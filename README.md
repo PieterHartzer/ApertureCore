@@ -1,6 +1,19 @@
-# AutoDash
+# ApertureCore
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+ApertureCore is a dashboard application for surfacing stats, KPI cards, and
+other analytical views from the user's database.
+
+The product direction includes text-to-SQL AI models that translate normal
+language requests into SQL so users can explore their data without writing
+queries directly.
+
+ApertureCore will also support a view-only dashboard mode so customers can
+embed curated dashboards inside their own applications without exposing editing
+or authoring capabilities.
+
+The frontend is built with Nuxt. Look at the
+[Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to
+learn more.
 
 ## Setup
 
@@ -228,7 +241,7 @@ You can override these dev compose defaults with environment variables before st
 - `OIDC_DEV_MAIL_UI_HOST_PORT` default: `8025`
 - `OIDC_DEV_MAIL_MAX_MESSAGES` default: `5000`
 - `OIDC_DEV_MAIL_FROM` default: `no-reply@localhost`
-- `OIDC_DEV_MAIL_FROM_NAME` default: `AutoDash Dev`
+- `OIDC_DEV_MAIL_FROM_NAME` default: `ApertureCore Dev`
 - `OIDC_DEV_MAIL_REPLY_TO` default: `no-reply@localhost`
 - `NUXT_HOST_PORT` default in app-only compose: `3000`
 - `NUXT_PUBLIC_APP_URL` default in app-only compose: `http://localhost:3000`
