@@ -1,0 +1,10 @@
+:3001 {
+  reverse_proxy host.docker.internal:3002 app:3003 {
+    lb_policy first
+    lb_try_duration 2s
+    lb_try_interval 250ms
+    health_uri /api/health
+    health_interval 2s
+    health_timeout 1s
+  }
+}

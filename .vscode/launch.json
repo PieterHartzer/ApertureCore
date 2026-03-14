@@ -2,44 +2,60 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Nuxt: dev server",
+      "name": "Nuxt: local dev server",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "dev"
+      "program": "${workspaceFolder}/node_modules/nuxt/bin/nuxt.mjs",
+      "args": [
+        "dev",
+        "--dotenv",
+        ".env.development"
       ],
+      "env": {
+        "NUXT_HOST": "0.0.0.0",
+        "NUXT_PORT": "3002",
+        "NUXT_PUBLIC_APP_URL": "http://localhost:3001"
+      },
       "console": "integratedTerminal",
+      "outputCapture": "std",
       "autoAttachChildProcesses": true,
       "skipFiles": [
         "<node_internals>/**"
       ]
     },
     {
-      "name": "Nuxt: browser",
+      "name": "Nuxt: browser via proxy",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3001",
       "webRoot": "${workspaceFolder}"
     },
     {
-      "name": "Nuxt: full stack",
+      "name": "Nuxt: full stack via proxy",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "dev"
+      "program": "${workspaceFolder}/node_modules/nuxt/bin/nuxt.mjs",
+      "args": [
+        "dev",
+        "--dotenv",
+        ".env.development"
       ],
+      "env": {
+        "NUXT_HOST": "0.0.0.0",
+        "NUXT_PORT": "3002",
+        "NUXT_PUBLIC_APP_URL": "http://localhost:3001"
+      },
       "console": "integratedTerminal",
+      "outputCapture": "std",
       "autoAttachChildProcesses": true,
       "skipFiles": [
         "<node_internals>/**"
       ],
       "serverReadyAction": {
         "pattern": "Local:\\s+(https?://\\S+)",
-        "uriFormat": "%s",
+        "uriFormat": "http://localhost:3001",
         "action": "debugWithChrome"
       }
     }

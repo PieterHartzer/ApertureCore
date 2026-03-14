@@ -51,7 +51,7 @@ if (oidcConfigured) {
         <p class="mt-2">
           Set your provider endpoints and
           <code>NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID</code> in your local
-          <code>.env</code>, then restart the app.
+          <code>.env.development</code>, then restart the app.
         </p>
       </div>
     </section>

@@ -1,4 +1,4 @@
-# Nuxt Minimal Starter
+# AutoDash
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
@@ -43,7 +43,7 @@ bun run dev
 This application is OpenID Connect provider agnostic. Any provider that supports
 the standard authorization code flow with PKCE should work.
 
-For non-Docker development, create a local `.env` file and fill in the values
+For non-Docker development, create a local `.env.development` file and fill in the values
 for your provider.
 
 If your app runs in a container and your provider does not expose a discovery
@@ -55,64 +55,95 @@ NUXT_OIDC_PROVIDERS_OIDC_ISSUER=https://your-provider.example.com
 NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI=https://your-provider.example.com/path/to/jwks
 ```
 
-## Docker Setup
+## Docker Workflows
 
-This repo also includes an optional Docker Compose setup for local development.
-It is only a convenience for running a local OIDC provider during development.
-It is not required, and you can point the app at any OIDC provider instead.
+This repo now has two separate compose entry points:
 
-The bundled dev stack runs:
+- [`docker-compose.dev.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.dev.yml): local development stack with the app, a stable edge proxy, a dev-only OIDC provider, Postgres, Mailpit, and the internal OIDC proxy.
+- [`docker-compose.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.yml): app-only containerized run for production-style testing.
 
-- Nuxt on `http://localhost:3001`
-- Zitadel on `http://localhost:18080`
-- Mailpit on `http://localhost:8025`
-- Mailpit API on `http://localhost:8025/api/v1/messages`
+They use separate compose project names, so they are clearly isolated from each other.
 
-Start or recreate everything with:
+### Dev Stack With Local Debug Failover
+
+Start the full dev stack with:
 
 ```bash
-docker compose up -d --force-recreate --remove-orphans
+docker compose -f docker-compose.dev.yml up -d --force-recreate --remove-orphans
 ```
 
-If you are switching from an older local dev-provider setup and the auth routes
-still behave strangely, reset the local dev-provider data and start again:
+This dev stack exposes:
+
+- Stable browser URL: `http://localhost:3001`
+- Local VS Code debug upstream: `http://localhost:3002`
+- Dockerized Nuxt fallback upstream: internal only on `app:3003`
+- Zitadel dev console: `http://localhost:18080`
+- Mailpit web UI: `http://localhost:8025`
+- Mailpit API: `http://localhost:8025/api/v1/messages`
+
+The browser should always use `http://localhost:3001`.
+
+- If no local debug app is running, the edge proxy serves the Dockerized Nuxt app.
+- If you launch Nuxt locally from VS Code on port `3002`, the same proxy switches to that local process automatically.
+- When you stop the local debug session, the proxy falls back to the Docker app again.
+
+The included VS Code launch profiles are configured for this:
+
+- `Nuxt: local dev server`
+- `Nuxt: browser via proxy`
+- `Nuxt: full stack via proxy`
+
+Those profiles run the local Nuxt server on `3002` while keeping the public app URL on `http://localhost:3001`, so OIDC callbacks still return through the stable proxy URL.
+
+Source changes are picked up by the Dockerized dev app because the project is bind-mounted into the container and the app runs with `nuxt dev`. This is live reload/HMR, not a full container restart on every file change.
+
+The Zitadel Postgres data persists in `./.data/oidc-db` by default, so your local provider setup survives normal `docker compose` restarts and recreates.
+
+If you are switching from an older local dev-provider setup and the auth routes still behave strangely, reset the local dev-provider data and start again:
 
 ```bash
-docker compose down -v --remove-orphans
-docker compose up -d --force-recreate --remove-orphans
+docker compose --env-file .env.development -f docker-compose.dev.yml down --remove-orphans
+rm -rf .data/oidc-db
+docker compose --env-file .env.development -f docker-compose.dev.yml up -d --force-recreate --remove-orphans
 ```
 
-Source changes are picked up by Nuxt because the project is bind-mounted into the
-container and the app runs with `nuxt dev`. This is live-reload/HMR, not a full
-container restart on every file change.
+### App-Only Compose
 
-The bundled Mailpit instance is a local email catcher for development. The
-included Zitadel setup sends its emails there instead of trying to deliver them
-externally. Use it to inspect verification, password reset, and account setup
-emails without sending anything to real inboxes.
+The default [`docker-compose.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.yml) only starts the app itself. It is useful for a containerized app-only run without the bundled dev provider, database, mail catcher, or helper proxies.
+
+Start it with:
+
+```bash
+docker compose up -d --build
+```
+
+By default that serves the app on `http://localhost:3000`.
+
+If you use OIDC with this app-only compose flow, make sure your provider callback and logout URLs match the public app URL for that run. The app derives its callback URL from `NUXT_PUBLIC_APP_URL`, so set that explicitly if you are not using the default `http://localhost:3000`.
+
+### Mailpit
+
+The bundled Mailpit instance is a local email catcher for development. The included dev-provider setup sends its emails there instead of trying to deliver them externally. Use it to inspect verification, password reset, and account setup emails without sending anything to real inboxes.
 
 Useful local Mailpit links:
 
 - Web UI: `http://localhost:8025`
 - API: `http://localhost:8025/api/v1/messages`
-- Upstream docs: `https://mailpit.axllent.org/docs/`
+- Docs: `https://mailpit.axllent.org/docs/`
 
-If you already have an existing persisted local Zitadel instance, those default
-mail settings may already be stored in the database from an earlier startup. In
-that case, either update the SMTP settings in the Zitadel console or recreate
-the local dev data volume with:
+If you already have an existing persisted local Zitadel instance, those default mail settings may already be stored in the database from an earlier startup. In that case, either update the SMTP settings in the Zitadel console or recreate the local dev database directory with:
 
 ```bash
-docker compose down -v --remove-orphans
-docker compose up -d --force-recreate --remove-orphans
+docker compose --env-file .env.development -f docker-compose.dev.yml down --remove-orphans
+rm -rf .data/oidc-db
+docker compose --env-file .env.development -f docker-compose.dev.yml up -d --force-recreate --remove-orphans
 ```
 
 ### Optional Local Dev Provider Setup
 
-The included compose file uses Zitadel as a local dev-only OIDC provider. It
-does not auto-provision the OIDC app, so you need to create it once.
+The included dev compose setup uses Zitadel as a local dev-only OIDC provider. It does not auto-provision the OIDC app, so you need to create it once.
 
-1. Start the stack with `docker compose up -d --force-recreate --remove-orphans`.
+1. Start the stack with `docker compose --env-file .env.development -f docker-compose.dev.yml up -d --force-recreate --remove-orphans`.
 2. Open the Zitadel console at:
 
 ```text
@@ -130,7 +161,7 @@ http://localhost:18080/ui/console?login_hint=root@zitadel.localhost
    This is only the initial admin account used to configure the local dev
    provider. It is not the user your app signs in as.
 
-   These defaults come from [`docker-compose.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.yml). You can override them with:
+   These defaults come from [`docker-compose.dev.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.dev.yml). You can override them with:
    - `OIDC_DEV_ADMIN_USERNAME`
    - `OIDC_DEV_ADMIN_PASSWORD`
 
@@ -165,7 +196,7 @@ http://localhost:3001/login
      - Response type: `code`
      - Grant types: `authorization_code`, `refresh_token`
 7. Copy the generated client ID.
-8. Put that value in a local `.env` file:
+8. Put that value in a local `.env.development` file:
 
 ```dotenv
 NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID=your-oidc-client-id
@@ -174,7 +205,7 @@ NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID=your-oidc-client-id
 9. Restart the Nuxt container so it picks up the new client ID:
 
 ```bash
-docker compose restart nuxt
+docker compose --env-file .env.development -f docker-compose.dev.yml restart app
 ```
 
 At runtime, users are authenticated by whichever OIDC provider you configure and
@@ -183,14 +214,14 @@ is only one local development option.
 
 ### Optional Overrides
 
-You can override these compose defaults with environment variables before
-starting Docker Compose:
+You can override these dev compose defaults with environment variables before starting Docker Compose:
 
-- `NUXT_HOST_PORT` default: `3001`
+- `DEV_PROXY_HOST_PORT` default: `3001`
 - `OIDC_DEV_PROVIDER_HOST_PORT` default: `18080`
 - `OIDC_DEV_DB_NAME` default: `oidc_dev`
 - `OIDC_DEV_DB_USER` default: `postgres`
 - `OIDC_DEV_DB_PASSWORD` default: `YourPassword!`
+- `OIDC_DEV_DB_DATA_DIR` default: `./.data/oidc-db`
 - `OIDC_DEV_PROVIDER_MASTERKEY` default: `MasterkeyNeedsToHave32Characters`
 - `OIDC_DEV_ADMIN_USERNAME` default: `root`
 - `OIDC_DEV_ADMIN_PASSWORD` default: `RootPassword1!`
@@ -199,6 +230,8 @@ starting Docker Compose:
 - `OIDC_DEV_MAIL_FROM` default: `no-reply@localhost`
 - `OIDC_DEV_MAIL_FROM_NAME` default: `AutoDash Dev`
 - `OIDC_DEV_MAIL_REPLY_TO` default: `no-reply@localhost`
+- `NUXT_HOST_PORT` default in app-only compose: `3000`
+- `NUXT_PUBLIC_APP_URL` default in app-only compose: `http://localhost:3000`
 
 ## Production
 
