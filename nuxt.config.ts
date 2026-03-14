@@ -1,4 +1,5 @@
 const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3001')
+const publicAppUrl = process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3001'
 const oidcAuthorizationUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL || ''
 const oidcTokenUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_TOKEN_URL || ''
 const oidcUserInfoUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_USER_INFO_URL || ''
@@ -22,6 +23,13 @@ const oidcOpenIdConfiguration =
     : oidcOpenIdConfigurationUrl
 const oidcDevProviderHostPort = process.env.OIDC_DEV_PROVIDER_HOST_PORT ?? '18080'
 const oidcDevMailUiHostPort = process.env.OIDC_DEV_MAIL_UI_HOST_PORT ?? '8025'
+const publicAppOrigin = (() => {
+  try {
+    return new URL(publicAppUrl).origin
+  } catch {
+    return 'http://localhost:3001'
+  }
+})()
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -67,7 +75,7 @@ export default defineNuxtConfig({
         openIdConfiguration: oidcOpenIdConfiguration,
         redirectUri:
           process.env.NUXT_OIDC_PROVIDERS_OIDC_REDIRECT_URI ||
-          `http://localhost:${nuxtPort}/auth/oidc/callback`,
+          `${publicAppOrigin}/auth/oidc/callback`,
         authenticationScheme: 'none',
         grantType: 'authorization_code',
         scope: ['openid', 'profile', 'email', 'offline_access'],
