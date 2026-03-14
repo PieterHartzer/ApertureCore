@@ -1,0 +1,122 @@
+services:
+  oidc-db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${OIDC_DEV_DB_NAME:-oidc_dev}
+      POSTGRES_PASSWORD: ${OIDC_DEV_DB_PASSWORD:-YourPassword!}
+      POSTGRES_USER: ${OIDC_DEV_DB_USER:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OIDC_DEV_DB_USER:-postgres} -d ${OIDC_DEV_DB_NAME:-oidc_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - oidc_dev_instance_data:/var/lib/postgresql/data
+
+  oidc-provider:
+    image: ghcr.io/zitadel/zitadel:latest
+    restart: unless-stopped
+    user: "0"
+    command: >-
+      start-from-init
+      --masterkey "${OIDC_DEV_PROVIDER_MASTERKEY:-MasterkeyNeedsToHave32Characters}"
+      --tlsMode disabled
+    depends_on:
+      oidc-db:
+        condition: service_healthy
+      oidc-mail:
+        condition: service_started
+    environment:
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${OIDC_DEV_DB_PASSWORD:-YourPassword!}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${OIDC_DEV_DB_USER:-postgres}
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${OIDC_DEV_DB_NAME:-oidc_dev}
+      ZITADEL_DATABASE_POSTGRES_HOST: oidc-db
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${OIDC_DEV_DB_PASSWORD:-YourPassword!}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${OIDC_DEV_DB_USER:-postgres}
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "false"
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM: ${OIDC_DEV_MAIL_FROM:-no-reply@localhost}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME: ${OIDC_DEV_MAIL_FROM_NAME:-AutoDash Dev}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_REPLYTOADDRESS: ${OIDC_DEV_MAIL_REPLY_TO:-no-reply@localhost}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST: oidc-mail:1025
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD: ""
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER: ""
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS: "false"
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: ${OIDC_DEV_PROVIDER_HOST_PORT:-18080}
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${OIDC_DEV_ADMIN_PASSWORD:-RootPassword1!}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: ${OIDC_DEV_ADMIN_USERNAME:-root}
+      ZITADEL_TLS_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    ports:
+      - "${OIDC_DEV_PROVIDER_HOST_PORT:-18080}:8080"
+
+  oidc-mail:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: ${OIDC_DEV_MAIL_MAX_MESSAGES:-5000}
+    ports:
+      - "${OIDC_DEV_MAIL_UI_HOST_PORT:-8025}:8025"
+
+  oidc-proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      oidc-provider:
+        condition: service_healthy
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    volumes:
+      - ./docker/oidc-proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+
+  nuxt:
+    image: node:22-bookworm
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command:
+      - sh
+      - -lc
+      - corepack enable && pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0 --port 3001
+    depends_on:
+      oidc-provider:
+        condition: service_healthy
+      oidc-proxy:
+        condition: service_started
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      NUXT_HOST: 0.0.0.0
+      NUXT_OIDC_AUTH_SESSION_SECRET: ${NUXT_OIDC_AUTH_SESSION_SECRET:-change-me-dev-auth-session-secret-to-a-long-random-string}
+      NUXT_PORT: 3001
+      NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL: http://localhost:${OIDC_DEV_PROVIDER_HOST_PORT:-18080}/oauth/v2/authorize
+      NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID: ${NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID:-}
+      NUXT_OIDC_PROVIDERS_OIDC_CLIENT_SECRET: ""
+      NUXT_OIDC_PROVIDERS_OIDC_LOGOUT_URL: http://localhost:${OIDC_DEV_PROVIDER_HOST_PORT:-18080}/oidc/v1/end_session
+      NUXT_OIDC_PROVIDERS_OIDC_OPENID_CONFIGURATION: http://oidc-proxy:8080/.well-known/openid-configuration
+      NUXT_OIDC_PROVIDERS_OIDC_ISSUER: http://localhost:${OIDC_DEV_PROVIDER_HOST_PORT:-18080}
+      NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI: http://oidc-proxy:8080/oauth/v2/keys
+      NUXT_OIDC_PROVIDERS_OIDC_REDIRECT_URI: http://localhost:${NUXT_HOST_PORT:-3001}/auth/oidc/callback
+      NUXT_OIDC_PROVIDERS_OIDC_TOKEN_URL: http://oidc-proxy:8080/oauth/v2/token
+      NUXT_OIDC_PROVIDERS_OIDC_USER_INFO_URL: http://oidc-proxy:8080/oidc/v1/userinfo
+      NUXT_OIDC_SESSION_SECRET: ${NUXT_OIDC_SESSION_SECRET:-change-me-dev-session-secret-to-a-long-random-string}
+      NUXT_OIDC_TOKEN_KEY: ${NUXT_OIDC_TOKEN_KEY:-data:;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${NUXT_HOST_PORT:-3001}:3001"
+    volumes:
+      - .:/app
+      - nuxt_node_modules:/app/node_modules
+
+volumes:
+  nuxt_node_modules:
+  oidc_dev_instance_data:

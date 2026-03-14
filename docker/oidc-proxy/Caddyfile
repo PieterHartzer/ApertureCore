@@ -1,0 +1,7 @@
+:8080 {
+  reverse_proxy oidc-provider:8080 {
+    header_up Host localhost:18080
+    header_up X-Forwarded-Host localhost:18080
+    header_up X-Forwarded-Proto http
+  }
+}

@@ -22,7 +22,7 @@ bun install
 
 ## Development Server
 
-Start the development server on `http://localhost:3000`:
+Start the development server on `http://localhost:3001`:
 
 ```bash
 # npm
@@ -37,6 +37,168 @@ yarn dev
 # bun
 bun run dev
 ```
+
+## OIDC Configuration
+
+This application is OpenID Connect provider agnostic. Any provider that supports
+the standard authorization code flow with PKCE should work.
+
+For non-Docker development, create a local `.env` file and fill in the values
+for your provider.
+
+If your app runs in a container and your provider does not expose a discovery
+document and JWKS URL that are reachable from inside that container, set these
+as well:
+
+```dotenv
+NUXT_OIDC_PROVIDERS_OIDC_ISSUER=https://your-provider.example.com
+NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI=https://your-provider.example.com/path/to/jwks
+```
+
+## Docker Setup
+
+This repo also includes an optional Docker Compose setup for local development.
+It is only a convenience for running a local OIDC provider during development.
+It is not required, and you can point the app at any OIDC provider instead.
+
+The bundled dev stack runs:
+
+- Nuxt on `http://localhost:3001`
+- Zitadel on `http://localhost:18080`
+- Mailpit on `http://localhost:8025`
+- Mailpit API on `http://localhost:8025/api/v1/messages`
+
+Start or recreate everything with:
+
+```bash
+docker compose up -d --force-recreate --remove-orphans
+```
+
+If you are switching from an older local dev-provider setup and the auth routes
+still behave strangely, reset the local dev-provider data and start again:
+
+```bash
+docker compose down -v --remove-orphans
+docker compose up -d --force-recreate --remove-orphans
+```
+
+Source changes are picked up by Nuxt because the project is bind-mounted into the
+container and the app runs with `nuxt dev`. This is live-reload/HMR, not a full
+container restart on every file change.
+
+The bundled Mailpit instance is a local email catcher for development. The
+included Zitadel setup sends its emails there instead of trying to deliver them
+externally. Use it to inspect verification, password reset, and account setup
+emails without sending anything to real inboxes.
+
+Useful local Mailpit links:
+
+- Web UI: `http://localhost:8025`
+- API: `http://localhost:8025/api/v1/messages`
+- Upstream docs: `https://mailpit.axllent.org/docs/`
+
+If you already have an existing persisted local Zitadel instance, those default
+mail settings may already be stored in the database from an earlier startup. In
+that case, either update the SMTP settings in the Zitadel console or recreate
+the local dev data volume with:
+
+```bash
+docker compose down -v --remove-orphans
+docker compose up -d --force-recreate --remove-orphans
+```
+
+### Optional Local Dev Provider Setup
+
+The included compose file uses Zitadel as a local dev-only OIDC provider. It
+does not auto-provision the OIDC app, so you need to create it once.
+
+1. Start the stack with `docker compose up -d --force-recreate --remove-orphans`.
+2. Open the Zitadel console at:
+
+```text
+http://localhost:18080/ui/console?login_hint=root@zitadel.localhost
+```
+
+3. Sign in with the first-instance admin credentials:
+   - Email / login name: `root@zitadel.localhost`
+   - Password: `RootPassword1!`
+
+   The compose default first-instance username is `root`, but the login
+   identifier used at sign-in is the email-style value shown in the
+   `login_hint`.
+
+   This is only the initial admin account used to configure the local dev
+   provider. It is not the user your app signs in as.
+
+   These defaults come from [`docker-compose.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.yml). You can override them with:
+   - `OIDC_DEV_ADMIN_USERNAME`
+   - `OIDC_DEV_ADMIN_PASSWORD`
+
+   If you override `OIDC_DEV_ADMIN_USERNAME`, use that value as the local-part
+   of the sign-in email, for example `alice@zitadel.localhost`.
+
+4. In Zitadel, open the instance default settings and set the Default Redirect
+   URI to:
+
+```text
+http://localhost:3001/login
+```
+
+   This matters for flows that do not have an active app auth request, such as
+   account initialization, verification, and password reset links from email.
+   Without it, Zitadel can send the browser back to the management console
+   instead of your app.
+
+5. In Zitadel, create a project for this app if you do not already have one.
+6. Under that project, create an OIDC application for the Nuxt frontend:
+   - Application type: `User Agent`
+     This is Zitadel's browser/public client type. Other providers use
+     equivalent public-client or SPA settings.
+   - During initial app creation, choose `PKCE` as the auth method.
+   - Add these URLs:
+     - Redirect URI: `http://localhost:3001/auth/oidc/callback`
+     - Post logout redirect URI: `http://localhost:3001/`
+   - If Zitadel warns about plain `http://` localhost URLs, enable its
+     development/debug allowance for HTTP so those local URLs can be saved.
+   - After the URLs are in place, switch the app settings to:
+     - Auth method: `none`
+     - Response type: `code`
+     - Grant types: `authorization_code`, `refresh_token`
+7. Copy the generated client ID.
+8. Put that value in a local `.env` file:
+
+```dotenv
+NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID=your-oidc-client-id
+```
+
+9. Restart the Nuxt container so it picks up the new client ID:
+
+```bash
+docker compose restart nuxt
+```
+
+At runtime, users are authenticated by whichever OIDC provider you configure and
+then redirected back to Nuxt through `nuxt-oidc-auth`. The bundled Zitadel stack
+is only one local development option.
+
+### Optional Overrides
+
+You can override these compose defaults with environment variables before
+starting Docker Compose:
+
+- `NUXT_HOST_PORT` default: `3001`
+- `OIDC_DEV_PROVIDER_HOST_PORT` default: `18080`
+- `OIDC_DEV_DB_NAME` default: `oidc_dev`
+- `OIDC_DEV_DB_USER` default: `postgres`
+- `OIDC_DEV_DB_PASSWORD` default: `YourPassword!`
+- `OIDC_DEV_PROVIDER_MASTERKEY` default: `MasterkeyNeedsToHave32Characters`
+- `OIDC_DEV_ADMIN_USERNAME` default: `root`
+- `OIDC_DEV_ADMIN_PASSWORD` default: `RootPassword1!`
+- `OIDC_DEV_MAIL_UI_HOST_PORT` default: `8025`
+- `OIDC_DEV_MAIL_MAX_MESSAGES` default: `5000`
+- `OIDC_DEV_MAIL_FROM` default: `no-reply@localhost`
+- `OIDC_DEV_MAIL_FROM_NAME` default: `AutoDash Dev`
+- `OIDC_DEV_MAIL_REPLY_TO` default: `no-reply@localhost`
 
 ## Production
 
