@@ -15,6 +15,29 @@ The frontend is built with Nuxt. Look at the
 [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to
 learn more.
 
+## Testing
+
+Run the current test suite with:
+
+```bash
+pnpm test
+```
+
+Use watch mode while developing:
+
+```bash
+pnpm test:watch
+```
+
+Run the suite with coverage enabled:
+
+```bash
+pnpm test:coverage
+```
+
+Coverage output is written to `coverage/`, including the HTML report at
+`coverage/index.html`.
+
 ## Setup
 
 Make sure to install dependencies:
@@ -111,6 +134,39 @@ Those profiles run the local Nuxt server on `3002` while keeping the public app 
 Source changes are picked up by the Dockerized dev app because the project is bind-mounted into the container and the app runs with `nuxt dev`. This is live reload/HMR, not a full container restart on every file change.
 
 The Zitadel Postgres data persists in `./.data/oidc-db` by default, so your local provider setup survives normal `docker compose` restarts and recreates.
+
+### Database Connection Testing Network
+
+The containerized dev app is attached to an external Docker network named
+`shared-db` in addition to its default compose network. This is used for
+testing database connections from the app to other Postgres containers.
+
+Create the shared network once if it does not already exist:
+
+```bash
+docker network create shared-db
+```
+
+Attach any external Postgres container you want to test against to that same
+network, then connect to it from the app using the container name or a network
+alias.
+
+Example:
+
+```bash
+docker network connect shared-db CentralDb-PG-1
+```
+
+In our current local setup, the external Postgres container is attached to
+`shared-db` with the alias `centraldb-pg`, so the app can reach it at
+`centraldb-pg:5432` once that container is running.
+
+Use these host rules when testing connections:
+
+- From the browser URL `http://localhost:3001`, requests are usually handled by the Dockerized app, so `localhost` means the app container, not your Mac.
+- For databases running in Docker on the `shared-db` network, use the service or container hostname such as `oidc-db` or `centraldb-pg`.
+- For databases published on your host machine, use `host.docker.internal` from the containerized app.
+- Only use `localhost` when the Nuxt server itself is running directly on the host, for example via the VS Code/F5 flow on `http://localhost:3002`.
 
 If you are switching from an older local dev-provider setup and the auth routes still behave strangely, reset the local dev-provider data and start again:
 

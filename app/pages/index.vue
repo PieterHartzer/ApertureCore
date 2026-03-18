@@ -1,23 +1,19 @@
 <script setup lang="ts">
-const { currentProvider, loggedIn, user } = useOidcAuth()
+import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
 
-if (import.meta.client) {
-  watch(
-    [loggedIn, currentProvider, user],
-    ([isLoggedIn, provider, currentUser]) => {
-      console.info('[oidc] dashboard session', {
-        loggedIn: isLoggedIn,
-        provider: provider ?? null,
-        user: currentUser ?? null,
-      })
-    },
-    {
-      immediate: true,
-    }
-  )
-}
+const { t } = useI18n()
 </script>
 
 <template>
-  <h1>Dashboard</h1>
+  <UPage>
+    <UPageHeader
+      :headline="t('pages.dashboard.headline')"
+      :title="t('pages.dashboard.title')"
+      :description="t('pages.dashboard.description')"
+    >
+      <template #links>
+        <AppLocaleSelect />
+      </template>
+    </UPageHeader>
+  </UPage>
 </template>

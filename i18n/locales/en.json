@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "ApertureCore"
+  },
+  "common": {
+    "labels": {
+      "locale": "Language"
+    }
+  },
+  "database": {
+    "types": {
+      "postgresql": "PostgreSQL"
+    },
+    "sslModes": {
+      "disable": "Disable SSL",
+      "require": "Require SSL"
+    }
+  },
+  "errors": {
+    "auth": {
+      "unauthorized": "You must be signed in to access this resource."
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "headline": "ApertureCore",
+      "title": "Dashboard",
+      "description": "Create view-only dashboards, stats, and cards from your own database."
+    }
+  },
+  "login": {
+    "title": "Sign in",
+    "description": "Redirecting to your OpenID Connect provider.",
+    "refreshHint": "If nothing happens, refresh the page.",
+    "oidcNotConfigured": {
+      "title": "OIDC is not configured yet.",
+      "description": "Set your provider endpoints and NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID in .env.development, then restart the app."
+    }
+  },
+  "connections": {
+    "new": {
+      "headline": "Connections",
+      "title": "New database connection",
+      "description": "Add a database connection and verify that ApertureCore can reach it securely.",
+      "card": {
+        "title": "Connection details",
+        "description": "Enter the credentials required to test the database connection."
+      },
+      "fields": {
+        "connectionName": {
+          "label": "Connection name",
+          "placeholder": "Primary reporting database",
+          "description": "A friendly name for this connection."
+        },
+        "databaseType": {
+          "label": "Database type"
+        },
+        "host": {
+          "label": "Host",
+          "placeholder": "db.internal"
+        },
+        "port": {
+          "label": "Port",
+          "placeholder": "5432"
+        },
+        "databaseName": {
+          "label": "Database name",
+          "placeholder": "app_db"
+        },
+        "username": {
+          "label": "Username",
+          "placeholder": "app_user"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Password"
+        },
+        "sslMode": {
+          "label": "SSL / Encryption"
+        }
+      },
+      "submit": {
+        "idle": "Test connection",
+        "loading": "Testing connection..."
+      }
+    },
+    "test": {
+      "success": "PostgreSQL connection successful.",
+      "result": {
+        "successTitle": "Connection successful",
+        "errorTitle": "Connection failed"
+      },
+      "notifications": {
+        "successTitle": "Connection successful",
+        "errorTitle": "Connection failed"
+      },
+      "errors": {
+        "unauthorized": "You must be signed in to test a database connection.",
+        "rateLimited": "Too many database connection tests. Please wait and try again.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "connectionNameInvalid": "Connection name must be a string.",
+        "databaseTypeInvalid": "Database type is not supported.",
+        "hostRequired": "Host is required.",
+        "portInvalid": "Port must be a positive integer.",
+        "databaseNameRequired": "Database name is required.",
+        "usernameRequired": "Username is required.",
+        "passwordRequired": "Password is required.",
+        "sslModeInvalid": "SSL mode is not supported.",
+        "invalidInput": "The database connection request is invalid.",
+        "unsupportedDatabaseType": "This database type is not supported yet.",
+        "authenticationFailed": "The database credentials were rejected.",
+        "databaseNotFound": "The specified database could not be found.",
+        "connectionFailed": "ApertureCore could not reach the database server.",
+        "timeout": "The database connection timed out.",
+        "sslRequired": "The database server requires SSL or compatible TLS settings.",
+        "notImplemented": "This database test is not implemented yet.",
+        "unexpected": "Unexpected error while testing the database connection."
+      }
+    }
+  }
+}

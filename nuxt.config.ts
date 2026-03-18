@@ -35,6 +35,7 @@ const publicAppOrigin = (() => {
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  css: ['~/assets/css/main.css'],
   devServer: {
     host: process.env.NUXT_HOST || undefined,
     port: nuxtPort
@@ -53,10 +54,26 @@ export default defineNuxtConfig({
     }
   },
 
-  modules: ['@nuxtjs/tailwindcss', 'nuxt-oidc-auth'],
-  tailwindcss: {
-    exposeConfig: true,
-    viewer: true,
+  modules: ['@nuxt/ui', '@nuxtjs/i18n', 'nuxt-oidc-auth'],
+  i18n: {
+    defaultLocale: 'en',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: false,
+    langDir: 'locales',
+    locales: [
+      {
+        code: 'en',
+        name: 'English',
+        language: 'en-US',
+        file: 'en.json'
+      },
+      {
+        code: 'pseudo',
+        name: 'Pseudo',
+        language: 'en-XA',
+        file: 'pseudo.json'
+      }
+    ]
   },
   oidc: {
     defaultProvider: 'oidc',

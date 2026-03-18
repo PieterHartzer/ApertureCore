@@ -1,3 +1,9 @@
+{
+  log default {
+    exclude http.handlers.reverse_proxy.health_checker.active
+  }
+}
+
 :3001 {
   reverse_proxy host.docker.internal:3002 app:3003 {
     lb_policy first

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AppAlert from '~/components/ui/AppAlert.vue'
+import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+
 definePageMeta({
   public: true
 })
@@ -6,6 +9,7 @@ definePageMeta({
 const config = useRuntimeConfig()
 const oidcConfigured = config.public.oidcConfigured
 const route = useRoute()
+const { t } = useI18n()
 
 const callbackRedirectUrl =
   typeof route.query.callbackRedirectUrl === 'string' && route.query.callbackRedirectUrl.startsWith('/')
@@ -30,30 +34,36 @@ if (oidcConfigured) {
 
 <template>
   <main class="flex min-h-dvh items-center justify-center px-6">
-    <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 class="text-2xl font-semibold text-slate-900">Sign in</h1>
-      <p class="mt-3 text-sm leading-6 text-slate-600">
-        Redirecting to your OpenID Connect provider.
-      </p>
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-2">
+            <h1 class="text-2xl font-semibold text-highlighted">
+              {{ t('login.title') }}
+            </h1>
+            <p class="text-sm leading-6 text-muted">
+              {{ t('login.description') }}
+            </p>
+          </div>
+
+          <AppLocaleSelect />
+        </div>
+      </template>
 
       <p
         v-if="oidcConfigured"
-        class="mt-6 text-sm leading-6 text-slate-500"
+        class="text-sm leading-6 text-muted"
       >
-        If nothing happens, refresh the page.
+        {{ t('login.refreshHint') }}
       </p>
 
-      <div
+      <AppAlert
         v-else
-        class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"
+        kind="warning"
+        :title="t('login.oidcNotConfigured.title')"
       >
-        <p class="font-medium">OIDC is not configured yet.</p>
-        <p class="mt-2">
-          Set your provider endpoints and
-          <code>NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID</code> in your local
-          <code>.env.development</code>, then restart the app.
-        </p>
-      </div>
-    </section>
+        {{ t('login.oidcNotConfigured.description') }}
+      </AppAlert>
+    </UCard>
   </main>
 </template>

@@ -87,6 +87,9 @@ services:
     restart: unless-stopped
     init: true
     working_dir: /app
+    networks:
+      - default
+      - shared-db
     command:
       - sh
       - -lc
@@ -134,3 +137,7 @@ services:
 
 volumes:
   nuxt_dev_node_modules:
+
+networks:
+  shared-db:
+    external: true
