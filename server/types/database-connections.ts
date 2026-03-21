@@ -28,6 +28,18 @@ export interface SavedDatabaseConnectionSecret {
   sslMode: DatabaseSslMode
 }
 
+export interface SavedDatabaseConnectionDetails {
+  id: string
+  connectionName: string
+  databaseType: DatabaseType
+  host: string
+  port: number
+  databaseName: string
+  username: string
+  sslMode: DatabaseSslMode
+  hasPassword: boolean
+}
+
 export type SaveDatabaseConnectionInput = TestDatabaseConnectionInput
 
 export type SaveDatabaseConnectionField =
@@ -122,6 +134,131 @@ export interface ListSavedDatabaseConnectionsApiResponse {
   message: string
   messageKey?: string
   connections?: SavedDatabaseConnectionSummary[]
+}
+
+export interface SavedDatabaseConnectionIdValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: 'connection_id_invalid'
+  message: string
+  field: 'connectionId'
+}
+
+export interface SavedDatabaseConnectionIdValidationSuccess {
+  ok: true
+  data: {
+    connectionId: string
+  }
+}
+
+export type SavedDatabaseConnectionIdValidationResult =
+  | SavedDatabaseConnectionIdValidationError
+  | SavedDatabaseConnectionIdValidationSuccess
+
+export type GetSavedDatabaseConnectionResultCode =
+  | 'success'
+  | 'not_found'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type GetSavedDatabaseConnectionResult =
+  | {
+      ok: true
+      code: 'success'
+      connection: SavedDatabaseConnectionDetails
+    }
+  | {
+      ok: false
+      code: Exclude<GetSavedDatabaseConnectionResultCode, 'success'>
+      message: string
+    }
+
+export interface GetSavedDatabaseConnectionApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'invalid_input'
+    | 'forbidden'
+    | Exclude<GetSavedDatabaseConnectionResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: 'connectionId'
+  issue?: 'connection_id_invalid'
+  connection?: SavedDatabaseConnectionDetails
+}
+
+export interface UpdateDatabaseConnectionInput
+  extends Omit<SaveDatabaseConnectionInput, 'password'> {
+  connectionId: string
+  password?: string
+}
+
+export type UpdateDatabaseConnectionField =
+  | keyof UpdateDatabaseConnectionInput
+  | 'body'
+
+export type UpdateDatabaseConnectionValidationIssue =
+  | 'body_invalid'
+  | 'connection_id_invalid'
+  | 'connection_name_invalid'
+  | 'connection_name_required'
+  | 'database_type_invalid'
+  | 'host_required'
+  | 'port_invalid'
+  | 'database_name_required'
+  | 'username_required'
+  | 'password_required'
+  | 'ssl_mode_invalid'
+
+export interface UpdateDatabaseConnectionValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: UpdateDatabaseConnectionValidationIssue
+  message: string
+  field?: UpdateDatabaseConnectionField
+}
+
+export interface UpdateDatabaseConnectionValidationSuccess {
+  ok: true
+  data: UpdateDatabaseConnectionInput
+}
+
+export type UpdateDatabaseConnectionValidationResult =
+  | UpdateDatabaseConnectionValidationError
+  | UpdateDatabaseConnectionValidationSuccess
+
+export type UpdateDatabaseConnectionResultCode =
+  | 'success'
+  | 'not_found'
+  | 'duplicate_connection_name'
+  | 'duplicate_connection_target'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type UpdateDatabaseConnectionResult =
+  | {
+      ok: true
+      code: 'success'
+      connection: SavedDatabaseConnectionSummary
+    }
+  | {
+      ok: false
+      code: Exclude<UpdateDatabaseConnectionResultCode, 'success'>
+      message: string
+    }
+
+export interface UpdateDatabaseConnectionApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'forbidden'
+    | 'invalid_input'
+    | Exclude<UpdateDatabaseConnectionResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: UpdateDatabaseConnectionField
+  issue?: UpdateDatabaseConnectionValidationIssue
+  connection?: SavedDatabaseConnectionSummary
 }
 
 export interface DeleteDatabaseConnectionInput {

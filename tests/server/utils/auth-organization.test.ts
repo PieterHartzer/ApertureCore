@@ -104,6 +104,37 @@ describe('getAuthenticatedOrganizationContext', () => {
     })
   })
 
+  it('tolerates missing optional organization claim configuration', async () => {
+    useRuntimeConfigMock.mockReturnValue({
+      oidcOrganizationClaims: {
+        idClaim: 'org_id',
+        nameClaim: '   ',
+        primaryDomainClaim: undefined
+      }
+    })
+
+    const { getAuthenticatedOrganizationContext } = await import(
+      '../../../server/utils/auth-organization'
+    )
+    const event = {
+      context: {
+        auth: {
+          claims: {
+            sub: 'user-optional',
+            org_id: 'org-optional'
+          }
+        }
+      }
+    }
+
+    expect(getAuthenticatedOrganizationContext(event as never)).toEqual({
+      userId: 'user-optional',
+      organizationId: 'org-optional',
+      organizationName: 'org-optional',
+      organizationPrimaryDomain: undefined
+    })
+  })
+
   it('falls back to the organization id when no organization name is present', async () => {
     const { getAuthenticatedOrganizationContext } = await import(
       '../../../server/utils/auth-organization'

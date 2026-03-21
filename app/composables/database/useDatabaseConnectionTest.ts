@@ -3,6 +3,10 @@ import type {
   DatabaseConnectionTestResponse,
 } from '~/types/database'
 
+interface TestDatabaseConnectionOptions {
+  connectionId?: string
+}
+
 const createUnexpectedResponse = (): DatabaseConnectionTestResponse => ({
   ok: false,
   code: 'unexpected_error',
@@ -24,12 +28,20 @@ const isConnectionTestResponse = (
 
 export const useDatabaseConnectionTest = () => {
   const testConnection = async (
-    connection: DatabaseConnection
+    connection: DatabaseConnection,
+    options: TestDatabaseConnectionOptions = {}
   ): Promise<DatabaseConnectionTestResponse> => {
     try {
       return await $fetch<DatabaseConnectionTestResponse>('/api/connections/test', {
         method: 'POST',
-        body: connection
+        body: {
+          ...connection,
+          ...(options.connectionId
+            ? {
+                connectionId: options.connectionId
+              }
+            : {})
+        }
       })
     } catch (error) {
       if (

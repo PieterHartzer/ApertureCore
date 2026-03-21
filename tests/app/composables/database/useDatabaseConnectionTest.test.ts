@@ -55,6 +55,29 @@ describe('useDatabaseConnectionTest', () => {
     })
   })
 
+  it('includes the saved connection id when testing an existing connection', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      code: 'success',
+      message: 'connections.test.success',
+      messageKey: 'connections.test.success',
+    })
+
+    const useDatabaseConnectionTest = await loadComposable()
+
+    await useDatabaseConnectionTest().testConnection(connection, {
+      connectionId: 'connection-1'
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/connections/test', {
+      method: 'POST',
+      body: {
+        ...connection,
+        connectionId: 'connection-1'
+      },
+    })
+  })
+
   it('returns structured API errors from failed fetch responses', async () => {
     fetchMock.mockRejectedValue({
       data: {

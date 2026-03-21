@@ -9,6 +9,7 @@ export type TestDatabaseConnectionResultCode =
   | 'unauthorized'
   | 'rate_limited'
   | 'invalid_input'
+  | 'saved_connection_not_found'
   | 'unsupported_database_type'
   | 'authentication_failed'
   | 'database_not_found'
@@ -28,10 +29,14 @@ export interface TestDatabaseConnectionInput {
   sslMode: DatabaseSslMode
 }
 
-export type TestDatabaseConnectionField = keyof TestDatabaseConnectionInput | 'body'
+export type TestDatabaseConnectionField =
+  | keyof TestDatabaseConnectionInput
+  | 'connectionId'
+  | 'body'
 
 export type TestDatabaseConnectionValidationIssue =
   | 'body_invalid'
+  | 'connection_id_invalid'
   | 'connection_name_invalid'
   | 'database_type_invalid'
   | 'host_required'

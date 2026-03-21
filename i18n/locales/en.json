@@ -39,6 +39,9 @@
     }
   },
   "connections": {
+    "form": {
+      "cancel": "Cancel"
+    },
     "index": {
       "headline": "Connections",
       "title": "Saved database connections",
@@ -119,6 +122,39 @@
         "loading": "Saving connection..."
       }
     },
+    "edit": {
+      "headline": "Connections",
+      "title": "Edit database connection",
+      "description": "Update a saved database connection for your organisation.",
+      "success": "Database connection loaded successfully.",
+      "loading": "Loading the saved connection details.",
+      "card": {
+        "title": "Connection details",
+        "description": "Update the connection fields, then retest before saving connectivity changes."
+      },
+      "fields": {
+        "password": {
+          "placeholder": "Leave blank to keep the stored password",
+          "description": "Leave blank to keep the stored password. It will be reused when testing or saving changes."
+        }
+      },
+      "submit": {
+        "idle": "Test connection",
+        "loading": "Testing connection..."
+      },
+      "save": {
+        "idle": "Save changes",
+        "loading": "Saving changes..."
+      },
+      "errors": {
+        "loadTitle": "Could not load connection",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "forbidden": "You do not have permission to view this database connection for this organisation.",
+        "notFound": "The selected connection could not be found.",
+        "persistenceUnavailable": "Saved connections are temporarily unavailable.",
+        "unexpected": "Unexpected error while loading the saved database connection."
+      }
+    },
     "test": {
       "success": "PostgreSQL connection successful.",
       "result": {
@@ -133,6 +169,7 @@
         "unauthorized": "You must be signed in to test a database connection.",
         "rateLimited": "Too many database connection tests. Please wait and try again.",
         "bodyInvalid": "Request body is not valid JSON.",
+        "connectionIdInvalid": "Connection id is invalid.",
         "connectionNameInvalid": "Connection name must be a string.",
         "databaseTypeInvalid": "Database type is not supported.",
         "hostRequired": "Host is required.",
@@ -140,6 +177,7 @@
         "databaseNameRequired": "Database name is required.",
         "usernameRequired": "Username is required.",
         "passwordRequired": "Password is required.",
+        "savedConnectionNotFound": "The saved connection could not be found.",
         "sslModeInvalid": "SSL mode is not supported.",
         "invalidInput": "The database connection request is invalid.",
         "unsupportedDatabaseType": "This database type is not supported yet.",
@@ -174,6 +212,32 @@
         "duplicateConnectionTarget": "A connection for this host and database already exists for your organisation.",
         "persistenceUnavailable": "Saved connections are temporarily unavailable.",
         "unexpected": "Unexpected error while saving the database connection."
+      }
+    },
+    "update": {
+      "success": "Database connection updated successfully.",
+      "notifications": {
+        "successTitle": "Connection updated",
+        "errorTitle": "Update failed"
+      },
+      "errors": {
+        "forbidden": "You do not have permission to update database connections for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "connectionNameInvalid": "Connection name must be a string.",
+        "connectionNameRequired": "Connection name is required.",
+        "databaseTypeInvalid": "Database type is not supported.",
+        "hostRequired": "Host is required.",
+        "portInvalid": "Port must be a positive integer.",
+        "databaseNameRequired": "Database name is required.",
+        "usernameRequired": "Username is required.",
+        "passwordRequired": "Password must be a string when provided.",
+        "sslModeInvalid": "SSL mode is not supported.",
+        "notFound": "The selected connection could not be found.",
+        "duplicateConnectionName": "A connection with this name already exists for your organisation.",
+        "duplicateConnectionTarget": "A connection for this host and database already exists for your organisation.",
+        "persistenceUnavailable": "Saved connections are temporarily unavailable.",
+        "unexpected": "Unexpected error while updating the database connection."
       }
     },
     "list": {

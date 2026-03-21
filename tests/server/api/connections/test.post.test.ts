@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const validateTestDatabaseConnectionInputMock = vi.fn()
 const testDatabaseConnectionMock = vi.fn()
 const consumeConnectionTestRateLimitMock = vi.fn()
+const validateSavedDatabaseConnectionIdMock = vi.fn()
+const getSavedDatabaseConnectionSecretMock = vi.fn()
+const getAuthenticatedOrganizationContextMock = vi.fn()
 const readBodyMock = vi.fn()
 const setResponseStatusMock = vi.fn((event: Record<string, unknown>, status: number) => {
   event.statusCode = status
@@ -22,8 +25,20 @@ vi.mock('../../../../server/services/database/index', () => ({
   testDatabaseConnection: testDatabaseConnectionMock,
 }))
 
+vi.mock('../../../../server/services/database-connections', () => ({
+  getSavedDatabaseConnectionSecret: getSavedDatabaseConnectionSecretMock,
+}))
+
 vi.mock('../../../../server/utils/database-connection-test-rate-limit', () => ({
   consumeConnectionTestRateLimit: consumeConnectionTestRateLimitMock,
+}))
+
+vi.mock('../../../../server/utils/auth-organization', () => ({
+  getAuthenticatedOrganizationContext: getAuthenticatedOrganizationContextMock,
+}))
+
+vi.mock('../../../../server/validators/database-connections', () => ({
+  validateSavedDatabaseConnectionId: validateSavedDatabaseConnectionIdMock,
 }))
 
 const loadHandler = async () => {
@@ -47,6 +62,11 @@ describe('POST /api/connections/test', () => {
       remaining: 4,
       resetAt: Date.now() + 60_000,
       retryAfterSeconds: 0
+    })
+    getAuthenticatedOrganizationContextMock.mockReturnValue({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      organizationName: 'ACME'
     })
   })
 
@@ -160,6 +180,221 @@ describe('POST /api/connections/test', () => {
     expect(event.statusCode).toBe(200)
   })
 
+  it('reuses the stored password when testing an existing saved connection', async () => {
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: '   ',
+      sslMode: 'disable',
+    })
+    validateSavedDatabaseConnectionIdMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    getSavedDatabaseConnectionSecretMock.mockResolvedValue({
+      ok: true,
+      code: 'success',
+      secret: {
+        host: 'db.internal',
+        port: 5432,
+        databaseName: 'app_db',
+        username: 'admin',
+        password: 'stored-secret',
+        sslMode: 'disable'
+      }
+    })
+    validateTestDatabaseConnectionInputMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionName: 'Primary',
+        databaseType: 'postgresql',
+        host: 'db.internal',
+        port: 5432,
+        databaseName: 'app_db',
+        username: 'admin',
+        password: 'stored-secret',
+        sslMode: 'disable',
+      },
+    })
+    testDatabaseConnectionMock.mockResolvedValue({
+      ok: true,
+      code: 'success',
+      message: 'success',
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = {}
+
+    await expect(handler(event)).resolves.toEqual({
+      ok: true,
+      code: 'success',
+      message: 'connections.test.success',
+      messageKey: 'connections.test.success',
+    })
+    expect(validateTestDatabaseConnectionInputMock).toHaveBeenCalledWith({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: 'stored-secret',
+      sslMode: 'disable',
+    })
+  })
+
+  it('returns a validation error when an edit test has an invalid connection id', async () => {
+    readBodyMock.mockResolvedValue({
+      connectionId: 'bad-id',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: '',
+      sslMode: 'disable',
+    })
+    validateSavedDatabaseConnectionIdMock.mockReturnValue({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'connection_id_invalid',
+      field: 'connectionId',
+      message: 'connection_id_invalid'
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = {}
+
+    await expect(handler(event)).resolves.toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'connection_id_invalid',
+      field: 'connectionId',
+      message: 'connections.test.errors.connectionIdInvalid',
+      messageKey: 'connections.test.errors.connectionIdInvalid',
+    })
+    expect(event.statusCode).toBe(400)
+  })
+
+  it('returns saved_connection_not_found when an edit test targets a missing saved connection', async () => {
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: '',
+      sslMode: 'disable',
+    })
+    validateSavedDatabaseConnectionIdMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    getSavedDatabaseConnectionSecretMock.mockResolvedValue({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = {}
+
+    await expect(handler(event)).resolves.toEqual({
+      ok: false,
+      code: 'saved_connection_not_found',
+      message: 'connections.test.errors.savedConnectionNotFound',
+      messageKey: 'connections.test.errors.savedConnectionNotFound',
+    })
+    expect(event.statusCode).toBe(404)
+  })
+
+  it('returns unauthorized when the edit test cannot resolve the organization context', async () => {
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: '',
+      sslMode: 'disable',
+    })
+    validateSavedDatabaseConnectionIdMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    getAuthenticatedOrganizationContextMock.mockImplementation(() => {
+      throw {
+        statusCode: 403
+      }
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = {}
+
+    await expect(handler(event)).resolves.toEqual({
+      ok: false,
+      code: 'unauthorized',
+      message: 'connections.test.errors.unauthorized',
+      messageKey: 'connections.test.errors.unauthorized',
+    })
+    expect(event.statusCode).toBe(401)
+    expect(getSavedDatabaseConnectionSecretMock).not.toHaveBeenCalled()
+  })
+
+  it('returns unexpected_error when loading a stored secret fails unexpectedly', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'admin',
+      password: '',
+      sslMode: 'disable',
+    })
+    validateSavedDatabaseConnectionIdMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    getSavedDatabaseConnectionSecretMock.mockRejectedValue(new Error('boom'))
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = {}
+
+    await expect(handler(event)).resolves.toEqual({
+      ok: false,
+      code: 'unexpected_error',
+      message: 'connections.test.errors.unexpected',
+      messageKey: 'connections.test.errors.unexpected',
+    })
+    expect(event.statusCode).toBe(500)
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
+  })
+
   it.each([
     [
       'rate_limited',
@@ -170,6 +405,11 @@ describe('POST /api/connections/test', () => {
       'invalid_input',
       400,
       'connections.test.errors.invalidInput',
+    ],
+    [
+      'saved_connection_not_found',
+      404,
+      'connections.test.errors.savedConnectionNotFound',
     ],
     [
       'unsupported_database_type',

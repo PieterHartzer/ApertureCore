@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import AppAlert from '~/components/ui/AppAlert.vue'
 import { useDatabaseConnectionSave } from '~/composables/database/useDatabaseConnectionSave'
+import { useDatabaseConnectionUpdate } from '~/composables/database/useDatabaseConnectionUpdate'
 import { useDatabaseConnectionTest } from '~/composables/database/useDatabaseConnectionTest'
 import { useNotifications } from '~/composables/ui/useNotifications'
 import {
+  type DatabaseConnection,
   createEmptyDatabaseConnection,
   DATABASE_SSL_MODES,
   DATABASE_TYPES
@@ -16,6 +18,20 @@ interface ScreenAlert {
   message: string
 }
 
+interface Props {
+  mode?: 'create' | 'edit'
+  connectionId?: string
+  initialConnection?: DatabaseConnection | null
+  hasStoredPassword?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  mode: 'create',
+  connectionId: undefined,
+  initialConnection: null,
+  hasStoredPassword: false
+})
+
 const connection = ref(createEmptyDatabaseConnection())
 const isTesting = ref(false)
 const isSaving = ref(false)
@@ -24,19 +40,35 @@ const lastTestedConnectionSignature = ref<string | null>(null)
 const lastSavedConnectionSignature = ref<string | null>(null)
 
 const { saveConnection } = useDatabaseConnectionSave()
+const { updateConnection } = useDatabaseConnectionUpdate()
 const { testConnection } = useDatabaseConnectionTest()
 const { success } = useNotifications()
 const { t } = useI18n()
+const goToConnections = async () => {
+  await navigateTo('/connections/')
+}
 
 const currentConnectionSignature = computed(() => {
   return JSON.stringify(connection.value)
+})
+
+const currentConnectionTestSignature = computed(() => {
+  return JSON.stringify({
+    databaseType: connection.value.databaseType,
+    host: connection.value.host,
+    port: connection.value.port,
+    databaseName: connection.value.databaseName,
+    username: connection.value.username,
+    password: connection.value.password,
+    sslMode: connection.value.sslMode
+  })
 })
 
 const canSave = computed(() => {
   return (
     !isTesting.value &&
     !isSaving.value &&
-    lastTestedConnectionSignature.value === currentConnectionSignature.value &&
+    lastTestedConnectionSignature.value === currentConnectionTestSignature.value &&
     lastSavedConnectionSignature.value !== currentConnectionSignature.value
   )
 })
@@ -67,6 +99,76 @@ const showScreenError = (title: string, message: string) => {
   }
 }
 
+const formTextPrefix = computed(() => {
+  return props.mode === 'edit'
+    ? 'connections.edit'
+    : 'connections.new'
+})
+
+const successMessageFallbackKey = computed(() => {
+  return props.mode === 'edit'
+    ? 'connections.update.success'
+    : 'connections.save.success'
+})
+
+const errorMessageFallbackKey = computed(() => {
+  return props.mode === 'edit'
+    ? 'connections.update.errors.unexpected'
+    : 'connections.save.errors.unexpected'
+})
+
+const successNotificationTitleKey = computed(() => {
+  return props.mode === 'edit'
+    ? 'connections.update.notifications.successTitle'
+    : 'connections.save.notifications.successTitle'
+})
+
+const errorNotificationTitleKey = computed(() => {
+  return props.mode === 'edit'
+    ? 'connections.update.notifications.errorTitle'
+    : 'connections.save.notifications.errorTitle'
+})
+
+const passwordDescription = computed(() => {
+  if (props.mode !== 'edit' || !props.hasStoredPassword) {
+    return undefined
+  }
+
+  return t('connections.edit.fields.password.description')
+})
+
+const resetForm = (nextConnection: DatabaseConnection) => {
+  connection.value = {
+    ...nextConnection
+  }
+  lastTestedConnectionSignature.value =
+    props.mode === 'edit'
+      ? currentConnectionTestSignature.value
+      : null
+  lastSavedConnectionSignature.value =
+    props.mode === 'edit'
+      ? currentConnectionSignature.value
+      : null
+  clearScreenAlert()
+}
+
+watch(
+  () => props.initialConnection,
+  (value) => {
+    if (value) {
+      resetForm(value)
+      return
+    }
+
+    if (props.mode === 'create') {
+      resetForm(createEmptyDatabaseConnection())
+    }
+  },
+  {
+    immediate: true
+  }
+)
+
 watch(currentConnectionSignature, () => {
   clearScreenAlert()
 })
@@ -77,7 +179,14 @@ const onSubmit = async () => {
   lastTestedConnectionSignature.value = null
 
   try {
-    const response = await testConnection(connection.value)
+    const response = await testConnection(
+      connection.value,
+      props.mode === 'edit' && props.connectionId
+        ? {
+            connectionId: props.connectionId
+          }
+        : undefined
+    )
     const message = translateMessage(
       t,
       response.messageKey,
@@ -87,7 +196,7 @@ const onSubmit = async () => {
     )
 
     if (response.ok) {
-      lastTestedConnectionSignature.value = currentConnectionSignature.value
+      lastTestedConnectionSignature.value = currentConnectionTestSignature.value
       clearScreenAlert()
       success(message, t('connections.test.notifications.successTitle'))
       return
@@ -111,29 +220,41 @@ const onSave = async () => {
   clearScreenAlert()
 
   try {
-    const response = await saveConnection(connection.value)
+    const response =
+      props.mode === 'edit' && props.connectionId
+        ? await updateConnection(props.connectionId, connection.value)
+        : await saveConnection(connection.value)
     const message = translateMessage(
       t,
       response.messageKey,
       response.ok
-        ? 'connections.save.success'
-        : 'connections.save.errors.unexpected'
+        ? successMessageFallbackKey.value
+        : errorMessageFallbackKey.value
     )
 
     if (response.ok) {
       lastSavedConnectionSignature.value = currentConnectionSignature.value
       clearScreenAlert()
-      success(message, t('connections.save.notifications.successTitle'))
+      success(message, t(successNotificationTitleKey.value))
+      await goToConnections()
       return
     }
 
     showScreenError(
-      t('connections.save.notifications.errorTitle'),
+      t(errorNotificationTitleKey.value),
       message
     )
   } finally {
     isSaving.value = false
   }
+}
+
+const onCancel = async () => {
+  if (isTesting.value || isSaving.value) {
+    return
+  }
+
+  await goToConnections()
 }
 </script>
 
@@ -215,11 +336,12 @@ const onSave = async () => {
       <UFormField
         name="password"
         :label="t('connections.new.fields.password.label')"
+        :description="passwordDescription"
       >
         <UInput
           v-model="connection.password"
           type="password"
-          :placeholder="t('connections.new.fields.password.placeholder')"
+          :placeholder="t(`${formTextPrefix}.fields.password.placeholder`)"
           autocomplete="current-password"
           class="w-full"
         />
@@ -249,7 +371,7 @@ const onSave = async () => {
       <UButton
         type="submit"
         icon="i-lucide-plug-zap"
-        :label="isTesting ? t('connections.new.submit.loading') : t('connections.new.submit.idle')"
+        :label="isTesting ? t(`${formTextPrefix}.submit.loading`) : t(`${formTextPrefix}.submit.idle`)"
         :loading="isTesting"
         :disabled="isSaving"
       />
@@ -258,10 +380,20 @@ const onSave = async () => {
         type="button"
         icon="i-lucide-save"
         color="neutral"
-        :label="isSaving ? t('connections.new.save.loading') : t('connections.new.save.idle')"
+        :label="isSaving ? t(`${formTextPrefix}.save.loading`) : t(`${formTextPrefix}.save.idle`)"
         :loading="isSaving"
         :disabled="!canSave"
         @click="onSave"
+      />
+
+      <UButton
+        type="button"
+        color="neutral"
+        variant="ghost"
+        icon="i-lucide-x"
+        :label="t('connections.form.cancel')"
+        :disabled="isTesting || isSaving"
+        @click="onCancel"
       />
     </div>
   </UForm>

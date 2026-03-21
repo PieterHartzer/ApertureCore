@@ -6,7 +6,10 @@ import type {
 } from '../../types/database'
 
 import { testDatabaseConnection } from '../../services/database/index'
+import { getSavedDatabaseConnectionSecret } from '../../services/database-connections'
+import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
 import { consumeConnectionTestRateLimit } from '../../utils/database-connection-test-rate-limit'
+import { validateSavedDatabaseConnectionId } from '../../validators/database-connections'
 import { validateTestDatabaseConnectionInput } from '../../validators/database'
 
 const VALIDATION_MESSAGE_KEYS: Record<
@@ -14,6 +17,7 @@ const VALIDATION_MESSAGE_KEYS: Record<
   string
 > = {
   body_invalid: 'connections.test.errors.bodyInvalid',
+  connection_id_invalid: 'connections.test.errors.connectionIdInvalid',
   connection_name_invalid: 'connections.test.errors.connectionNameInvalid',
   database_type_invalid: 'connections.test.errors.databaseTypeInvalid',
   host_required: 'connections.test.errors.hostRequired',
@@ -31,6 +35,7 @@ const ERROR_MESSAGE_KEYS: Record<
   unauthorized: 'connections.test.errors.unauthorized',
   rate_limited: 'connections.test.errors.rateLimited',
   invalid_input: 'connections.test.errors.invalidInput',
+  saved_connection_not_found: 'connections.test.errors.savedConnectionNotFound',
   unsupported_database_type: 'connections.test.errors.unsupportedDatabaseType',
   authentication_failed: 'connections.test.errors.authenticationFailed',
   database_not_found: 'connections.test.errors.databaseNotFound',
@@ -88,6 +93,8 @@ const mapCodeToStatus = (code: Exclude<TestDatabaseConnectionResultCode, 'succes
       return 429
     case 'authentication_failed':
       return 401
+    case 'saved_connection_not_found':
+      return 404
     case 'database_not_found':
       return 404
     case 'timeout':
@@ -99,6 +106,10 @@ const mapCodeToStatus = (code: Exclude<TestDatabaseConnectionResultCode, 'succes
     case 'unexpected_error':
       return 500
   }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export default defineEventHandler(async (event) => {
@@ -130,6 +141,76 @@ export default defineEventHandler(async (event) => {
       field: 'body',
       message: 'body_invalid'
     })
+  }
+
+  if (
+    isRecord(body) &&
+    'connectionId' in body &&
+    (
+      body.password === undefined ||
+      (typeof body.password === 'string' && !body.password.trim())
+    )
+  ) {
+    const connectionIdValidation = validateSavedDatabaseConnectionId(body.connectionId)
+
+    if (!connectionIdValidation.ok) {
+      setResponseStatus(event, 400)
+
+      return buildValidationErrorResponse({
+        ok: false,
+        code: 'invalid_input',
+        issue: 'connection_id_invalid',
+        field: 'connectionId',
+        message: 'connection_id_invalid'
+      })
+    }
+
+    try {
+      const authContext = getAuthenticatedOrganizationContext(event)
+      const savedSecretResult = await getSavedDatabaseConnectionSecret(
+        authContext,
+        connectionIdValidation.data.connectionId
+      )
+
+      if (!savedSecretResult.ok) {
+        setResponseStatus(event, mapCodeToStatus('saved_connection_not_found'))
+
+        return buildServiceErrorResponse({
+          ok: false,
+          code: 'saved_connection_not_found',
+          message: 'saved_connection_not_found'
+        })
+      }
+
+      body = {
+        ...body,
+        password: savedSecretResult.secret.password
+      }
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'statusCode' in error &&
+        error.statusCode === 403
+      ) {
+        setResponseStatus(event, mapCodeToStatus('unauthorized'))
+
+        return buildServiceErrorResponse({
+          ok: false,
+          code: 'unauthorized',
+          message: 'unauthorized'
+        })
+      }
+
+      console.error(error)
+      setResponseStatus(event, 500)
+
+      return buildServiceErrorResponse({
+        ok: false,
+        code: 'unexpected_error',
+        message: 'unexpected_error'
+      })
+    }
   }
 
   const validationResult = validateTestDatabaseConnectionInput(body)

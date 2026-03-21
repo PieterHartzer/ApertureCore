@@ -4,6 +4,7 @@ import { isUuid } from '../../../server/utils/is-uuid'
 
 const getAppDatabaseMock = vi.fn()
 const encryptSavedDatabaseConnectionSecretMock = vi.fn()
+const decryptSavedDatabaseConnectionSecretMock = vi.fn()
 
 class AppDatabaseConfigurationError extends Error {}
 class DatabaseConnectionEncryptionConfigurationError extends Error {}
@@ -15,6 +16,7 @@ vi.mock('../../../server/utils/app-database', () => ({
 
 vi.mock('../../../server/utils/database-connection-secrets', () => ({
   encryptSavedDatabaseConnectionSecret: encryptSavedDatabaseConnectionSecretMock,
+  decryptSavedDatabaseConnectionSecret: decryptSavedDatabaseConnectionSecretMock,
   DatabaseConnectionEncryptionConfigurationError
 }))
 
@@ -70,6 +72,7 @@ const createMockDb = () => {
   const updateTableMock = vi.fn().mockReturnValue({
     set: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
+    returningAll: vi.fn().mockReturnThis(),
     executeTakeFirst: vi.fn().mockResolvedValue(undefined)
   })
 
@@ -85,6 +88,14 @@ describe('database connection persistence service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     encryptSavedDatabaseConnectionSecretMock.mockReturnValue('encrypted-secret')
+    decryptSavedDatabaseConnectionSecretMock.mockReturnValue({
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'app_user',
+      password: 'stored-secret',
+      sslMode: 'disable'
+    })
   })
 
   it('saves a connection scoped to the current organization', async () => {
@@ -470,6 +481,499 @@ describe('database connection persistence service', () => {
         updatedAt: '2026-03-18T01:00:00.000Z'
       }]
     })
+  })
+
+  it('returns editable connection details without exposing the stored password', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        connection_name: 'Primary DB',
+        database_type: 'postgres',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { getSavedDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnection(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: true,
+      code: 'success',
+      connection: {
+        id: 'connection-1',
+        connectionName: 'Primary DB',
+        databaseType: 'postgresql',
+        host: 'db.internal',
+        port: 5432,
+        databaseName: 'app_db',
+        username: 'app_user',
+        sslMode: 'disable',
+        hasPassword: true
+      }
+    })
+    expect(decryptSavedDatabaseConnectionSecretMock).toHaveBeenCalledWith(
+      'encrypted-secret'
+    )
+  })
+
+  it('returns not_found when loading a missing saved connection', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { getSavedDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnection(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+  })
+
+  it('maps persistence configuration failures when loading saved connection details cleanly', async () => {
+    getAppDatabaseMock.mockImplementation(() => {
+      throw new AppDatabaseConfigurationError('missing db')
+    })
+
+    const { getSavedDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnection(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'persistence_unavailable',
+      message: 'persistence_unavailable'
+    })
+  })
+
+  it('returns unexpected_error when loading saved connection details fails unexpectedly', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue(new Error('boom'))
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { getSavedDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnection(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    })
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('returns the decrypted stored secret for edit-time connection tests', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { getSavedDatabaseConnectionSecret } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnectionSecret(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: true,
+      code: 'success',
+      secret: {
+        host: 'db.internal',
+        port: 5432,
+        databaseName: 'app_db',
+        username: 'app_user',
+        password: 'stored-secret',
+        sslMode: 'disable'
+      }
+    })
+  })
+
+  it('returns not_found when loading a missing saved connection secret', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { getSavedDatabaseConnectionSecret } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnectionSecret(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+  })
+
+  it('maps persistence configuration failures when loading saved connection secrets cleanly', async () => {
+    getAppDatabaseMock.mockImplementation(() => {
+      throw new AppDatabaseConfigurationError('missing db')
+    })
+
+    const { getSavedDatabaseConnectionSecret } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnectionSecret(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'persistence_unavailable',
+      message: 'persistence_unavailable'
+    })
+  })
+
+  it('returns unexpected_error when loading saved connection secrets fails unexpectedly', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue(new Error('boom'))
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { getSavedDatabaseConnectionSecret } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(
+      getSavedDatabaseConnectionSecret(
+        authContext,
+        '2f8f9425-55cf-4d8e-a446-638848de1942'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    })
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('updates a connection and preserves the stored password when omitted', async () => {
+    const mockDb = createMockDb()
+    const selectBuilder = {
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    }
+    const updateBuilder = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        connection_name: 'Primary DB',
+        database_type: 'postgres',
+        created_at: new Date('2026-03-18T00:00:00.000Z'),
+        updated_at: new Date('2026-03-18T01:00:00.000Z')
+      })
+    }
+    mockDb.selectFrom = vi.fn().mockReturnValue(selectBuilder)
+    mockDb.updateTable = vi.fn().mockReturnValue(updateBuilder)
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      connectionName: 'Primary DB',
+      databaseType: 'postgresql',
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'app_user',
+      password: undefined,
+      sslMode: 'disable'
+    })).resolves.toEqual({
+      ok: true,
+      code: 'success',
+      connection: {
+        id: 'connection-1',
+        connectionName: 'Primary DB',
+        databaseType: 'postgresql',
+        createdAt: '2026-03-18T00:00:00.000Z',
+        updatedAt: '2026-03-18T01:00:00.000Z'
+      }
+    })
+    expect(encryptSavedDatabaseConnectionSecretMock).toHaveBeenLastCalledWith({
+      host: 'db.internal',
+      port: 5432,
+      databaseName: 'app_db',
+      username: 'app_user',
+      password: 'stored-secret',
+      sslMode: 'disable'
+    })
+    expect(updateBuilder.set).toHaveBeenCalledWith(expect.objectContaining({
+      connection_name: connectionInput.connectionName,
+      connection_target_fingerprint: buildConnectionTargetFingerprint(
+        connectionInput.host,
+        connectionInput.databaseName
+      ),
+      database_type: 'postgres',
+      encrypted_secret: 'encrypted-secret',
+      updated_by_user_id: authContext.userId
+    }))
+  })
+
+  it('returns not_found when updating a missing connection', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput,
+      password: undefined
+    })).resolves.toEqual({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+  })
+
+  it('returns not_found when the update target disappears before the write completes', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    mockDb.updateTable = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput,
+      password: undefined
+    })).resolves.toEqual({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+  })
+
+  it('maps duplicate connection names during update to a stable error code', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    mockDb.updateTable = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue({
+        code: '23505',
+        constraint: 'app_database_connections_unique_name_per_org'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput
+    })).resolves.toEqual({
+      ok: false,
+      code: 'duplicate_connection_name',
+      message: 'duplicate_connection_name'
+    })
+  })
+
+  it('maps duplicate connection targets during update to a stable error code', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    mockDb.updateTable = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue({
+        code: '23505',
+        constraint: 'app_database_connections_unique_target_per_org'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput
+    })).resolves.toEqual({
+      ok: false,
+      code: 'duplicate_connection_target',
+      message: 'duplicate_connection_target'
+    })
+  })
+
+  it('maps encryption configuration failures during update cleanly', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+    decryptSavedDatabaseConnectionSecretMock.mockImplementation(() => {
+      throw new DatabaseConnectionEncryptionConfigurationError('missing key')
+    })
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput,
+      password: undefined
+    })).resolves.toEqual({
+      ok: false,
+      code: 'persistence_unavailable',
+      message: 'persistence_unavailable'
+    })
+  })
+
+  it('returns unexpected_error when updating fails unexpectedly', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        encrypted_secret: 'encrypted-secret'
+      })
+    })
+    mockDb.updateTable = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue(new Error('boom'))
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { updateDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(updateDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      ...connectionInput,
+      password: undefined
+    })).resolves.toEqual({
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    })
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
   })
 
   it('returns unexpected_error when listing fails unexpectedly', async () => {

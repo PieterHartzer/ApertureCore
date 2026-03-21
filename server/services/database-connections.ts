@@ -4,14 +4,20 @@ import type {
   DeleteDatabaseConnectionInput,
   DeleteDatabaseConnectionResult,
   AuthenticatedOrganizationContext,
+  GetSavedDatabaseConnectionResult,
   ListSavedDatabaseConnectionsResult,
   SaveDatabaseConnectionInput,
   SaveDatabaseConnectionResult,
-  SavedDatabaseConnectionSummary
+  SavedDatabaseConnectionDetails,
+  SavedDatabaseConnectionSecret,
+  SavedDatabaseConnectionSummary,
+  UpdateDatabaseConnectionInput,
+  UpdateDatabaseConnectionResult
 } from '../types/database-connections'
 import type { DatabaseType } from '../types/database'
 import {
   DatabaseConnectionEncryptionConfigurationError,
+  decryptSavedDatabaseConnectionSecret,
   encryptSavedDatabaseConnectionSecret
 } from '../utils/database-connection-secrets'
 import {
@@ -28,9 +34,33 @@ interface DatabaseConnectionRow {
   updated_at: Date
 }
 
+interface DatabaseConnectionDetailsRow {
+  connection_id: string
+  connection_name: string
+  database_type: string
+  encrypted_secret: string
+}
+
 interface DatabaseConnectionIdentityRow {
   connection_id: string
   connection_name: string
+}
+
+interface DatabaseConnectionSecretRow {
+  connection_id: string
+  encrypted_secret: string
+}
+
+interface SavedDatabaseConnectionSecretLookupResult {
+  ok: true
+  code: 'success'
+  secret: SavedDatabaseConnectionSecret
+}
+
+interface SavedDatabaseConnectionSecretLookupError {
+  ok: false
+  code: 'not_found' | 'persistence_unavailable' | 'unexpected_error'
+  message: string
 }
 
 const UNIQUE_NAME_CONSTRAINT = 'app_database_connections_unique_name_per_org'
@@ -63,6 +93,21 @@ const mapSavedDatabaseConnectionSummary = (
   updatedAt: new Date(row.updated_at).toISOString()
 })
 
+const mapSavedDatabaseConnectionDetails = (
+  row: DatabaseConnectionDetailsRow,
+  secret: SavedDatabaseConnectionSecret
+): SavedDatabaseConnectionDetails => ({
+  id: row.connection_id,
+  connectionName: row.connection_name,
+  databaseType: mapStoredDatabaseType(row.database_type),
+  host: secret.host,
+  port: secret.port,
+  databaseName: secret.databaseName,
+  username: secret.username,
+  sslMode: secret.sslMode,
+  hasPassword: Boolean(secret.password)
+})
+
 /**
  * Produces a deterministic org-scoped uniqueness key for a connection target
  * without storing the raw host/database pair in plaintext columns.
@@ -86,6 +131,23 @@ const isPersistenceConfigurationError = (value: unknown) => {
     value instanceof AppDatabaseConfigurationError ||
     value instanceof DatabaseConnectionEncryptionConfigurationError
   )
+}
+
+const getDuplicateConnectionErrorCode = (
+  value: unknown
+): 'duplicate_connection_name' | 'duplicate_connection_target' | undefined => {
+  if (!(isPostgresError(value) && value.code === '23505')) {
+    return undefined
+  }
+
+  switch (value.constraint) {
+    case UNIQUE_NAME_CONSTRAINT:
+      return 'duplicate_connection_name'
+    case UNIQUE_TARGET_CONSTRAINT:
+      return 'duplicate_connection_target'
+    default:
+      return undefined
+  }
 }
 
 /**
@@ -147,21 +209,125 @@ export const saveDatabaseConnection = async (
       }
     }
 
-    if (isPostgresError(error) && error.code === '23505') {
-      if (error.constraint === UNIQUE_NAME_CONSTRAINT) {
-        return {
-          ok: false,
-          code: 'duplicate_connection_name',
-          message: 'duplicate_connection_name'
-        }
-      }
+    const duplicateErrorCode = getDuplicateConnectionErrorCode(error)
 
-      if (error.constraint === UNIQUE_TARGET_CONSTRAINT) {
-        return {
-          ok: false,
-          code: 'duplicate_connection_target',
-          message: 'duplicate_connection_target'
-        }
+    if (duplicateErrorCode) {
+      return {
+        ok: false,
+        code: duplicateErrorCode,
+        message: duplicateErrorCode
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Returns the editable details for a saved connection in the authenticated
+ * organization without exposing the stored password.
+ */
+export const getSavedDatabaseConnection = async (
+  authContext: AuthenticatedOrganizationContext,
+  connectionId: string
+): Promise<GetSavedDatabaseConnectionResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const connection = await db
+      .selectFrom('app_database_connections')
+      .select([
+        'connection_id',
+        'connection_name',
+        'database_type',
+        'encrypted_secret'
+      ])
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', connectionId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as DatabaseConnectionDetailsRow | undefined
+
+    if (!connection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    return {
+      ok: true,
+      code: 'success',
+      connection: mapSavedDatabaseConnectionDetails(
+        connection,
+        decryptSavedDatabaseConnectionSecret(connection.encrypted_secret)
+      )
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Returns the decrypted stored secret for a saved connection in the
+ * authenticated organization for server-side workflows such as edit-time tests.
+ */
+export const getSavedDatabaseConnectionSecret = async (
+  authContext: AuthenticatedOrganizationContext,
+  connectionId: string
+): Promise<
+  SavedDatabaseConnectionSecretLookupResult | SavedDatabaseConnectionSecretLookupError
+> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const connection = await db
+      .selectFrom('app_database_connections')
+      .select(['connection_id', 'encrypted_secret'])
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', connectionId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as DatabaseConnectionSecretRow | undefined
+
+    if (!connection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    return {
+      ok: true,
+      code: 'success',
+      secret: decryptSavedDatabaseConnectionSecret(connection.encrypted_secret)
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
       }
     }
 
@@ -204,6 +370,102 @@ export const listSavedDatabaseConnections = async (
         ok: false,
         code: 'persistence_unavailable',
         message: 'persistence_unavailable'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Updates a saved connection for the authenticated organization. When the
+ * request omits a password, the existing stored password is preserved.
+ */
+export const updateDatabaseConnection = async (
+  authContext: AuthenticatedOrganizationContext,
+  input: UpdateDatabaseConnectionInput
+): Promise<UpdateDatabaseConnectionResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const existingConnection = await db
+      .selectFrom('app_database_connections')
+      .select(['connection_id', 'encrypted_secret'])
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', input.connectionId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as DatabaseConnectionSecretRow | undefined
+
+    if (!existingConnection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    const existingSecret = decryptSavedDatabaseConnectionSecret(
+      existingConnection.encrypted_secret
+    )
+    const encryptedSecret = encryptSavedDatabaseConnectionSecret({
+      host: input.host,
+      port: input.port,
+      databaseName: input.databaseName,
+      username: input.username,
+      password: input.password ?? existingSecret.password,
+      sslMode: input.sslMode
+    })
+
+    const updatedConnection = await db
+      .updateTable('app_database_connections')
+      .set({
+        connection_name: input.connectionName,
+        connection_target_fingerprint: buildConnectionTargetFingerprint(input),
+        database_type: mapDatabaseTypeToStorage(input.databaseType),
+        encrypted_secret: encryptedSecret,
+        updated_by_user_id: authContext.userId
+      })
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', input.connectionId)
+      .where('deleted_at', 'is', null)
+      .returningAll()
+      .executeTakeFirst() as DatabaseConnectionRow | undefined
+
+    if (!updatedConnection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    return {
+      ok: true,
+      code: 'success',
+      connection: mapSavedDatabaseConnectionSummary(updatedConnection)
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
+      }
+    }
+
+    const duplicateErrorCode = getDuplicateConnectionErrorCode(error)
+
+    if (duplicateErrorCode) {
+      return {
+        ok: false,
+        code: duplicateErrorCode,
+        message: duplicateErrorCode
       }
     }
 

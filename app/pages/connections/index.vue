@@ -176,12 +176,11 @@ const onDeleteConfirm = async (
           <template #actions-cell="{ row }">
             <div class="flex items-center gap-2">
               <UButton
-                type="button"
+                :to="`/connections/${row.original.id}`"
                 color="neutral"
                 variant="ghost"
                 icon="i-lucide-pencil"
                 :label="t('connections.index.table.actions.edit')"
-                disabled
               />
               <UButton
                 type="button"

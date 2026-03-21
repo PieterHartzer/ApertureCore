@@ -25,6 +25,7 @@ export default defineConfig({
         '.output/**',
         'node_modules/**',
         '**/*.d.ts',
+        'server/types/database-connections.ts',
         'server/services/database/types.ts',
       ],
     },

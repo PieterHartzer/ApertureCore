@@ -64,13 +64,15 @@ export const getAuthenticatedOrganizationContext = (
     })
   }
 
+  const organizationName = getConfiguredClaimValue(
+    auth,
+    organizationClaims.nameClaim
+  )
+
   return {
     userId,
     organizationId,
-    organizationName: pickString(
-      getConfiguredClaimValue(auth, organizationClaims.nameClaim),
-      organizationId
-    ) || organizationId,
+    organizationName: organizationName ?? organizationId,
     organizationPrimaryDomain: getConfiguredClaimValue(
       auth,
       organizationClaims.primaryDomainClaim

@@ -24,6 +24,7 @@ export type DatabaseConnectionTestResultCode =
   | 'unauthorized'
   | 'rate_limited'
   | 'invalid_input'
+  | 'saved_connection_not_found'
   | 'unsupported_database_type'
   | 'authentication_failed'
   | 'database_not_found'
