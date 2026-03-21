@@ -1,5 +1,5 @@
-const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3001')
-const publicAppUrl = process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3001'
+const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3300')
+const publicAppUrl = process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3300'
 const oidcAuthorizationUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL || ''
 const oidcTokenUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_TOKEN_URL || ''
 const oidcUserInfoUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_USER_INFO_URL || ''
@@ -27,7 +27,7 @@ const publicAppOrigin = (() => {
   try {
     return new URL(publicAppUrl).origin
   } catch {
-    return 'http://localhost:3001'
+    return 'http://localhost:3300'
   }
 })()
 
@@ -41,6 +41,10 @@ export default defineNuxtConfig({
     port: nuxtPort
   },
   runtimeConfig: {
+    appDatabaseUrl: process.env.APP_DATABASE_URL || '',
+    appDatabaseEncryptionKey:
+      process.env.APP_DATABASE_ENCRYPTION_KEY ||
+      '',
     public: {
       oidcConfigured: Boolean(process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID),
       devToolsLinks: {
@@ -54,7 +58,7 @@ export default defineNuxtConfig({
     }
   },
 
-  modules: ['@nuxt/ui', '@nuxtjs/i18n', 'nuxt-oidc-auth'],
+  modules: ['@nuxt/ui', '@nuxtjs/i18n', 'nuxt-oidc-auth', '@nuxt/eslint'],
   i18n: {
     defaultLocale: 'en',
     strategy: 'no_prefix',
@@ -95,13 +99,25 @@ export default defineNuxtConfig({
           `${publicAppOrigin}/auth/oidc/callback`,
         authenticationScheme: 'none',
         grantType: 'authorization_code',
-        scope: ['openid', 'profile', 'email', 'offline_access'],
+        scope: [
+          'openid',
+          'profile',
+          'email',
+          'offline_access',
+          'urn:zitadel:iam:user:resourceowner'
+        ],
         scopeInTokenRequest: true,
         tokenRequestType: 'form-urlencoded',
         pkce: true,
         state: true,
         nonce: true,
         userNameClaim: 'preferred_username',
+        optionalClaims: [
+          'sub',
+          'urn:zitadel:iam:user:resourceowner:id',
+          'urn:zitadel:iam:user:resourceowner:name',
+          'urn:zitadel:iam:user:resourceowner:primary_domain'
+        ],
         skipAccessTokenParsing: true,
         validateAccessToken: false,
         validateIdToken: true,

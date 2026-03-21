@@ -22,7 +22,7 @@ describe('testDatabaseConnection', () => {
       port: 5432,
       databaseName: 'app_db',
       username: 'admin',
-      password: 'secret',
+      password: 'secret', // NOSONAR Dummy password
       sslMode: 'disable' as const,
     }
     const expected = {

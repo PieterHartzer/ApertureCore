@@ -37,7 +37,6 @@ const ERROR_MESSAGE_KEYS: Record<
   connection_failed: 'connections.test.errors.connectionFailed',
   timeout: 'connections.test.errors.timeout',
   ssl_required: 'connections.test.errors.sslRequired',
-  not_implemented: 'connections.test.errors.notImplemented',
   unexpected_error: 'connections.test.errors.unexpected'
 }
 
@@ -79,11 +78,35 @@ const isServiceErrorResponse = (
   return response.code !== 'success'
 }
 
+const mapCodeToStatus = (code: Exclude<TestDatabaseConnectionResultCode, 'success'>): number => {
+  switch (code) {
+    case 'invalid_input':
+    case 'unsupported_database_type':
+    case 'ssl_required':
+      return 400
+    case 'rate_limited':
+      return 429
+    case 'authentication_failed':
+      return 401
+    case 'database_not_found':
+      return 404
+    case 'timeout':
+      return 504
+    case 'connection_failed':
+      return 503
+    case 'unauthorized':
+      return 401
+    case 'unexpected_error':
+      return 500
+  }
+}
+
 export default defineEventHandler(async (event) => {
+  // Prevents it used as a fast port scanner
   const rateLimit = await consumeConnectionTestRateLimit(event)
 
   if (!rateLimit.allowed) {
-    setResponseHeader(event, 'retry-after', String(rateLimit.retryAfterSeconds))
+    setResponseHeader(event, 'retry-after', rateLimit.retryAfterSeconds)
     setResponseStatus(event, 429)
 
     return buildServiceErrorResponse({
@@ -129,38 +152,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    switch (result.code) {
-      case 'invalid_input':
-        setResponseStatus(event, 400)
-        break
-      case 'rate_limited':
-        setResponseStatus(event, 429)
-        break
-      case 'unsupported_database_type':
-        setResponseStatus(event, 400)
-        break
-      case 'authentication_failed':
-        setResponseStatus(event, 401)
-        break
-      case 'database_not_found':
-        setResponseStatus(event, 404)
-        break
-      case 'ssl_required':
-        setResponseStatus(event, 400)
-        break
-      case 'timeout':
-        setResponseStatus(event, 504)
-        break
-      case 'connection_failed':
-        setResponseStatus(event, 503)
-        break
-      case 'not_implemented':
-        setResponseStatus(event, 501)
-        break
-      default:
-        setResponseStatus(event, 500)
-        break
-    }
+    setResponseStatus(event, mapCodeToStatus(result.code))
 
     return buildServiceErrorResponse(result)
   } catch (error) {

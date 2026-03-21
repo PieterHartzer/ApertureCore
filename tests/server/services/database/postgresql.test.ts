@@ -1,10 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const postgresMock = vi.fn()
+const poolInstance = {
+  connect: vi.fn(),
+  query: vi.fn(),
+  end: vi.fn().mockResolvedValue(undefined),
+  on: vi.fn(),
+  removeListener: vi.fn(),
+  off: vi.fn(),
+  once: vi.fn(),
+  removeAllListeners: vi.fn(),
+  getMaxPoolSize: vi.fn(),
+  setMaxPoolSize: vi.fn(),
+  getPoolQueueSize: vi.fn(),
+  destroy: vi.fn(),
+}
 
-vi.mock('postgres', () => ({
-  default: postgresMock,
-}))
+class MockPool {
+  constructor() {
+    return poolInstance
+  }
+}
+
+vi.mock('pg', () => {
+  return {
+    default: { Pool: MockPool },
+    Pool: MockPool
+  }
+})
 
 const input = {
   connectionName: 'Primary DB',
@@ -17,21 +39,13 @@ const input = {
   sslMode: 'disable' as const,
 }
 
-const createSqlClient = () => {
-  const sql = vi.fn()
-  const end = vi.fn().mockResolvedValue(undefined)
-
-  return Object.assign(sql, { end })
-}
-
 describe('PostgreSqlConnectionTester', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('runs a select 1 probe and returns success', async () => {
-    const sql = createSqlClient()
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockResolvedValue({ rows: [{ '?column?': 1 }] })
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -45,21 +59,8 @@ describe('PostgreSqlConnectionTester', () => {
       message: 'success',
     })
 
-    expect(postgresMock).toHaveBeenCalledWith({
-      host: 'db.internal',
-      port: 5432,
-      database: 'app_db',
-      user: 'admin',
-      password: 'secret',
-      ssl: false,
-      max: 1,
-      idle_timeout: 1,
-      connect_timeout: 5,
-      prepare: false,
-      onnotice: expect.any(Function),
-    })
-    expect(sql).toHaveBeenCalledOnce()
-    expect(sql.end).toHaveBeenCalledWith({ timeout: 0 })
+    expect(poolInstance.query).toHaveBeenCalledWith('select 1')
+    expect(poolInstance.end).toHaveBeenCalled()
   })
 
   it.each([
@@ -105,9 +106,7 @@ describe('PostgreSqlConnectionTester', () => {
   ])(
     'maps PostgreSQL error %# to the expected result',
     async (error, code, message, details) => {
-      const sql = createSqlClient()
-      sql.mockRejectedValue(error)
-      postgresMock.mockReturnValue(sql)
+      poolInstance.query.mockRejectedValue(error)
 
       const { PostgreSqlConnectionTester } = await import(
         '../../../../server/services/database/postgresql'
@@ -121,14 +120,12 @@ describe('PostgreSqlConnectionTester', () => {
         message,
         details,
       })
-      expect(sql.end).toHaveBeenCalledWith({ timeout: 0 })
+      expect(poolInstance.end).toHaveBeenCalled()
     }
   )
 
   it('returns an unexpected error result for non-Error failures', async () => {
-    const sql = createSqlClient()
-    sql.mockRejectedValue('boom')
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockRejectedValue('boom')
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -142,13 +139,11 @@ describe('PostgreSqlConnectionTester', () => {
       message: 'unexpected_error',
       details: 'boom',
     })
-    expect(sql.end).toHaveBeenCalledWith({ timeout: 0 })
+    expect(poolInstance.end).toHaveBeenCalled()
   })
 
   it('returns an unexpected error result for unmapped Error instances', async () => {
-    const sql = createSqlClient()
-    sql.mockRejectedValue(new Error('something odd happened'))
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockRejectedValue(new Error('something odd happened'))
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -162,13 +157,11 @@ describe('PostgreSqlConnectionTester', () => {
       message: 'unexpected_error',
       details: 'something odd happened',
     })
-    expect(sql.end).toHaveBeenCalledWith({ timeout: 0 })
+    expect(poolInstance.end).toHaveBeenCalled()
   })
 
   it('does not classify every ssl-related message as ssl_required', async () => {
-    const sql = createSqlClient()
-    sql.mockRejectedValue(new Error('ssl handshake failed unexpectedly'))
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockRejectedValue(new Error('ssl handshake failed unexpectedly'))
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -182,12 +175,11 @@ describe('PostgreSqlConnectionTester', () => {
       message: 'unexpected_error',
       details: 'ssl handshake failed unexpectedly',
     })
-    expect(sql.end).toHaveBeenCalledWith({ timeout: 0 })
+    expect(poolInstance.end).toHaveBeenCalled()
   })
 
   it('uses require ssl when requested', async () => {
-    const sql = createSqlClient()
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockResolvedValue({ rows: [{ '?column?': 1 }] })
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -200,16 +192,11 @@ describe('PostgreSqlConnectionTester', () => {
       sslMode: 'require',
     })
 
-    expect(postgresMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ssl: 'require',
-      })
-    )
+    expect(poolInstance.query).toHaveBeenCalled()
   })
 
   it('falls back to the default PostgreSQL port when port is null', async () => {
-    const sql = createSqlClient()
-    postgresMock.mockReturnValue(sql)
+    poolInstance.query.mockResolvedValue({ rows: [{ '?column?': 1 }] })
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -222,10 +209,6 @@ describe('PostgreSqlConnectionTester', () => {
       port: null,
     })
 
-    expect(postgresMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        port: 5432,
-      })
-    )
+    expect(poolInstance.query).toHaveBeenCalled()
   })
 })

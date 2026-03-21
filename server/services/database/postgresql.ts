@@ -1,4 +1,4 @@
-import postgres from 'postgres'
+import { Pool } from 'pg'
 
 import type { TestDatabaseConnectionInput, TestDatabaseConnectionResult } from '../../types/database'
 
@@ -6,6 +6,7 @@ import type { DatabaseConnectionTester } from './types'
 
 const CONNECT_TIMEOUT_SECONDS = 5
 const DEFAULT_POSTGRES_PORT = 5432
+const POOL_TERMINATION_TIMEOUT_MS = 5_000
 
 type DatabaseError = Error & {
   code?: string
@@ -118,32 +119,33 @@ export class PostgreSqlConnectionTester implements DatabaseConnectionTester {
   async testConnection(
     input: TestDatabaseConnectionInput
   ): Promise<TestDatabaseConnectionResult> {
-    const sql = postgres({
+    const pool = new Pool({
       host: input.host,
       port: input.port ?? DEFAULT_POSTGRES_PORT,
       database: input.databaseName,
       user: input.username,
       password: input.password,
-      ssl: input.sslMode === 'require' ? 'require' : false,
-      max: 1,
-      idle_timeout: 1,
-      connect_timeout: CONNECT_TIMEOUT_SECONDS,
-      prepare: false,
-      onnotice: () => {}
+      ssl: input.sslMode === 'require' ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: CONNECT_TIMEOUT_SECONDS * 1000,
+      max: 1
     })
 
-    try {
-      await sql`select 1`
+    let result: TestDatabaseConnectionResult
 
-      return {
+    try {
+      await pool.query('select 1')
+
+      result = {
         ok: true,
         code: 'success',
         message: 'success'
       }
     } catch (error) {
-      return mapPostgreSqlError(error)
+      result = mapPostgreSqlError(error)
     } finally {
-      await sql.end({ timeout: 0 }).catch(() => undefined)
+      await pool.end()
     }
+
+    return result
   }
 }

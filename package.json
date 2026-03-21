@@ -1,10 +1,12 @@
 {
-  "name": "AutoDash",
+  "name": "aperture-core",
   "type": "module",
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
     "build": "nuxt build",
+    "db:migrate": "node ./scripts/run-migrations.mjs",
+    "db:migrate:down": "node ./scripts/run-migrations.mjs down",
     "dev": "nuxt dev --dotenv .env.development",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -23,18 +25,23 @@
     "@vueuse/nuxt": "14.2.1",
     "echarts": "^6.0.0",
     "gridstack": "^12.4.2",
+    "kysely": "^0.28.14",
     "nuxt": "^4.4.2",
     "nuxt-icon": "1.0.0-beta.7",
     "nuxt-oidc-auth": "1.0.0-beta.10",
-    "postgres": "^3.4.8",
-    "undici": "^7.16.0",
+    "pg": "^8.20.0",
+    "undici": "^7.24.5",
+    "uuid": "^13.0.0",
     "vue": "^3.5.30",
     "vue-echarts": "^8.0.1"
   },
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
   "devDependencies": {
+    "@nuxt/eslint": "^1.15.2",
+    "@types/pg": "^8.20.0",
     "@vitest/coverage-v8": "^4.1.0",
-    "tailwindcss": "^4",
+    "kysely-codegen": "^0.20.0",
+    "tailwindcss": "^4.2.2",
     "vitest": "^4.1.0"
   }
 }

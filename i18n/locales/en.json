@@ -18,6 +18,7 @@
   },
   "errors": {
     "auth": {
+      "organizationRequired": "Your organisation context is missing from the current session.",
       "unauthorized": "You must be signed in to access this resource."
     }
   },
@@ -38,6 +39,19 @@
     }
   },
   "connections": {
+    "index": {
+      "headline": "Connections",
+      "title": "Saved database connections",
+      "description": "View and manage the database connections available to your organisation.",
+      "actions": {
+        "new": "New connection",
+        "addFirst": "Add your first connection"
+      },
+      "empty": {
+        "title": "No saved connections yet",
+        "description": "Create a connection to start building dashboards from your database."
+      }
+    },
     "new": {
       "headline": "Connections",
       "title": "New database connection",
@@ -82,6 +96,10 @@
       "submit": {
         "idle": "Test connection",
         "loading": "Testing connection..."
+      },
+      "save": {
+        "idle": "Save connection",
+        "loading": "Saving connection..."
       }
     },
     "test": {
@@ -115,6 +133,38 @@
         "sslRequired": "The database server requires SSL or compatible TLS settings.",
         "notImplemented": "This database test is not implemented yet.",
         "unexpected": "Unexpected error while testing the database connection."
+      }
+    },
+    "save": {
+      "success": "Database connection saved successfully.",
+      "notifications": {
+        "successTitle": "Connection saved",
+        "errorTitle": "Save failed"
+      },
+      "errors": {
+        "forbidden": "You do not have permission to save database connections for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "connectionNameInvalid": "Connection name must be a string.",
+        "connectionNameRequired": "Connection name is required.",
+        "databaseTypeInvalid": "Database type is not supported.",
+        "hostRequired": "Host is required.",
+        "portInvalid": "Port must be a positive integer.",
+        "databaseNameRequired": "Database name is required.",
+        "usernameRequired": "Username is required.",
+        "passwordRequired": "Password is required.",
+        "sslModeInvalid": "SSL mode is not supported.",
+        "duplicateConnectionName": "A connection with this name already exists for your organisation.",
+        "duplicateConnectionTarget": "A connection for this host and database already exists for your organisation.",
+        "persistenceUnavailable": "Saved connections are temporarily unavailable.",
+        "unexpected": "Unexpected error while saving the database connection."
+      }
+    },
+    "list": {
+      "success": "Saved database connections loaded successfully.",
+      "errors": {
+        "forbidden": "You do not have permission to view database connections for this organisation.",
+        "persistenceUnavailable": "Saved connections are temporarily unavailable.",
+        "unexpected": "Unexpected error while loading saved database connections."
       }
     }
   }

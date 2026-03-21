@@ -38,6 +38,29 @@ pnpm test:coverage
 Coverage output is written to `coverage/`, including the HTML report at
 `coverage/index.html`.
 
+## Database Migrations
+
+The app now has its own persistence database for multitenant application data,
+separate from the OIDC/Zitadel database.
+
+Run migrations with:
+
+```bash
+pnpm db:migrate
+```
+
+Required environment variables:
+
+```dotenv
+APP_DATABASE_URL=postgres://user:password@host:5432/database
+APP_DATABASE_ENCRYPTION_KEY=change-me-to-a-long-random-secret
+```
+
+Saved external database credentials are encrypted at rest with
+`APP_DATABASE_ENCRYPTION_KEY`. Tenant isolation is enforced on the server using
+the authenticated organisation claim from Zitadel, so the API never trusts an
+`organizationId` from the browser.
+
 ## Setup
 
 Make sure to install dependencies:
@@ -58,7 +81,7 @@ bun install
 
 ## Development Server
 
-Start the development server on `http://localhost:3001`:
+Start the development server on `http://localhost:3300`:
 
 ```bash
 # npm
@@ -74,13 +97,16 @@ yarn dev
 bun run dev
 ```
 
+This repo does not use `http://localhost:3000` by default. The default local
+Nuxt URL is `http://localhost:3300`.
+
 ## OIDC Configuration
 
 This application is OpenID Connect provider agnostic. Any provider that supports
 the standard authorization code flow with PKCE should work.
 
 For non-Docker development, create a local `.env.development` file and fill in the values
-for your provider.
+for your provider. You can start from [`.env.example`](/Users/pieterhartzer/Source/AutoDash/.env.example).
 
 If your app runs in a container and your provider does not expose a discovery
 document and JWKS URL that are reachable from inside that container, set these
@@ -95,7 +121,7 @@ NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI=https://your-provider.example.com/path/to/jwks
 
 This repo now has two separate compose entry points:
 
-- [`docker-compose.dev.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.dev.yml): local development stack with the app, a stable edge proxy, a dev-only OIDC provider, Postgres, Mailpit, and the internal OIDC proxy.
+- [`docker-compose.dev.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.dev.yml): local development stack with the app, a stable edge proxy, a dev-only OIDC provider, the app persistence database, Postgres for Zitadel, Mailpit, and the internal OIDC proxy.
 - [`docker-compose.yml`](/Users/pieterhartzer/Source/AutoDash/docker-compose.yml): app-only containerized run for production-style testing.
 
 They use separate compose project names, so they are clearly isolated from each other.
@@ -110,14 +136,15 @@ docker compose -f docker-compose.dev.yml up -d --force-recreate --remove-orphans
 
 This dev stack exposes:
 
-- Stable browser URL: `http://localhost:3001`
+- Stable browser URL: `http://localhost:3300`
 - Local VS Code debug upstream: `http://localhost:3002`
 - Dockerized Nuxt fallback upstream: internal only on `app:3003`
+- App persistence Postgres: `localhost:55432`
 - Zitadel dev console: `http://localhost:18080`
 - Mailpit web UI: `http://localhost:8025`
 - Mailpit API: `http://localhost:8025/api/v1/messages`
 
-The browser should always use `http://localhost:3001`.
+The browser should always use `http://localhost:3300`.
 
 - If no local debug app is running, the edge proxy serves the Dockerized Nuxt app.
 - If you launch Nuxt locally from VS Code on port `3002`, the same proxy switches to that local process automatically.
@@ -129,11 +156,13 @@ The included VS Code launch profiles are configured for this:
 - `Nuxt: browser via proxy`
 - `Nuxt: full stack via proxy`
 
-Those profiles run the local Nuxt server on `3002` while keeping the public app URL on `http://localhost:3001`, so OIDC callbacks still return through the stable proxy URL.
+Those profiles run the local Nuxt server on `3002` while keeping the public app URL on `http://localhost:3300`, so OIDC callbacks still return through the stable proxy URL.
 
 Source changes are picked up by the Dockerized dev app because the project is bind-mounted into the container and the app runs with `nuxt dev`. This is live reload/HMR, not a full container restart on every file change.
 
 The Zitadel Postgres data persists in `./.data/oidc-db` by default, so your local provider setup survives normal `docker compose` restarts and recreates.
+The app persistence database state persists in `./.data/app-db`, and the app
+container runs `pnpm db:migrate` automatically before `pnpm dev`.
 
 ### Database Connection Testing Network
 
@@ -163,7 +192,7 @@ In our current local setup, the external Postgres container is attached to
 
 Use these host rules when testing connections:
 
-- From the browser URL `http://localhost:3001`, requests are usually handled by the Dockerized app, so `localhost` means the app container, not your Mac.
+- From the browser URL `http://localhost:3300`, requests are usually handled by the Dockerized app, so `localhost` means the app container, not your Mac.
 - For databases running in Docker on the `shared-db` network, use the service or container hostname such as `oidc-db` or `centraldb-pg`.
 - For databases published on your host machine, use `host.docker.internal` from the containerized app.
 - Only use `localhost` when the Nuxt server itself is running directly on the host, for example via the VS Code/F5 flow on `http://localhost:3002`.
@@ -186,9 +215,18 @@ Start it with:
 docker compose up -d --build
 ```
 
-By default that serves the app on `http://localhost:3000`.
+By default that serves the app on `http://localhost:3300`.
 
-If you use OIDC with this app-only compose flow, make sure your provider callback and logout URLs match the public app URL for that run. The app derives its callback URL from `NUXT_PUBLIC_APP_URL`, so set that explicitly if you are not using the default `http://localhost:3000`.
+If you use OIDC with this app-only compose flow, make sure your provider callback and logout URLs match the public app URL for that run. The app derives its callback URL from `NUXT_PUBLIC_APP_URL`, so set that explicitly if you are not using the default `http://localhost:3300`.
+
+If you want saved database connections to work in this app-only flow, provide:
+
+```dotenv
+APP_DATABASE_URL=postgres://user:password@host:5432/database
+APP_DATABASE_ENCRYPTION_KEY=change-me-to-a-long-random-secret
+```
+
+Run `pnpm db:migrate` against that database before starting the app.
 
 ### Mailpit
 
@@ -241,7 +279,7 @@ http://localhost:18080/ui/console?login_hint=root@zitadel.localhost
    URI to:
 
 ```text
-http://localhost:3001/login
+http://localhost:3300/login
 ```
 
    This matters for flows that do not have an active app auth request, such as
@@ -256,8 +294,8 @@ http://localhost:3001/login
      equivalent public-client or SPA settings.
    - During initial app creation, choose `PKCE` as the auth method.
    - Add these URLs:
-     - Redirect URI: `http://localhost:3001/auth/oidc/callback`
-     - Post logout redirect URI: `http://localhost:3001/`
+     - Redirect URI: `http://localhost:3300/auth/oidc/callback`
+     - Post logout redirect URI: `http://localhost:3300/`
    - If Zitadel warns about plain `http://` localhost URLs, enable its
      development/debug allowance for HTTP so those local URLs can be saved.
    - After the URLs are in place, switch the app settings to:
@@ -285,7 +323,7 @@ is only one local development option.
 
 You can override these dev compose defaults with environment variables before starting Docker Compose:
 
-- `DEV_PROXY_HOST_PORT` default: `3001`
+- `DEV_PROXY_HOST_PORT` default: `3300`
 - `OIDC_DEV_PROVIDER_HOST_PORT` default: `18080`
 - `OIDC_DEV_DB_NAME` default: `oidc_dev`
 - `OIDC_DEV_DB_USER` default: `postgres`
@@ -299,8 +337,8 @@ You can override these dev compose defaults with environment variables before st
 - `OIDC_DEV_MAIL_FROM` default: `no-reply@localhost`
 - `OIDC_DEV_MAIL_FROM_NAME` default: `ApertureCore Dev`
 - `OIDC_DEV_MAIL_REPLY_TO` default: `no-reply@localhost`
-- `NUXT_HOST_PORT` default in app-only compose: `3000`
-- `NUXT_PUBLIC_APP_URL` default in app-only compose: `http://localhost:3000`
+- `NUXT_HOST_PORT` default in app-only compose: `3300`
+- `NUXT_PUBLIC_APP_URL` default in app-only compose: `http://localhost:3300`
 
 ## Production
 

@@ -34,11 +34,14 @@ describe('consumeConnectionTestRateLimit', () => {
     vi.unstubAllGlobals()
   })
 
-  it('keys the rate limit by authenticated username when present', async () => {
+  it('keys the rate limit by the authenticated subject when present', async () => {
     const { consumeConnectionTestRateLimit } = await loadUtility()
     const event = {
       context: {
         auth: {
+          claims: {
+            sub: 'user-123'
+          },
           userName: 'pieter'
         }
       }
@@ -55,13 +58,33 @@ describe('consumeConnectionTestRateLimit', () => {
     expect(useStorageMock).toHaveBeenCalledWith('cache')
     expect(consumeFixedWindowRateLimitMock).toHaveBeenCalledWith(
       expect.any(Object),
-      'rate-limit:connections:test:user:pieter',
+      'rate-limit:connections:test:user:user-123',
       5,
       60_000
     )
   })
 
-  it('falls back to a generic authenticated user bucket when username is missing', async () => {
+  it('falls back to the username when the subject is missing', async () => {
+    const { consumeConnectionTestRateLimit } = await loadUtility()
+    const event = {
+      context: {
+        auth: {
+          userName: 'pieter'
+        }
+      }
+    }
+
+    await consumeConnectionTestRateLimit(event as never)
+
+    expect(consumeFixedWindowRateLimitMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      'rate-limit:connections:test:user-name:pieter',
+      5,
+      60_000
+    )
+  })
+
+  it('falls back to a generic authenticated user bucket when no stable identity is available', async () => {
     const { consumeConnectionTestRateLimit } = await loadUtility()
     const event = {
       context: {

@@ -15,7 +15,6 @@ export type TestDatabaseConnectionResultCode =
   | 'connection_failed'
   | 'timeout'
   | 'ssl_required'
-  | 'not_implemented'
   | 'unexpected_error'
 
 export interface TestDatabaseConnectionInput {

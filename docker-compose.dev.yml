@@ -1,6 +1,23 @@
 name: autodash-dev
 
 services:
+  app-db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${APP_DB_NAME:-aperture_core_dev}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:-AppPassword1!}
+      POSTGRES_USER: ${APP_DB_USER:-aperture_core}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP_DB_USER:-aperture_core} -d ${APP_DB_NAME:-aperture_core_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "55432:5432"
+    volumes:
+      - ${APP_DB_DATA_DIR:-./.data/app-db}:/var/lib/postgresql/data
+
   oidc-db:
     image: postgres:17
     restart: unless-stopped
@@ -93,17 +110,21 @@ services:
     command:
       - sh
       - -lc
-      - corepack enable && pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0 --port 3003
+      - corepack enable && pnpm install --frozen-lockfile && pnpm db:migrate && pnpm dev --host 0.0.0.0 --port 3003
     depends_on:
+      app-db:
+        condition: service_healthy
       oidc-provider:
         condition: service_healthy
       oidc-proxy:
         condition: service_started
     environment:
+      APP_DATABASE_ENCRYPTION_KEY: ${APP_DATABASE_ENCRYPTION_KEY:-change-me-dev-connection-encryption-key}
+      APP_DATABASE_URL: postgres://${APP_DB_USER:-aperture_core}:${APP_DB_PASSWORD:-AppPassword1!}@app-db:5432/${APP_DB_NAME:-aperture_core_dev}
       CHOKIDAR_USEPOLLING: "true"
       NUXT_HOST: 0.0.0.0
       NUXT_PORT: 3003
-      NUXT_PUBLIC_APP_URL: http://localhost:${DEV_PROXY_HOST_PORT:-3001}
+      NUXT_PUBLIC_APP_URL: http://localhost:${DEV_PROXY_HOST_PORT:-3300}
       NUXT_OIDC_AUTH_SESSION_SECRET: ${NUXT_OIDC_AUTH_SESSION_SECRET:-change-me-dev-auth-session-secret-to-a-long-random-string}
       NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL: http://localhost:${OIDC_DEV_PROVIDER_HOST_PORT:-18080}/oauth/v2/authorize
       NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID: ${NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID:-}
@@ -131,7 +152,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${DEV_PROXY_HOST_PORT:-3001}:3001"
+      - "${DEV_PROXY_HOST_PORT:-3300}:3300"
     volumes:
       - ./docker/dev-proxy/Caddyfile:/etc/caddy/Caddyfile:ro
 

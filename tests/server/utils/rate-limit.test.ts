@@ -83,4 +83,49 @@ describe('consumeFixedWindowRateLimit', () => {
       resetAt: 70_000
     })
   })
+
+  it('serializes updates for the same key so concurrent requests cannot overrun the limit', async () => {
+    let state: { count: number, resetAt: number } | null = null
+
+    const storage = {
+      getItem: vi.fn(async () => {
+        await Promise.resolve()
+        return state
+      }),
+      setItem: vi.fn(async (_key: string, value: { count: number, resetAt: number }) => {
+        await Promise.resolve()
+        state = value
+      })
+    }
+
+    const firstRequest = consumeFixedWindowRateLimit(
+      storage,
+      'rate-limit:test-user',
+      1,
+      60_000,
+      1_000
+    )
+    const secondRequest = consumeFixedWindowRateLimit(
+      storage,
+      'rate-limit:test-user',
+      1,
+      60_000,
+      1_000
+    )
+
+    await expect(firstRequest).resolves.toEqual({
+      allowed: true,
+      limit: 1,
+      remaining: 0,
+      resetAt: 61_000,
+      retryAfterSeconds: 0
+    })
+    await expect(secondRequest).resolves.toEqual({
+      allowed: false,
+      limit: 1,
+      remaining: 0,
+      resetAt: 61_000,
+      retryAfterSeconds: 60
+    })
+  })
 })

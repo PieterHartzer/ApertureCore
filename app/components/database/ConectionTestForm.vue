@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import type { DatabaseConnectionTestResponse } from '~/types/database'
-
-import ConnectionTestResult from '~/components/database/ConnectionTestResult.vue'
+import AppAlert from '~/components/ui/AppAlert.vue'
+import { useDatabaseConnectionSave } from '~/composables/database/useDatabaseConnectionSave'
 import { useDatabaseConnectionTest } from '~/composables/database/useDatabaseConnectionTest'
 import { useNotifications } from '~/composables/ui/useNotifications'
 import {
@@ -11,13 +10,36 @@ import {
 } from '~/types/database'
 import { translateMessage } from '~/utils/translateMessage'
 
+interface ScreenAlert {
+  kind: 'error'
+  title: string
+  message: string
+}
+
 const connection = ref(createEmptyDatabaseConnection())
 const isTesting = ref(false)
-const result = ref<DatabaseConnectionTestResponse | null>(null)
+const isSaving = ref(false)
+const screenAlert = ref<ScreenAlert | null>(null)
+const lastTestedConnectionSignature = ref<string | null>(null)
+const lastSavedConnectionSignature = ref<string | null>(null)
 
+const { saveConnection } = useDatabaseConnectionSave()
 const { testConnection } = useDatabaseConnectionTest()
-const { success, error } = useNotifications()
+const { success } = useNotifications()
 const { t } = useI18n()
+
+const currentConnectionSignature = computed(() => {
+  return JSON.stringify(connection.value)
+})
+
+const canSave = computed(() => {
+  return (
+    !isTesting.value &&
+    !isSaving.value &&
+    lastTestedConnectionSignature.value === currentConnectionSignature.value &&
+    lastSavedConnectionSignature.value !== currentConnectionSignature.value
+  )
+})
 
 const databaseTypeItems = computed(() => {
   return DATABASE_TYPES.map((type) => ({
@@ -33,24 +55,84 @@ const sslModeItems = computed(() => {
   }))
 })
 
+const clearScreenAlert = () => {
+  screenAlert.value = null
+}
+
+const showScreenError = (title: string, message: string) => {
+  screenAlert.value = {
+    kind: 'error',
+    title,
+    message
+  }
+}
+
+watch(currentConnectionSignature, () => {
+  clearScreenAlert()
+})
+
 const onSubmit = async () => {
   isTesting.value = true
-  result.value = null
+  clearScreenAlert()
+  lastTestedConnectionSignature.value = null
 
   try {
     const response = await testConnection(connection.value)
-    const message = translateMessage(t, response.messageKey, response.message)
-
-    result.value = response
+    const message = translateMessage(
+      t,
+      response.messageKey,
+      response.ok
+        ? 'connections.test.success'
+        : 'connections.test.errors.unexpected'
+    )
 
     if (response.ok) {
+      lastTestedConnectionSignature.value = currentConnectionSignature.value
+      clearScreenAlert()
       success(message, t('connections.test.notifications.successTitle'))
       return
     }
 
-    error(message, t('connections.test.notifications.errorTitle'))
+    showScreenError(
+      t('connections.test.notifications.errorTitle'),
+      message
+    )
   } finally {
     isTesting.value = false
+  }
+}
+
+const onSave = async () => {
+  if (!canSave.value) {
+    return
+  }
+
+  isSaving.value = true
+  clearScreenAlert()
+
+  try {
+    const response = await saveConnection(connection.value)
+    const message = translateMessage(
+      t,
+      response.messageKey,
+      response.ok
+        ? 'connections.save.success'
+        : 'connections.save.errors.unexpected'
+    )
+
+    if (response.ok) {
+      lastSavedConnectionSignature.value = currentConnectionSignature.value
+      clearScreenAlert()
+      success(message, t('connections.save.notifications.successTitle'))
+      return
+    }
+
+    showScreenError(
+      t('connections.save.notifications.errorTitle'),
+      message
+    )
+  } finally {
+    isSaving.value = false
   }
 }
 </script>
@@ -155,13 +237,32 @@ const onSubmit = async () => {
       </UFormField>
     </div>
 
-    <ConnectionTestResult :result="result" />
+    <AppAlert
+      v-if="screenAlert"
+      :kind="screenAlert.kind"
+      :title="screenAlert.title"
+    >
+      {{ screenAlert.message }}
+    </AppAlert>
 
-    <UButton
-      type="submit"
-      icon="i-lucide-plug-zap"
-      :label="isTesting ? t('connections.new.submit.loading') : t('connections.new.submit.idle')"
-      :loading="isTesting"
-    />
+    <div class="flex gap-3">
+      <UButton
+        type="submit"
+        icon="i-lucide-plug-zap"
+        :label="isTesting ? t('connections.new.submit.loading') : t('connections.new.submit.idle')"
+        :loading="isTesting"
+        :disabled="isSaving"
+      />
+
+      <UButton
+        type="button"
+        icon="i-lucide-save"
+        color="neutral"
+        :label="isSaving ? t('connections.new.save.loading') : t('connections.new.save.idle')"
+        :loading="isSaving"
+        :disabled="!canSave"
+        @click="onSave"
+      />
+    </div>
   </UForm>
 </template>

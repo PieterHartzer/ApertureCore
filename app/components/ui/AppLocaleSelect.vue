@@ -2,16 +2,27 @@
 const { locale, locales } = useI18n()
 
 const availableLocales = computed(() => {
-  return locales.value
-    .filter((entry): entry is { code: string, name?: string } => {
-      return typeof entry === 'object' && entry !== null && 'code' in entry
-    })
-    .map((entry) => {
-      return {
-        code: entry.code,
-        name: entry.name ?? entry.code
-      }
-    })
+  return locales.value.flatMap((entry) => {
+    if (typeof entry !== 'object' || entry === null || !('code' in entry)) {
+      return []
+    }
+
+    const localeCode = entry.code
+
+    if (typeof localeCode !== 'string') {
+      return []
+    }
+
+    const localeName =
+      'name' in entry && typeof entry.name === 'string'
+        ? entry.name
+        : localeCode
+
+    return [{
+      code: localeCode,
+      name: localeName
+    }]
+  })
 })
 </script>
 

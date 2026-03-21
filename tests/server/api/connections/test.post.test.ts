@@ -7,10 +7,10 @@ const readBodyMock = vi.fn()
 const setResponseStatusMock = vi.fn((event: Record<string, unknown>, status: number) => {
   event.statusCode = status
 })
-const setResponseHeaderMock = vi.fn((event: Record<string, unknown>, name: string, value: string) => {
+const setResponseHeaderMock = vi.fn((event: Record<string, unknown>, name: string, value: string | number) => {
   event.headers = {
     ...(event.headers as Record<string, string> | undefined),
-    [name]: value
+    [name]: String(value)
   }
 })
 
@@ -202,9 +202,9 @@ describe('POST /api/connections/test', () => {
       'connections.test.errors.connectionFailed',
     ],
     [
-      'not_implemented',
-      501,
-      'connections.test.errors.notImplemented',
+      'unauthorized',
+      401,
+      'connections.test.errors.unauthorized',
     ],
     [
       'unexpected_error',

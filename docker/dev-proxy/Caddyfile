@@ -4,7 +4,7 @@
   }
 }
 
-:3001 {
+:3300 {
   reverse_proxy host.docker.internal:3002 app:3003 {
     lb_policy first
     lb_try_duration 2s

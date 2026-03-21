@@ -1,15 +1,24 @@
-import type { ComposerTranslation } from 'vue-i18n'
+type TranslateMessageFn = (key: string) => string
 
+/**
+ * Resolves an API-provided i18n key using the active locale and its configured
+ * fallback chain, then falls back to a safe local message key instead of the
+ * raw API message text.
+ */
 export const translateMessage = (
-  t: ComposerTranslation,
+  t: TranslateMessageFn,
   messageKey: string | undefined,
-  fallbackMessage: string
+  fallbackKey: string
 ) => {
+  const safeFallbackMessage = t(fallbackKey)
+
   if (!messageKey) {
-    return fallbackMessage
+    return safeFallbackMessage
   }
 
   const translatedMessage = t(messageKey)
 
-  return translatedMessage === messageKey ? fallbackMessage : translatedMessage
+  return translatedMessage === messageKey
+    ? safeFallbackMessage
+    : translatedMessage
 }

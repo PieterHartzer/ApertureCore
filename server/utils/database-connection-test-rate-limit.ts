@@ -1,28 +1,26 @@
 import type { H3Event } from 'h3'
 
 import { consumeFixedWindowRateLimit } from './rate-limit'
+import { pickString } from './pick-string'
 
 const CONNECTION_TEST_RATE_LIMIT_KEY = 'rate-limit:connections:test'
 const CONNECTION_TEST_RATE_LIMIT_LIMIT = 5
 const CONNECTION_TEST_RATE_LIMIT_WINDOW_MS = 60_000
 
-const hasUserName = (
-  value: unknown
-): value is {
-  userName: string
-} => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'userName' in value &&
-    typeof value.userName === 'string' &&
-    value.userName.trim().length > 0
-  )
-}
-
 const resolveConnectionTestActor = (event: H3Event) => {
-  if (hasUserName(event.context.auth)) {
-    return `user:${event.context.auth.userName}`
+  const subjectId = pickString(
+    event.context.auth?.claims?.sub,
+    event.context.auth?.userInfo?.sub
+  )
+
+  if (subjectId) {
+    return `user:${subjectId}`
+  }
+
+  const userName = pickString(event.context.auth?.userName)
+
+  if (userName) {
+    return `user-name:${userName}`
   }
 
   return 'user:authenticated'
