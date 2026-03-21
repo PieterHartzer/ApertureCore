@@ -43,9 +43,26 @@
       "headline": "Connections",
       "title": "Saved database connections",
       "description": "View and manage the database connections available to your organisation.",
+      "errors": {
+        "loadTitle": "Could not load connections"
+      },
       "actions": {
         "new": "New connection",
         "addFirst": "Add your first connection"
+      },
+      "table": {
+        "title": "Connections",
+        "description": "Saved database connections for your organisation.",
+        "empty": "No connections found.",
+        "columns": {
+          "connectionName": "Connection name",
+          "databaseType": "Database type",
+          "actions": "Actions"
+        },
+        "actions": {
+          "edit": "Edit",
+          "delete": "Delete"
+        }
       },
       "empty": {
         "title": "No saved connections yet",
