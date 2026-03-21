@@ -123,3 +123,68 @@ export interface ListSavedDatabaseConnectionsApiResponse {
   messageKey?: string
   connections?: SavedDatabaseConnectionSummary[]
 }
+
+export interface DeleteDatabaseConnectionInput {
+  connectionId: string
+  confirmationName: string
+  deleteLinkedQueries: boolean
+}
+
+export type DeleteDatabaseConnectionField =
+  | keyof DeleteDatabaseConnectionInput
+  | 'body'
+
+export type DeleteDatabaseConnectionValidationIssue =
+  | 'body_invalid'
+  | 'connection_id_invalid'
+  | 'confirmation_name_invalid'
+  | 'confirmation_name_required'
+  | 'delete_linked_queries_invalid'
+
+export interface DeleteDatabaseConnectionValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: DeleteDatabaseConnectionValidationIssue
+  message: string
+  field?: DeleteDatabaseConnectionField
+}
+
+export interface DeleteDatabaseConnectionValidationSuccess {
+  ok: true
+  data: DeleteDatabaseConnectionInput
+}
+
+export type DeleteDatabaseConnectionValidationResult =
+  | DeleteDatabaseConnectionValidationError
+  | DeleteDatabaseConnectionValidationSuccess
+
+export type DeleteDatabaseConnectionResultCode =
+  | 'success'
+  | 'confirmation_mismatch'
+  | 'not_found'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type DeleteDatabaseConnectionResult =
+  | {
+      ok: true
+      code: 'success'
+    }
+  | {
+      ok: false
+      code: Exclude<DeleteDatabaseConnectionResultCode, 'success'>
+      message: string
+    }
+
+export interface DeleteDatabaseConnectionApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'forbidden'
+    | 'invalid_input'
+    | Exclude<DeleteDatabaseConnectionResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: DeleteDatabaseConnectionField
+  issue?: DeleteDatabaseConnectionValidationIssue
+}

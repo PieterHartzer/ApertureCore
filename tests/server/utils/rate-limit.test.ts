@@ -128,4 +128,39 @@ describe('consumeFixedWindowRateLimit', () => {
       retryAfterSeconds: 60
     })
   })
+
+  it('recovers cleanly when the previous request for the same key failed', async () => {
+    const storage = {
+      getItem: vi.fn()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(null),
+      setItem: vi.fn().mockResolvedValue(undefined)
+    }
+
+    const firstRequest = consumeFixedWindowRateLimit(
+      storage,
+      'rate-limit:test-user',
+      1,
+      60_000,
+      1_000
+    )
+
+    await expect(firstRequest).rejects.toThrow('boom')
+
+    await expect(
+      consumeFixedWindowRateLimit(
+        storage,
+        'rate-limit:test-user',
+        1,
+        60_000,
+        1_000
+      )
+    ).resolves.toEqual({
+      allowed: true,
+      limit: 1,
+      remaining: 0,
+      resetAt: 61_000,
+      retryAfterSeconds: 0
+    })
+  })
 })

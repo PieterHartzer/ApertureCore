@@ -7,6 +7,9 @@ const CONNECTION_TEST_RATE_LIMIT_KEY = 'rate-limit:connections:test'
 const CONNECTION_TEST_RATE_LIMIT_LIMIT = 5
 const CONNECTION_TEST_RATE_LIMIT_WINDOW_MS = 60_000
 
+/**
+ * Builds a stable rate-limit actor key from the authenticated user context.
+ */
 const resolveConnectionTestActor = (event: H3Event) => {
   const subjectId = pickString(
     event.context.auth?.claims?.sub,
@@ -26,6 +29,9 @@ const resolveConnectionTestActor = (event: H3Event) => {
   return 'user:authenticated'
 }
 
+/**
+ * Applies the per-user rate limit used by the connection test endpoint.
+ */
 export const consumeConnectionTestRateLimit = async (event: H3Event) => {
   const storage = useStorage('cache')
   const actorKey = resolveConnectionTestActor(event)

@@ -4,6 +4,18 @@ const oidcAuthorizationUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_
 const oidcTokenUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_TOKEN_URL || ''
 const oidcUserInfoUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_USER_INFO_URL || ''
 const oidcLogoutUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_LOGOUT_URL || ''
+const DEFAULT_OIDC_SCOPES = [
+  'openid',
+  'profile',
+  'email',
+  'offline_access'
+]
+const splitEnvList = (value: string | undefined): string[] => {
+  return (value ?? '')
+    .split(/[\s,]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
 const oidcOpenIdConfigurationUrl =
   process.env.NUXT_OIDC_PROVIDERS_OIDC_OPENID_CONFIGURATION || undefined
 const oidcIssuer = process.env.NUXT_OIDC_PROVIDERS_OIDC_ISSUER || (() => {
@@ -30,6 +42,22 @@ const publicAppOrigin = (() => {
     return 'http://localhost:3300'
   }
 })()
+const oidcScopes = splitEnvList(process.env.APP_OIDC_SCOPE)
+const oidcOrganizationIdClaim =
+  process.env.APP_OIDC_ORGANIZATION_ID_CLAIM ||
+  ''
+const oidcOrganizationNameClaim =
+  process.env.APP_OIDC_ORGANIZATION_NAME_CLAIM ||
+  ''
+const oidcOrganizationPrimaryDomainClaim =
+  process.env.APP_OIDC_ORGANIZATION_PRIMARY_DOMAIN_CLAIM ||
+  ''
+const oidcOptionalClaims = Array.from(new Set([
+  'sub',
+  oidcOrganizationIdClaim,
+  oidcOrganizationNameClaim,
+  oidcOrganizationPrimaryDomainClaim
+].filter(Boolean)))
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -45,6 +73,11 @@ export default defineNuxtConfig({
     appDatabaseEncryptionKey:
       process.env.APP_DATABASE_ENCRYPTION_KEY ||
       '',
+    oidcOrganizationClaims: {
+      idClaim: oidcOrganizationIdClaim,
+      nameClaim: oidcOrganizationNameClaim,
+      primaryDomainClaim: oidcOrganizationPrimaryDomainClaim
+    },
     public: {
       oidcConfigured: Boolean(process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID),
       devToolsLinks: {
@@ -100,11 +133,9 @@ export default defineNuxtConfig({
         authenticationScheme: 'none',
         grantType: 'authorization_code',
         scope: [
-          'openid',
-          'profile',
-          'email',
-          'offline_access',
-          'urn:zitadel:iam:user:resourceowner'
+          ...(oidcScopes.length > 0
+            ? oidcScopes
+            : DEFAULT_OIDC_SCOPES)
         ],
         scopeInTokenRequest: true,
         tokenRequestType: 'form-urlencoded',
@@ -112,12 +143,7 @@ export default defineNuxtConfig({
         state: true,
         nonce: true,
         userNameClaim: 'preferred_username',
-        optionalClaims: [
-          'sub',
-          'urn:zitadel:iam:user:resourceowner:id',
-          'urn:zitadel:iam:user:resourceowner:name',
-          'urn:zitadel:iam:user:resourceowner:primary_domain'
-        ],
+        optionalClaims: oidcOptionalClaims,
         skipAccessTokenParsing: true,
         validateAccessToken: false,
         validateIdToken: true,

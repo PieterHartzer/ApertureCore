@@ -64,12 +64,19 @@ const createMockDb = () => {
     select: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
+    executeTakeFirst: vi.fn().mockResolvedValue(undefined),
     execute: vi.fn().mockResolvedValue([])
+  })
+  const updateTableMock = vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    executeTakeFirst: vi.fn().mockResolvedValue(undefined)
   })
 
   return {
     insertInto: insertIntoMock,
     selectFrom: selectFromMock,
+    updateTable: updateTableMock,
     destroy: vi.fn().mockResolvedValue(undefined)
   }
 }
@@ -424,6 +431,12 @@ describe('database connection persistence service', () => {
       expect.any(String)
     )
     expect(isUuid(selectBuilder.where.mock.calls[0][2])).toBe(true)
+    expect(selectBuilder.where).toHaveBeenNthCalledWith(
+      2,
+      'deleted_at',
+      'is',
+      null
+    )
   })
 
   it('preserves unknown stored database types when listing summaries', async () => {
@@ -475,6 +488,164 @@ describe('database connection persistence service', () => {
     )
 
     await expect(listSavedDatabaseConnections(authContext)).resolves.toEqual({
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    })
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('soft deletes a connection when the confirmation name matches', async () => {
+    const mockDb = createMockDb()
+    const selectBuilder = {
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        connection_name: 'Primary DB'
+      })
+    }
+    const updateBuilder = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    }
+    mockDb.selectFrom = vi.fn().mockReturnValue(selectBuilder)
+    mockDb.updateTable = vi.fn().mockReturnValue(updateBuilder)
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { deleteDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(deleteDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      confirmationName: 'Primary DB',
+      deleteLinkedQueries: true
+    })).resolves.toEqual({
+      ok: true,
+      code: 'success'
+    })
+
+    expect(mockDb.selectFrom).toHaveBeenCalledWith('app_database_connections')
+    expect(selectBuilder.where).toHaveBeenNthCalledWith(
+      1,
+      'organization_id',
+      '=',
+      expect.any(String)
+    )
+    expect(selectBuilder.where).toHaveBeenNthCalledWith(
+      2,
+      'connection_id',
+      '=',
+      '2f8f9425-55cf-4d8e-a446-638848de1942'
+    )
+    expect(selectBuilder.where).toHaveBeenNthCalledWith(
+      3,
+      'deleted_at',
+      'is',
+      null
+    )
+    expect(updateBuilder.set).toHaveBeenCalledWith(expect.objectContaining({
+      deleted_at: expect.any(Date),
+      updated_by_user_id: authContext.userId
+    }))
+  })
+
+  it('returns not_found when deleting a missing connection', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { deleteDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(deleteDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      confirmationName: 'Primary DB',
+      deleteLinkedQueries: false
+    })).resolves.toEqual({
+      ok: false,
+      code: 'not_found',
+      message: 'not_found'
+    })
+    expect(mockDb.updateTable).not.toHaveBeenCalled()
+  })
+
+  it('returns confirmation_mismatch when the confirmation name does not match', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue({
+        connection_id: 'connection-1',
+        connection_name: 'Primary DB'
+      })
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+
+    const { deleteDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(deleteDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      confirmationName: 'Secondary DB',
+      deleteLinkedQueries: false
+    })).resolves.toEqual({
+      ok: false,
+      code: 'confirmation_mismatch',
+      message: 'confirmation_mismatch'
+    })
+    expect(mockDb.updateTable).not.toHaveBeenCalled()
+  })
+
+  it('maps persistence configuration failures during delete cleanly', async () => {
+    getAppDatabaseMock.mockImplementation(() => {
+      throw new AppDatabaseConfigurationError('missing db')
+    })
+
+    const { deleteDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(deleteDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      confirmationName: 'Primary DB',
+      deleteLinkedQueries: false
+    })).resolves.toEqual({
+      ok: false,
+      code: 'persistence_unavailable',
+      message: 'persistence_unavailable'
+    })
+  })
+
+  it('returns unexpected_error when deleting fails unexpectedly', async () => {
+    const mockDb = createMockDb()
+    mockDb.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockRejectedValue(new Error('boom'))
+    })
+    getAppDatabaseMock.mockReturnValue(mockDb)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { deleteDatabaseConnection } = await import(
+      '../../../server/services/database-connections'
+    )
+
+    await expect(deleteDatabaseConnection(authContext, {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      confirmationName: 'Primary DB',
+      deleteLinkedQueries: false
+    })).resolves.toEqual({
       ok: false,
       code: 'unexpected_error',
       message: 'unexpected_error'

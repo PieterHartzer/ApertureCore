@@ -19,6 +19,7 @@ interface AppDatabase {
     organization_primary_domain: string | null
     created_at: Generated<Date>
     updated_at: Generated<Date>
+    deleted_at: Date | null
   }
   app_database_connections: {
     connection_id: string
@@ -31,6 +32,7 @@ interface AppDatabase {
     updated_by_user_id: string
     created_at: Generated<Date>
     updated_at: Generated<Date>
+    deleted_at: Date | null
   }
 }
 
@@ -41,6 +43,9 @@ declare global {
   var __apertureCoreAppDatabaseUrl: string | undefined
 }
 
+/**
+ * Creates a Kysely client for the configured application database URL.
+ */
 const createAppDatabaseClient = (url: string): AppDatabaseClient => {
   return new Kysely<AppDatabase>({
     dialect: new PostgresDialect({
@@ -54,6 +59,10 @@ const createAppDatabaseClient = (url: string): AppDatabaseClient => {
   })
 }
 
+/**
+ * Returns a cached Kysely client for the application database, recreating it
+ * when the configured connection URL changes.
+ */
 export const getAppDatabase = (): AppDatabaseClient => {
   const { appDatabaseUrl } = useRuntimeConfig()
 
@@ -78,6 +87,10 @@ export const getAppDatabase = (): AppDatabaseClient => {
   return globalThis.__apertureCoreAppDatabase
 }
 
+/**
+ * Disposes the cached database client between tests so each test can control
+ * its own runtime configuration.
+ */
 export const resetAppDatabaseForTests = async () => {
   if (globalThis.__apertureCoreAppDatabase) {
     await globalThis.__apertureCoreAppDatabase.destroy()

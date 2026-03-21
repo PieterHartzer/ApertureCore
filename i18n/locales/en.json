@@ -183,6 +183,38 @@
         "persistenceUnavailable": "Saved connections are temporarily unavailable.",
         "unexpected": "Unexpected error while loading saved database connections."
       }
+    },
+    "delete": {
+      "success": "Database connection deleted successfully.",
+      "dialog": {
+        "title": "Delete connection",
+        "description": "Type \"{connectionName}\" to confirm deletion.",
+        "confirmationLabel": "Connection name",
+        "confirmationDescription": "Enter the exact saved connection name to confirm deletion.",
+        "deleteLinkedQueries": {
+          "label": "Delete linked SQL queries too",
+          "description": "This preference will be applied once linked SQL query persistence is added."
+        },
+        "cancel": "Cancel",
+        "confirm": "Delete connection",
+        "confirmLoading": "Deleting connection..."
+      },
+      "notifications": {
+        "successTitle": "Connection deleted",
+        "errorTitle": "Delete failed"
+      },
+      "errors": {
+        "forbidden": "You do not have permission to delete database connections for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "confirmationNameInvalid": "Confirmation name must be a string.",
+        "confirmationNameRequired": "Confirmation name is required.",
+        "deleteLinkedQueriesInvalid": "Delete linked SQL queries must be true or false.",
+        "confirmationMismatch": "The confirmation name did not match the selected connection.",
+        "notFound": "The selected connection could not be found.",
+        "persistenceUnavailable": "Saved connections are temporarily unavailable.",
+        "unexpected": "Unexpected error while deleting the database connection."
+      }
     }
   }
 }

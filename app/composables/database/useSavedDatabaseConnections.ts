@@ -37,16 +37,14 @@ const isListConnectionsResponse = (
   )
 }
 
-const getRequestFetch = () => {
-  return import.meta.server
-    ? useRequestFetch()
-    : $fetch
-}
+type RequestFetch = typeof $fetch
 
-export const useSavedDatabaseConnections = () => {
+export const useSavedDatabaseConnections = (
+  requestFetch: RequestFetch = $fetch
+) => {
   const listConnections = async (): Promise<ListSavedDatabaseConnectionsResponse> => {
     try {
-      return await getRequestFetch()<ListSavedDatabaseConnectionsResponse>(
+      return await requestFetch<ListSavedDatabaseConnectionsResponse>(
         '/api/connections'
       )
     } catch (error) {

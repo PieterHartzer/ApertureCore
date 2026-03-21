@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const useRuntimeConfigMock = vi.fn()
+const kyselyDestroyMocks: Array<ReturnType<typeof vi.fn>> = []
 const poolInstance = {
   connect: vi.fn(),
   end: vi.fn().mockResolvedValue(undefined),
@@ -24,8 +25,11 @@ class MockPool {
 
 class MockKysely {
   constructor() {
+    const destroy = vi.fn().mockResolvedValue(undefined)
+    kyselyDestroyMocks.push(destroy)
+
     return {
-      destroy: vi.fn().mockResolvedValue(undefined)
+      destroy
     }
   }
 }
@@ -50,6 +54,7 @@ describe('app database utility', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    kyselyDestroyMocks.length = 0
     globalThis.__apertureCoreAppDatabase = undefined
     globalThis.__apertureCoreAppDatabaseUrl = undefined
   })
@@ -108,6 +113,18 @@ describe('app database utility', () => {
 
     await resetAppDatabaseForTests()
 
+    expect(kyselyDestroyMocks).toHaveLength(1)
+    expect(kyselyDestroyMocks[0]).toHaveBeenCalledTimes(1)
+    expect(globalThis.__apertureCoreAppDatabase).toBeUndefined()
+    expect(globalThis.__apertureCoreAppDatabaseUrl).toBeUndefined()
+  })
+
+  it('can reset tests when no cached client exists', async () => {
+    const { resetAppDatabaseForTests } = await import(
+      '../../../server/utils/app-database'
+    )
+
+    await expect(resetAppDatabaseForTests()).resolves.toBeUndefined()
     expect(globalThis.__apertureCoreAppDatabase).toBeUndefined()
     expect(globalThis.__apertureCoreAppDatabaseUrl).toBeUndefined()
   })

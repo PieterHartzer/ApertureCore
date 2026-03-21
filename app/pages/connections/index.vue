@@ -1,15 +1,38 @@
 <script setup lang="ts">
 import AppAlert from '~/components/ui/AppAlert.vue'
+import DeleteConnectionDialog from '~/components/database/DeleteConnectionDialog.vue'
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+import { useDatabaseConnectionDelete } from '~/composables/database/useDatabaseConnectionDelete'
 import { useSavedDatabaseConnections } from '~/composables/database/useSavedDatabaseConnections'
+import { useNotifications } from '~/composables/ui/useNotifications'
 import { translateMessage } from '~/utils/translateMessage'
 
+interface SavedDatabaseConnectionListItem {
+  id: string
+  connectionName: string
+  databaseType: string
+}
+
+interface DeleteConnectionDialogConfirmPayload {
+  confirmationName: string
+  deleteLinkedQueries: boolean
+}
+
 const { t } = useI18n()
-const { listConnections } = useSavedDatabaseConnections()
-const { data: listResponse, status } = await useAsyncData(
+const { success } = useNotifications()
+const { deleteConnection } = useDatabaseConnectionDelete()
+const requestFetch = import.meta.server
+  ? useRequestFetch()
+  : $fetch
+const { listConnections } = useSavedDatabaseConnections(requestFetch)
+const { data: listResponse, status, refresh } = await useAsyncData(
   'saved-database-connections',
   listConnections
 )
+const selectedConnection = ref<SavedDatabaseConnectionListItem | null>(null)
+const isDeleteDialogOpen = ref(false)
+const isDeleting = ref(false)
+const deleteDialogErrorMessage = ref('')
 
 const columns = computed(() => [
   {
@@ -55,6 +78,54 @@ const formatDatabaseType = (databaseType: string) => {
   return translatedLabel === key
     ? databaseType
     : translatedLabel
+}
+
+const onDeleteDialogOpenChange = (open: boolean) => {
+  isDeleteDialogOpen.value = open
+
+  if (!open) {
+    selectedConnection.value = null
+    deleteDialogErrorMessage.value = ''
+  }
+}
+
+const openDeleteDialog = (connection: SavedDatabaseConnectionListItem) => {
+  selectedConnection.value = connection
+  deleteDialogErrorMessage.value = ''
+  isDeleteDialogOpen.value = true
+}
+
+const onDeleteConfirm = async (
+  payload: DeleteConnectionDialogConfirmPayload
+) => {
+  if (!selectedConnection.value) {
+    return
+  }
+
+  isDeleting.value = true
+  deleteDialogErrorMessage.value = ''
+
+  try {
+    const response = await deleteConnection(selectedConnection.value.id, payload)
+    const message = translateMessage(
+      t,
+      response.messageKey,
+      response.ok
+        ? 'connections.delete.success'
+        : 'connections.delete.errors.unexpected'
+    )
+
+    if (response.ok) {
+      onDeleteDialogOpenChange(false)
+      await refresh()
+      success(message, t('connections.delete.notifications.successTitle'))
+      return
+    }
+
+    deleteDialogErrorMessage.value = message
+  } finally {
+    isDeleting.value = false
+  }
 }
 </script>
 
@@ -102,7 +173,7 @@ const formatDatabaseType = (databaseType: string) => {
             {{ formatDatabaseType(row.original.databaseType) }}
           </template>
 
-          <template #actions-cell>
+          <template #actions-cell="{ row }">
             <div class="flex items-center gap-2">
               <UButton
                 type="button"
@@ -118,7 +189,7 @@ const formatDatabaseType = (databaseType: string) => {
                 variant="ghost"
                 icon="i-lucide-trash-2"
                 :label="t('connections.index.table.actions.delete')"
-                disabled
+                @click="openDeleteDialog(row.original)"
               />
             </div>
           </template>
@@ -137,6 +208,15 @@ const formatDatabaseType = (databaseType: string) => {
           :label="t('connections.index.actions.addFirst')"
         />
       </UPageCard>
+
+      <DeleteConnectionDialog
+        :open="isDeleteDialogOpen"
+        :connection-name="selectedConnection?.connectionName ?? ''"
+        :is-deleting="isDeleting"
+        :error-message="deleteDialogErrorMessage"
+        @update:open="onDeleteDialogOpenChange"
+        @confirm="onDeleteConfirm"
+      />
     </UPageBody>
   </UPage>
 </template>

@@ -18,12 +18,15 @@ interface RateLimitStorage {
 
 const rateLimitLocks = new Map<string, Promise<void>>()
 
+/**
+ * Serializes updates for a single rate-limit key so concurrent requests do not
+ * overwrite each other's counters.
+ */
 const withRateLimitLock = async <T>(
   key: string,
   action: () => Promise<T>
 ): Promise<T> => {
-  const previousLock = (rateLimitLocks.get(key) ?? Promise.resolve())
-    .catch(() => undefined)
+  const previousLock = rateLimitLocks.get(key) ?? Promise.resolve()
 
   let releaseLock!: () => void
   const currentLock = new Promise<void>((resolve) => {
@@ -46,6 +49,10 @@ const withRateLimitLock = async <T>(
   }
 }
 
+/**
+ * Consumes one request from a fixed-window rate limit and returns the updated
+ * allowance state for the caller.
+ */
 export const consumeFixedWindowRateLimit = async (
   storage: RateLimitStorage,
   key: string,

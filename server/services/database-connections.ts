@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto'
 
 import type {
+  DeleteDatabaseConnectionInput,
+  DeleteDatabaseConnectionResult,
   AuthenticatedOrganizationContext,
   ListSavedDatabaseConnectionsResult,
   SaveDatabaseConnectionInput,
@@ -24,6 +26,11 @@ interface DatabaseConnectionRow {
   database_type: string
   created_at: Date
   updated_at: Date
+}
+
+interface DatabaseConnectionIdentityRow {
+  connection_id: string
+  connection_name: string
 }
 
 const UNIQUE_NAME_CONSTRAINT = 'app_database_connections_unique_name_per_org'
@@ -181,6 +188,7 @@ export const listSavedDatabaseConnections = async (
       .selectFrom('app_database_connections')
       .select(['connection_id', 'connection_name', 'database_type', 'created_at', 'updated_at'])
       .where('organization_id', '=', organizationId)
+      .where('deleted_at', 'is', null)
       .orderBy('created_at', 'desc')
       .orderBy('connection_name', 'asc')
       .execute()
@@ -189,6 +197,75 @@ export const listSavedDatabaseConnections = async (
       ok: true,
       code: 'success',
       connections: connections.map(mapSavedDatabaseConnectionSummary)
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Soft deletes a saved connection for the authenticated organization after the
+ * caller confirms the visible connection name.
+ */
+export const deleteDatabaseConnection = async (
+  authContext: AuthenticatedOrganizationContext,
+  input: DeleteDatabaseConnectionInput
+): Promise<DeleteDatabaseConnectionResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const connection = await db
+      .selectFrom('app_database_connections')
+      .select(['connection_id', 'connection_name'])
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', input.connectionId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as DatabaseConnectionIdentityRow | undefined
+
+    if (!connection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    if (connection.connection_name !== input.confirmationName) {
+      return {
+        ok: false,
+        code: 'confirmation_mismatch',
+        message: 'confirmation_mismatch'
+      }
+    }
+
+    await db
+      .updateTable('app_database_connections')
+      .set({
+        deleted_at: new Date(),
+        updated_by_user_id: authContext.userId
+      })
+      .where('organization_id', '=', organizationId)
+      .where('connection_id', '=', input.connectionId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst()
+
+    return {
+      ok: true,
+      code: 'success'
     }
   } catch (error) {
     if (isPersistenceConfigurationError(error)) {

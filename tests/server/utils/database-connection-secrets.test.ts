@@ -57,4 +57,27 @@ describe('database connection secret encryption', () => {
       sslMode: 'disable'
     })).toThrowError('APP_DATABASE_ENCRYPTION_KEY is not configured.')
   })
+
+  it('rejects malformed encrypted payloads', async () => {
+    const {
+      decryptSavedDatabaseConnectionSecret
+    } = await import('../../../server/utils/database-connection-secrets')
+
+    expect(() => decryptSavedDatabaseConnectionSecret('bad-payload')).toThrowError(
+      'Saved database connection secret is invalid.'
+    )
+  })
+
+  it('rejects decrypted payloads that do not match the saved connection shape', async () => {
+    const {
+      decryptSavedDatabaseConnectionSecret,
+      encryptSavedDatabaseConnectionSecret
+    } = await import('../../../server/utils/database-connection-secrets')
+
+    const encrypted = encryptSavedDatabaseConnectionSecret([] as never)
+
+    expect(() => decryptSavedDatabaseConnectionSecret(encrypted)).toThrowError(
+      'Saved database connection secret is invalid.'
+    )
+  })
 })

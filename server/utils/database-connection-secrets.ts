@@ -37,6 +37,10 @@ const buildEncryptionKey = () => {
     .digest()
 }
 
+/**
+ * Verifies that decrypted JSON matches the saved connection secret shape before
+ * the payload is returned to application code.
+ */
 const isSavedDatabaseConnectionSecret = (
   value: unknown
 ): value is SavedDatabaseConnectionSecret => {
