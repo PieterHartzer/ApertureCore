@@ -15,7 +15,7 @@
       "env": {
         "NUXT_HOST": "0.0.0.0",
         "NUXT_PORT": "3002",
-        "NUXT_PUBLIC_APP_URL": "http://localhost:3001"
+        "NUXT_PUBLIC_APP_URL": "http://localhost:3300"
       },
       "console": "integratedTerminal",
       "outputCapture": "std",
@@ -28,7 +28,8 @@
       "name": "Nuxt: browser via proxy",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3001",
+      "preLaunchTask": "Dev Stack: ensure proxy",
+      "url": "http://localhost:3300",
       "webRoot": "${workspaceFolder}"
     },
     {
@@ -45,8 +46,9 @@
       "env": {
         "NUXT_HOST": "0.0.0.0",
         "NUXT_PORT": "3002",
-        "NUXT_PUBLIC_APP_URL": "http://localhost:3001"
+        "NUXT_PUBLIC_APP_URL": "http://localhost:3300"
       },
+      "preLaunchTask": "Dev Stack: ensure proxy",
       "console": "integratedTerminal",
       "outputCapture": "std",
       "autoAttachChildProcesses": true,
@@ -55,7 +57,7 @@
       ],
       "serverReadyAction": {
         "pattern": "Local:\\s+(https?://\\S+)",
-        "uriFormat": "http://localhost:3001",
+        "uriFormat": "http://localhost:3300",
         "action": "debugWithChrome"
       }
     }

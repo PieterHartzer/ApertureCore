@@ -28,3 +28,7 @@ logs
 
 # Repo-local SSH keys
 .git-ssh/
+
+# Local planning artifacts
+notes.md
+task_plan.md

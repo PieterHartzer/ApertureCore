@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev Stack: ensure proxy",
+      "type": "shell",
+      "command": "docker compose --env-file .env.development -f docker-compose.dev.yml up -d dev-proxy",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
