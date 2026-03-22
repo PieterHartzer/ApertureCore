@@ -8,7 +8,7 @@ export default defineConfig({
     restoreMocks: true,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'json-summary', 'lcov'],
+      reporter: ['text', 'html', 'json-summary'],
       all: true,
       include: [
         'app/composables/**/*.ts',

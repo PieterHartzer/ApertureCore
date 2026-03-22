@@ -62,25 +62,6 @@ pnpm test:coverage
 pnpm build
 ```
 
-## SonarQube Cloud
-
-This repo includes a GitHub Actions workflow at
-[`.github/workflows/quality.yml`](.github/workflows/quality.yml)
-and a checked-in
-[`sonar-project.properties`](sonar-project.properties)
-for SonarQube Cloud analysis.
-
-To enable SonarQube Cloud for this repository:
-
-1. Create or bind the project in SonarQube Cloud.
-2. Add the repository secret `SONAR_TOKEN`.
-3. Add the repository variables `SONAR_PROJECT_KEY` and `SONAR_ORGANIZATION`.
-
-Once configured, the quality workflow will run linting, Nuxt typecheck, tests
-with coverage, build the app, and then submit the coverage-aware scan to
-SonarQube Cloud. If the SonarQube Cloud settings are not configured yet, the
-workflow still runs the local quality checks and skips the scan step cleanly.
-
 ## Database Migrations
 
 The app now has its own persistence database for multitenant application data,
