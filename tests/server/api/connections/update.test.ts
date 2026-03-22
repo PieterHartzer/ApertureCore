@@ -122,7 +122,7 @@ describe('PUT /api/connections/:connectionId', () => {
     const validatedInput = {
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -142,7 +142,7 @@ describe('PUT /api/connections/:connectionId', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T01:00:00.000Z'
       }
@@ -159,7 +159,7 @@ describe('PUT /api/connections/:connectionId', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T01:00:00.000Z'
       }

@@ -44,13 +44,10 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    switch (result.code) {
-      case 'persistence_unavailable':
-        setResponseStatus(event, 503)
-        break
-      default:
-        setResponseStatus(event, 500)
-        break
+    if (result.code === 'persistence_unavailable') {
+      setResponseStatus(event, 503)
+    } else {
+      setResponseStatus(event, 500)
     }
 
     return buildErrorResponse(result.code)

@@ -9,9 +9,9 @@ describe('createEmptyDatabaseConnection', () => {
   it('returns the expected default PostgreSQL form values', () => {
     expect(createEmptyDatabaseConnection()).toEqual({
       connectionName: '',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: '',
-      port: DEFAULT_PORTS.postgresql,
+      port: DEFAULT_PORTS.postgres,
       databaseName: '',
       username: '',
       password: '',

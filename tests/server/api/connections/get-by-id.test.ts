@@ -83,7 +83,7 @@ describe('GET /api/connections/:connectionId', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -104,7 +104,7 @@ describe('GET /api/connections/:connectionId', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',

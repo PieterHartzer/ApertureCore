@@ -9,10 +9,10 @@ vi.mock('../../../server/utils/authenticated-rate-limit', () => ({
 const loadUtility = async () => {
   vi.resetModules()
 
-  return await import('../../../server/utils/database-connection-test-rate-limit')
+  return await import('../../../server/utils/saved-sql-query-test-rate-limit')
 }
 
-describe('consumeConnectionTestRateLimit', () => {
+describe('consumeSavedSqlQueryTestRateLimit', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     consumeAuthenticatedFixedWindowRateLimitMock.mockResolvedValue({
@@ -28,8 +28,8 @@ describe('consumeConnectionTestRateLimit', () => {
     vi.unstubAllGlobals()
   })
 
-  it('applies the shared authenticated-user limiter with the connection test policy', async () => {
-    const { consumeConnectionTestRateLimit } = await loadUtility()
+  it('applies the shared authenticated-user limiter with the query test policy', async () => {
+    const { consumeSavedSqlQueryTestRateLimit } = await loadUtility()
     const event = {
       context: {
         auth: {
@@ -40,7 +40,7 @@ describe('consumeConnectionTestRateLimit', () => {
       }
     }
 
-    await expect(consumeConnectionTestRateLimit(event as never)).resolves.toEqual({
+    await expect(consumeSavedSqlQueryTestRateLimit(event as never)).resolves.toEqual({
       allowed: true,
       limit: 5,
       remaining: 4,
@@ -51,7 +51,7 @@ describe('consumeConnectionTestRateLimit', () => {
     expect(consumeAuthenticatedFixedWindowRateLimitMock).toHaveBeenCalledWith(
       event,
       {
-        keyPrefix: 'rate-limit:connections:test',
+        keyPrefix: 'rate-limit:queries:test',
         limit: 5,
         windowMs: 60_000
       }

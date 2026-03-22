@@ -148,7 +148,7 @@ describe('POST /api/connections/test', () => {
   it('returns success responses unchanged', async () => {
     const validatedInput = {
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -184,7 +184,7 @@ describe('POST /api/connections/test', () => {
     readBodyMock.mockResolvedValue({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -214,7 +214,7 @@ describe('POST /api/connections/test', () => {
       ok: true,
       data: {
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -241,7 +241,7 @@ describe('POST /api/connections/test', () => {
     expect(validateTestDatabaseConnectionInputMock).toHaveBeenCalledWith({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -255,7 +255,7 @@ describe('POST /api/connections/test', () => {
     readBodyMock.mockResolvedValue({
       connectionId: 'bad-id',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -289,7 +289,7 @@ describe('POST /api/connections/test', () => {
     readBodyMock.mockResolvedValue({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -325,7 +325,7 @@ describe('POST /api/connections/test', () => {
     readBodyMock.mockResolvedValue({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -364,7 +364,7 @@ describe('POST /api/connections/test', () => {
     readBodyMock.mockResolvedValue({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -456,7 +456,7 @@ describe('POST /api/connections/test', () => {
     async (code, status, messageKey) => {
       const validatedInput = {
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -494,7 +494,7 @@ describe('POST /api/connections/test', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const validatedInput = {
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -527,7 +527,7 @@ describe('POST /api/connections/test', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const validatedInput = {
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',

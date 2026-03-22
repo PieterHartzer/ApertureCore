@@ -1,4 +1,4 @@
-export const SERVER_DATABASE_TYPES = ['postgresql'] as const
+export const SERVER_DATABASE_TYPES = ['postgres'] as const
 export type DatabaseType = (typeof SERVER_DATABASE_TYPES)[number]
 
 export const SERVER_DATABASE_SSL_MODES = ['disable', 'require'] as const
@@ -76,3 +76,52 @@ export interface TestDatabaseConnectionApiResponse
   issue?: TestDatabaseConnectionValidationIssue
   field?: TestDatabaseConnectionField
 }
+
+export interface ExecuteDatabaseReadOnlyQueryInput {
+  databaseType: DatabaseType
+  host: string
+  port: number
+  databaseName: string
+  username: string
+  password: string
+  sslMode: DatabaseSslMode
+  sql: string
+}
+
+export type DatabaseQueryResultValue =
+  | string
+  | number
+  | boolean
+  | null
+
+export interface DatabaseQueryResultRow {
+  [column: string]: DatabaseQueryResultValue
+}
+
+export type ExecuteDatabaseReadOnlyQueryResultCode =
+  | 'success'
+  | 'unsupported_database_type'
+  | 'authentication_failed'
+  | 'database_not_found'
+  | 'connection_failed'
+  | 'timeout'
+  | 'ssl_required'
+  | 'query_rejected'
+  | 'query_failed'
+  | 'unexpected_error'
+
+export type ExecuteDatabaseReadOnlyQueryResult =
+  | {
+      ok: true
+      code: 'success'
+      message: 'success'
+      columns: string[]
+      rows: DatabaseQueryResultRow[]
+      rowLimit: number
+    }
+  | {
+      ok: false
+      code: Exclude<ExecuteDatabaseReadOnlyQueryResultCode, 'success'>
+      message: Exclude<ExecuteDatabaseReadOnlyQueryResultCode, 'success'>
+      details?: string
+    }

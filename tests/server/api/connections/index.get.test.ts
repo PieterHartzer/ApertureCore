@@ -45,7 +45,7 @@ describe('GET /api/connections', () => {
       connections: [{
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T00:00:00.000Z'
       }]
@@ -62,7 +62,7 @@ describe('GET /api/connections', () => {
       connections: [{
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T00:00:00.000Z'
       }]

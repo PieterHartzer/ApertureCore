@@ -63,7 +63,14 @@ const listErrorMessage = computed(() => {
       :description="t('queries.index.description')"
     >
       <template #links>
-        <AppLocaleSelect />
+        <div class="flex items-center gap-3">
+          <AppLocaleSelect />
+          <UButton
+            to="/queries/new"
+            icon="i-lucide-plus"
+            :label="t('queries.index.actions.new')"
+          />
+        </div>
       </template>
     </UPageHeader>
 
@@ -95,7 +102,13 @@ const listErrorMessage = computed(() => {
         icon="i-lucide-file-search"
         :title="t('queries.index.empty.title')"
         :description="t('queries.index.empty.description')"
-      />
+      >
+        <UButton
+          to="/queries/new"
+          icon="i-lucide-file-plus-2"
+          :label="t('queries.index.actions.addFirst')"
+        />
+      </UPageCard>
     </UPageBody>
   </UPage>
 </template>

@@ -29,7 +29,7 @@ import { upsertOrganization, mapOrganizationIdToStorage } from './organization'
 interface DatabaseConnectionRow {
   connection_id: string
   connection_name: string
-  database_type: string
+  database_type: DatabaseType
   created_at: Date
   updated_at: Date
 }
@@ -37,7 +37,7 @@ interface DatabaseConnectionRow {
 interface DatabaseConnectionDetailsRow {
   connection_id: string
   connection_name: string
-  database_type: string
+  database_type: DatabaseType
   encrypted_secret: string
 }
 
@@ -66,29 +66,12 @@ interface SavedDatabaseConnectionSecretLookupError {
 const UNIQUE_NAME_CONSTRAINT = 'app_database_connections_unique_name_per_org'
 const UNIQUE_TARGET_CONSTRAINT = 'app_database_connections_unique_target_per_org'
 
-const mapStoredDatabaseType = (databaseType: string): DatabaseType => {
-  switch (databaseType) {
-    case 'postgres':
-    case 'postgresql':
-      return 'postgresql'
-    default:
-      return databaseType as DatabaseType
-  }
-}
-
-const mapDatabaseTypeToStorage = (databaseType: DatabaseType): string => {
-  switch (databaseType) {
-    case 'postgresql':
-      return 'postgres'
-  }
-}
-
 const mapSavedDatabaseConnectionSummary = (
   row: DatabaseConnectionRow
 ): SavedDatabaseConnectionSummary => ({
   id: row.connection_id,
   connectionName: row.connection_name,
-  databaseType: mapStoredDatabaseType(row.database_type),
+  databaseType: row.database_type,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString()
 })
@@ -99,7 +82,7 @@ const mapSavedDatabaseConnectionDetails = (
 ): SavedDatabaseConnectionDetails => ({
   id: row.connection_id,
   connectionName: row.connection_name,
-  databaseType: mapStoredDatabaseType(row.database_type),
+  databaseType: row.database_type,
   host: secret.host,
   port: secret.port,
   databaseName: secret.databaseName,
@@ -179,7 +162,7 @@ export const saveDatabaseConnection = async (
         organization_id: organizationId,
         connection_name: input.connectionName,
         connection_target_fingerprint: buildConnectionTargetFingerprint(input),
-        database_type: mapDatabaseTypeToStorage(input.databaseType),
+        database_type: input.databaseType,
         encrypted_secret: encryptedSecret,
         created_by_user_id: authContext.userId,
         updated_by_user_id: authContext.userId
@@ -427,7 +410,7 @@ export const updateDatabaseConnection = async (
       .set({
         connection_name: input.connectionName,
         connection_target_fingerprint: buildConnectionTargetFingerprint(input),
-        database_type: mapDatabaseTypeToStorage(input.databaseType),
+        database_type: input.databaseType,
         encrypted_secret: encryptedSecret,
         updated_by_user_id: authContext.userId
       })

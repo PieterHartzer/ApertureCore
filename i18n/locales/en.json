@@ -9,7 +9,7 @@
   },
   "database": {
     "types": {
-      "postgresql": "PostgreSQL"
+      "postgres": "PostgreSQL"
     },
     "sslModes": {
       "disable": "Disable SSL",
@@ -286,6 +286,10 @@
       "headline": "Queries",
       "title": "Saved SQL queries",
       "description": "View the saved SQL queries available to your organisation.",
+      "actions": {
+        "new": "New query",
+        "addFirst": "Add your first query"
+      },
       "errors": {
         "loadTitle": "Could not load SQL queries"
       },
@@ -300,7 +304,107 @@
       },
       "empty": {
         "title": "No saved SQL queries yet",
-        "description": "Saved SQL queries will appear here once query persistence is added."
+        "description": "Create a saved SQL query to reuse it later."
+      }
+    },
+    "new": {
+      "headline": "Queries",
+      "title": "New saved SQL query",
+      "description": "Create a saved SQL query for your organisation.",
+      "card": {
+        "title": "Query details",
+        "description": "Choose a connection, test the SQL, and store the query securely."
+      },
+      "loading": "Loading saved database connections...",
+      "actions": {
+        "test": "Test query",
+        "testLoading": "Testing query...",
+        "save": "Save query",
+        "saveLoading": "Saving query...",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "loadTitle": "Could not load connections"
+      },
+      "emptyConnections": {
+        "title": "Create a connection first",
+        "description": "A saved SQL query must be linked to a saved database connection.",
+        "action": "Add connection"
+      }
+    },
+    "form": {
+      "fields": {
+        "queryName": {
+          "label": "Query name",
+          "description": "Give this query a clear name for your organisation.",
+          "placeholder": "e.g. Top customers"
+        },
+        "connectionId": {
+          "label": "Connection",
+          "description": "Choose the saved database connection this query runs against.",
+          "placeholder": "Select a connection"
+        },
+        "sql": {
+          "label": "SQL",
+          "description": "This SQL is encrypted at rest and only decrypted when explicitly loaded for editing.",
+          "placeholder": "select * from table_name"
+        }
+      }
+    },
+    "test": {
+      "success": "SQL query test completed successfully.",
+      "notifications": {
+        "successTitle": "Query test successful",
+        "errorTitle": "Query test failed"
+      },
+      "results": {
+        "title": "Query results",
+        "description": "Showing a sample of up to {rowLimit} rows from the current query test.",
+        "empty": "The query returned no rows."
+      },
+      "errors": {
+        "forbidden": "You do not have permission to test SQL queries for this organisation.",
+        "rateLimited": "Too many SQL query tests. Please wait and try again.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "sqlInvalid": "SQL must be a string.",
+        "sqlRequired": "SQL is required.",
+        "savedConnectionNotFound": "The selected saved connection could not be found.",
+        "unsupportedDatabaseType": "This database type is not supported yet.",
+        "authenticationFailed": "The database credentials were rejected.",
+        "databaseNotFound": "The specified database could not be found.",
+        "connectionFailed": "ApertureCore could not reach the database server.",
+        "timeout": "The database query timed out.",
+        "sslRequired": "The database server requires SSL or compatible TLS settings.",
+        "queryRejected": "Only a single read-only SELECT query can be tested.",
+        "queryFailed": "The SQL query could not be executed.",
+        "details": "Database feedback: {details}",
+        "persistenceUnavailable": "Saved SQL query testing is temporarily unavailable.",
+        "unexpected": "Unexpected error while testing the SQL query."
+      }
+    },
+    "save": {
+      "success": "SQL query saved successfully.",
+      "notifications": {
+        "successTitle": "Query saved",
+        "errorTitle": "Save failed"
+      },
+      "errors": {
+        "forbidden": "You do not have permission to save SQL queries for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "queryNameInvalid": "Query name must be a string.",
+        "queryNameRequired": "Query name is required.",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "sqlInvalid": "SQL must be a string.",
+        "sqlRequired": "SQL is required.",
+        "sqlTooLong": "SQL exceeds the maximum allowed length.",
+        "sqlInvalidCharacters": "SQL contains invalid characters.",
+        "sqlMultipleStatements": "Only a single SQL statement can be saved.",
+        "sqlNotReadOnly": "Only a single read-only SELECT query can be saved.",
+        "notFound": "The selected connection could not be found.",
+        "duplicateQueryName": "A query with this name already exists for the selected connection.",
+        "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+        "unexpected": "Unexpected error while saving the SQL query."
       }
     },
     "list": {

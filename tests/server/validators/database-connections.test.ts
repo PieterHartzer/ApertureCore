@@ -21,7 +21,7 @@ describe('validateSaveDatabaseConnectionInput', () => {
   it('requires a connection name for persisted connections', () => {
     expect(validateSaveDatabaseConnectionInput({
       connectionName: '   ',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: 'db.internal',
       port: 5432,
       databaseName: 'app_db',
@@ -40,7 +40,7 @@ describe('validateSaveDatabaseConnectionInput', () => {
   it('returns normalized data when the payload is valid', () => {
     expect(validateSaveDatabaseConnectionInput({
       connectionName: 'Primary',
-      databaseType: 'postgresql',
+      databaseType: 'postgres',
       host: ' db.internal ',
       port: '5432',
       databaseName: ' app_db ',
@@ -51,7 +51,7 @@ describe('validateSaveDatabaseConnectionInput', () => {
       ok: true,
       data: {
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -198,7 +198,7 @@ describe('validateUpdateDatabaseConnectionInput', () => {
     expect(
       validateUpdateDatabaseConnectionInput('not-a-uuid', {
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -220,7 +220,7 @@ describe('validateUpdateDatabaseConnectionInput', () => {
         '2f8f9425-55cf-4d8e-a446-638848de1942',
         {
           connectionName: 'Primary',
-          databaseType: 'postgresql',
+          databaseType: 'postgres',
           host: 'db.internal',
           port: 5432,
           databaseName: 'app_db',
@@ -259,7 +259,7 @@ describe('validateUpdateDatabaseConnectionInput', () => {
         '2f8f9425-55cf-4d8e-a446-638848de1942',
         {
           connectionName: '   ',
-          databaseType: 'postgresql',
+          databaseType: 'postgres',
           host: 'db.internal',
           port: 5432,
           databaseName: 'app_db',
@@ -283,7 +283,7 @@ describe('validateUpdateDatabaseConnectionInput', () => {
         '2f8f9425-55cf-4d8e-a446-638848de1942',
         {
           connectionName: ' Primary ',
-          databaseType: 'postgresql',
+          databaseType: 'postgres',
           host: ' db.internal ',
           port: '5432',
           databaseName: ' app_db ',
@@ -297,7 +297,7 @@ describe('validateUpdateDatabaseConnectionInput', () => {
       data: {
         connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',

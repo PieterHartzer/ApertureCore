@@ -4,7 +4,7 @@ const fetchMock = vi.fn()
 
 const connection = {
   connectionName: 'Primary',
-  databaseType: 'postgresql' as const,
+  databaseType: 'postgres' as const,
   host: 'db.internal',
   port: 5432,
   databaseName: 'app_db',

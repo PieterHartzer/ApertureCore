@@ -2,6 +2,7 @@ import { useRuntimeConfig } from '#imports'
 import { Kysely, PostgresDialect } from 'kysely'
 import type { Generated } from 'kysely'
 import pg from 'pg'
+import type { DatabaseType } from '../types/database'
 
 const { Pool } = pg
 
@@ -26,7 +27,7 @@ interface AppDatabase {
     organization_id: string
     connection_name: string
     connection_target_fingerprint: string
-    database_type: string
+    database_type: DatabaseType
     encrypted_secret: string
     created_by_user_id: string
     updated_by_user_id: string

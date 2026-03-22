@@ -4,7 +4,7 @@ import { validateTestDatabaseConnectionInput } from '../../../server/validators/
 
 const validInput = {
   connectionName: ' Reporting DB ',
-  databaseType: 'postgresql',
+  databaseType: 'postgres',
   host: ' db.internal ',
   port: '5432',
   databaseName: ' app_db ',
@@ -29,7 +29,7 @@ describe('validateTestDatabaseConnectionInput', () => {
       ok: true,
       data: {
         connectionName: 'Reporting DB',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -50,7 +50,7 @@ describe('validateTestDatabaseConnectionInput', () => {
       ok: true,
       data: {
         connectionName: 'Reporting DB',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -71,7 +71,7 @@ describe('validateTestDatabaseConnectionInput', () => {
       ok: true,
       data: {
         connectionName: '',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',

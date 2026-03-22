@@ -28,7 +28,7 @@ describe('useSavedDatabaseConnection', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',
@@ -50,7 +50,7 @@ describe('useSavedDatabaseConnection', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         host: 'db.internal',
         port: 5432,
         databaseName: 'app_db',

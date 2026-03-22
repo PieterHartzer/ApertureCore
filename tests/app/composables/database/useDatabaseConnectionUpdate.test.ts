@@ -4,7 +4,7 @@ const fetchMock = vi.fn()
 
 const connection = {
   connectionName: 'Primary',
-  databaseType: 'postgresql' as const,
+  databaseType: 'postgres' as const,
   host: 'db.internal',
   port: 5432,
   databaseName: 'app_db',
@@ -39,7 +39,7 @@ describe('useDatabaseConnectionUpdate', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T01:00:00.000Z'
       }
@@ -57,7 +57,7 @@ describe('useDatabaseConnectionUpdate', () => {
       connection: {
         id: 'connection-1',
         connectionName: 'Primary',
-        databaseType: 'postgresql',
+        databaseType: 'postgres',
         createdAt: '2026-03-18T00:00:00.000Z',
         updatedAt: '2026-03-18T01:00:00.000Z'
       }

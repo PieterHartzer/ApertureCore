@@ -1,11 +1,11 @@
-export const DATABASE_TYPES = ['postgresql'] as const
+export const DATABASE_TYPES = ['postgres'] as const
 export type DatabaseType = (typeof DATABASE_TYPES)[number]
 
 export const DATABASE_SSL_MODES = ['disable', 'require'] as const
 export type DatabaseSslMode = (typeof DATABASE_SSL_MODES)[number]
 
 export const DEFAULT_PORTS = {
-  postgresql: 5432,
+  postgres: 5432,
 } as const
 
 export interface DatabaseConnection {
@@ -43,9 +43,9 @@ export interface DatabaseConnectionTestResponse {
 
 export const createEmptyDatabaseConnection = (): DatabaseConnection => ({
   connectionName: '',
-  databaseType: 'postgresql',
+  databaseType: 'postgres',
   host: '',
-  port: DEFAULT_PORTS.postgresql,
+  port: DEFAULT_PORTS.postgres,
   databaseName: '',
   username: '',
   password: '',
