@@ -30,8 +30,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare Nuxt
-        run: pnpm exec nuxt prepare
-
       - name: Run quality checks
         run: pnpm quality
