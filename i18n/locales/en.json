@@ -280,5 +280,36 @@
         "unexpected": "Unexpected error while deleting the database connection."
       }
     }
+  },
+  "queries": {
+    "index": {
+      "headline": "Queries",
+      "title": "Saved SQL queries",
+      "description": "View the saved SQL queries available to your organisation.",
+      "errors": {
+        "loadTitle": "Could not load SQL queries"
+      },
+      "table": {
+        "title": "Queries",
+        "description": "Saved SQL queries for your organisation.",
+        "empty": "No SQL queries found.",
+        "columns": {
+          "queryName": "Query name",
+          "connectionName": "Connection"
+        }
+      },
+      "empty": {
+        "title": "No saved SQL queries yet",
+        "description": "Saved SQL queries will appear here once query persistence is added."
+      }
+    },
+    "list": {
+      "success": "Saved SQL queries loaded successfully.",
+      "errors": {
+        "forbidden": "You do not have permission to view SQL queries for this organisation.",
+        "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+        "unexpected": "Unexpected error while loading saved SQL queries."
+      }
+    }
   }
 }
