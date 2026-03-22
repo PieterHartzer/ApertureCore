@@ -46,6 +46,8 @@ Run the full local quality gate with:
 pnpm quality
 ```
 
+The same checks run in GitHub Actions on pull requests and pushes to `main`.
+
 This runs:
 
 - `pnpm lint`
