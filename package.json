@@ -9,7 +9,7 @@
     "db:migrate:down": "node ./scripts/run-migrations.mjs down",
     "dev": "nuxt dev --dotenv .env.development",
     "generate": "nuxt generate",
-    "lint": "pnpm exec nuxt prepare && pnpm exec eslint . --max-warnings=0",
+    "lint": "pnpm exec nuxt prepare && pnpm exec eslint --config ./eslint.config.mjs . --max-warnings=0",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "quality": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build",
