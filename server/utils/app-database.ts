@@ -34,6 +34,18 @@ interface AppDatabase {
     updated_at: Generated<Date>
     deleted_at: Date | null
   }
+  app_saved_sql_queries: {
+    query_id: string
+    organization_id: string
+    connection_id: string
+    query_name: string
+    encrypted_sql: string
+    created_by_user_id: string
+    updated_by_user_id: string
+    created_at: Generated<Date>
+    updated_at: Generated<Date>
+    deleted_at: Date | null
+  }
 }
 
 type AppDatabaseClient = Kysely<AppDatabase>
