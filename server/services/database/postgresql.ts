@@ -5,8 +5,6 @@ import type { TestDatabaseConnectionInput, TestDatabaseConnectionResult } from '
 import type { DatabaseConnectionTester } from './types'
 
 const CONNECT_TIMEOUT_SECONDS = 5
-const POOL_TERMINATION_TIMEOUT_MS = 5_000
-
 type DatabaseError = Error & {
   code?: string
   detail?: string

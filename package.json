@@ -9,11 +9,14 @@
     "db:migrate:down": "node ./scripts/run-migrations.mjs down",
     "dev": "nuxt dev --dotenv .env.development",
     "generate": "nuxt generate",
+    "lint": "pnpm exec eslint . --max-warnings=0",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "quality": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "pnpm exec nuxi typecheck"
   },
   "dependencies": {
     "@nuxt/a11y": "1.0.0-alpha.1",
@@ -42,6 +45,7 @@
     "@vitest/coverage-v8": "^4.1.0",
     "kysely-codegen": "^0.20.0",
     "tailwindcss": "^4.2.2",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "vue-tsc": "^3.2.6"
   }
 }

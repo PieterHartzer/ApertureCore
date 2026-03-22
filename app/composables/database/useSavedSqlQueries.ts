@@ -38,7 +38,10 @@ const isListSavedSqlQueriesResponse = (
   )
 }
 
-type RequestFetch = typeof $fetch
+type RequestFetch = <T>(
+  request: string,
+  options?: Record<string, unknown>
+) => Promise<T>
 
 export const useSavedSqlQueries = (
   requestFetch: RequestFetch = $fetch

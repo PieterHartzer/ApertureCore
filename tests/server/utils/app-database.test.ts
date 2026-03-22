@@ -16,21 +16,15 @@ const poolInstance = {
   getPoolQueueSize: vi.fn(),
   destroy: vi.fn(),
 }
-
-class MockPool {
-  constructor() {
-    return poolInstance
-  }
+function MockPool() {
+  return poolInstance
 }
+function MockKysely() {
+  const destroy = vi.fn().mockResolvedValue(undefined)
+  kyselyDestroyMocks.push(destroy)
 
-class MockKysely {
-  constructor() {
-    const destroy = vi.fn().mockResolvedValue(undefined)
-    kyselyDestroyMocks.push(destroy)
-
-    return {
-      destroy
-    }
+  return {
+    destroy
   }
 }
 
@@ -109,7 +103,7 @@ describe('app database utility', () => {
       resetAppDatabaseForTests
     } = await import('../../../server/utils/app-database')
 
-    const client = getAppDatabase()
+    getAppDatabase()
 
     await resetAppDatabaseForTests()
 

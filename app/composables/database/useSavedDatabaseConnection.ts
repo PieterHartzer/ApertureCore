@@ -47,7 +47,10 @@ const isGetConnectionResponse = (
   )
 }
 
-type RequestFetch = typeof $fetch
+type RequestFetch = <T>(
+  request: string,
+  options?: Record<string, unknown>
+) => Promise<T>
 
 export const useSavedDatabaseConnection = (
   requestFetch: RequestFetch = $fetch

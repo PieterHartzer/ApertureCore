@@ -81,7 +81,11 @@ export const validateSaveDatabaseConnectionInput = (
 
   if (!validationResult.ok) {
     return {
-      ...validationResult
+      ok: false,
+      code: 'invalid_input',
+      issue: validationResult.issue as SaveDatabaseConnectionValidationIssue,
+      message: validationResult.message,
+      field: validationResult.field as SaveDatabaseConnectionValidationError['field']
     }
   }
 

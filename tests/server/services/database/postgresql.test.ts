@@ -16,12 +16,9 @@ const poolInstance = {
 }
 
 const poolConstructorMock = vi.fn()
-
-class MockPool {
-  constructor(config: unknown) {
-    poolConstructorMock(config)
-    return poolInstance
-  }
+function MockPool(config: unknown) {
+  poolConstructorMock(config)
+  return poolInstance
 }
 
 vi.mock('pg', () => {
