@@ -5,7 +5,6 @@ import type { TestDatabaseConnectionInput, TestDatabaseConnectionResult } from '
 import type { DatabaseConnectionTester } from './types'
 
 const CONNECT_TIMEOUT_SECONDS = 5
-const DEFAULT_POSTGRES_PORT = 5432
 const POOL_TERMINATION_TIMEOUT_MS = 5_000
 
 type DatabaseError = Error & {
@@ -121,7 +120,7 @@ export class PostgreSqlConnectionTester implements DatabaseConnectionTester {
   ): Promise<TestDatabaseConnectionResult> {
     const pool = new Pool({
       host: input.host,
-      port: input.port ?? DEFAULT_POSTGRES_PORT,
+      port: input.port,
       database: input.databaseName,
       user: input.username,
       password: input.password,

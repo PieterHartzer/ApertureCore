@@ -292,7 +292,7 @@ describe('database connection persistence service', () => {
     })
   })
 
-  it('defaults missing organization domain and port when saving a connection', async () => {
+  it('defaults a missing organization domain when saving a connection', async () => {
     const mockDb = createMockDb()
     const organizationInsertBuilder = {
       values: vi.fn().mockImplementation((values) => {
@@ -323,10 +323,7 @@ describe('database connection persistence service', () => {
     await expect(saveDatabaseConnection({
       ...authContext,
       organizationPrimaryDomain: undefined
-    }, {
-      ...connectionInput,
-      port: null
-    })).resolves.toEqual({
+    }, connectionInput)).resolves.toEqual({
       ok: false,
       code: 'unexpected_error',
       message: 'unexpected_error'

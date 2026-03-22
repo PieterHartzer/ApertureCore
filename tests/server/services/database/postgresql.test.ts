@@ -15,8 +15,11 @@ const poolInstance = {
   destroy: vi.fn(),
 }
 
+const poolConstructorMock = vi.fn()
+
 class MockPool {
-  constructor() {
+  constructor(config: unknown) {
+    poolConstructorMock(config)
     return poolInstance
   }
 }
@@ -195,7 +198,7 @@ describe('PostgreSqlConnectionTester', () => {
     expect(poolInstance.query).toHaveBeenCalled()
   })
 
-  it('falls back to the default PostgreSQL port when port is null', async () => {
+  it('passes the validated port through to the PostgreSQL pool config', async () => {
     poolInstance.query.mockResolvedValue({ rows: [{ '?column?': 1 }] })
 
     const { PostgreSqlConnectionTester } = await import(
@@ -206,9 +209,11 @@ describe('PostgreSqlConnectionTester', () => {
 
     await tester.testConnection({
       ...input,
-      port: null,
+      port: 6543,
     })
 
-    expect(poolInstance.query).toHaveBeenCalled()
+    expect(poolConstructorMock).toHaveBeenCalledWith(expect.objectContaining({
+      port: 6543
+    }))
   })
 })

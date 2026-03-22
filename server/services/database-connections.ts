@@ -163,7 +163,7 @@ export const saveDatabaseConnection = async (
 
     const encryptedSecret = encryptSavedDatabaseConnectionSecret({
       host: input.host,
-      port: input.port ?? 5432,
+      port: input.port,
       databaseName: input.databaseName,
       username: input.username,
       password: input.password,

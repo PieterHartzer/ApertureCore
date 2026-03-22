@@ -22,7 +22,7 @@ export interface TestDatabaseConnectionInput {
   connectionName: string
   databaseType: DatabaseType
   host: string
-  port: number | null
+  port: number
   databaseName: string
   username: string
   password: string
