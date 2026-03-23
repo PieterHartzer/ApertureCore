@@ -1,12 +1,19 @@
 import type {
+  DeleteSavedSqlQueryValidationError,
+  DeleteSavedSqlQueryValidationIssue,
+  DeleteSavedSqlQueryValidationResult,
   SaveSavedSqlQueryInput,
   SaveSavedSqlQueryValidationError,
   SaveSavedSqlQueryValidationIssue,
   SaveSavedSqlQueryValidationResult,
+  SavedSqlQueryIdValidationResult,
   TestSavedSqlQueryInput,
   TestSavedSqlQueryValidationError,
   TestSavedSqlQueryValidationIssue,
-  TestSavedSqlQueryValidationResult
+  TestSavedSqlQueryValidationResult,
+  UpdateSavedSqlQueryValidationError,
+  UpdateSavedSqlQueryValidationIssue,
+  UpdateSavedSqlQueryValidationResult
 } from '../types/saved-sql-queries'
 import { isUuid } from '../utils/is-uuid'
 import { normalizeReadOnlySql } from '../utils/read-only-sql'
@@ -33,8 +40,51 @@ const createTestValidationError = (
   field
 })
 
+const createUpdateValidationError = (
+  issue: UpdateSavedSqlQueryValidationIssue,
+  field?: UpdateSavedSqlQueryValidationError['field']
+): UpdateSavedSqlQueryValidationError => ({
+  ok: false,
+  code: 'invalid_input',
+  issue,
+  message: issue,
+  field
+})
+
+const createDeleteValidationError = (
+  issue: DeleteSavedSqlQueryValidationIssue,
+  field?: DeleteSavedSqlQueryValidationError['field']
+): DeleteSavedSqlQueryValidationError => ({
+  ok: false,
+  code: 'invalid_input',
+  issue,
+  message: issue,
+  field
+})
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export const validateSavedSqlQueryId = (
+  queryId: unknown
+): SavedSqlQueryIdValidationResult => {
+  if (typeof queryId !== 'string' || !isUuid(queryId.trim())) {
+    return {
+      ok: false,
+      code: 'invalid_input',
+      issue: 'query_id_invalid',
+      message: 'query_id_invalid',
+      field: 'queryId'
+    }
+  }
+
+  return {
+    ok: true,
+    data: {
+      queryId: queryId.trim()
+    }
+  }
 }
 
 /**
@@ -106,6 +156,76 @@ export const validateSaveSavedSqlQueryInput = (
   return {
     ok: true,
     data: normalizedInput
+  }
+}
+
+export const validateUpdateSavedSqlQueryInput = (
+  queryId: unknown,
+  value: unknown
+): UpdateSavedSqlQueryValidationResult => {
+  const queryIdValidation = validateSavedSqlQueryId(queryId)
+
+  if (!queryIdValidation.ok) {
+    return queryIdValidation
+  }
+
+  const validationResult = validateSaveSavedSqlQueryInput(value)
+
+  if (!validationResult.ok) {
+    return createUpdateValidationError(
+      validationResult.issue,
+      validationResult.field
+    )
+  }
+
+  return {
+    ok: true,
+    data: {
+      queryId: queryIdValidation.data.queryId,
+      ...validationResult.data
+    }
+  }
+}
+
+export const validateDeleteSavedSqlQueryInput = (
+  queryId: unknown,
+  value: unknown
+): DeleteSavedSqlQueryValidationResult => {
+  const queryIdValidation = validateSavedSqlQueryId(queryId)
+
+  if (!queryIdValidation.ok) {
+    return queryIdValidation
+  }
+
+  if (!isRecord(value)) {
+    return createDeleteValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
+  if (typeof value.confirmationName !== 'string') {
+    return createDeleteValidationError(
+      'confirmation_name_invalid',
+      'confirmationName'
+    )
+  }
+
+  const confirmationName = value.confirmationName.trim()
+
+  if (!confirmationName) {
+    return createDeleteValidationError(
+      'confirmation_name_required',
+      'confirmationName'
+    )
+  }
+
+  return {
+    ok: true,
+    data: {
+      queryId: queryIdValidation.data.queryId,
+      confirmationName
+    }
   }
 }
 

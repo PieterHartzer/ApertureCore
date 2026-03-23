@@ -9,7 +9,7 @@ import type { SavedSqlQueryInput } from '~/types/saved-sql-queries'
 import { translateMessage } from '~/utils/translateMessage'
 
 const { t } = useI18n()
-const { success } = useNotifications()
+const { success, error } = useNotifications()
 const { saveQuery } = useSavedSqlQuerySave()
 const requestFetch = import.meta.server
   ? useRequestFetch()
@@ -70,6 +70,7 @@ const onSubmit = async (query: SavedSqlQueryInput) => {
     }
 
     saveErrorMessage.value = message
+    error(message, t('queries.save.notifications.errorTitle'))
   } finally {
     isSaving.value = false
   }

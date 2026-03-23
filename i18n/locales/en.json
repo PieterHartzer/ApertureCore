@@ -293,21 +293,26 @@
       "errors": {
         "loadTitle": "Could not load SQL queries"
       },
-      "table": {
-        "title": "Queries",
-        "description": "Saved SQL queries for your organisation.",
-        "empty": "No SQL queries found.",
-        "columns": {
-          "queryName": "Query name",
-          "connectionName": "Connection"
-        }
+    "table": {
+      "title": "Queries",
+      "description": "Saved SQL queries for your organisation.",
+      "empty": "No SQL queries found.",
+      "columns": {
+        "queryName": "Query name",
+        "connectionName": "Connection",
+        "actions": "Actions"
       },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
       "empty": {
         "title": "No saved SQL queries yet",
         "description": "Create a saved SQL query to reuse it later."
       }
     },
-    "new": {
+  "new": {
       "headline": "Queries",
       "title": "New saved SQL query",
       "description": "Create a saved SQL query for your organisation.",
@@ -330,9 +335,35 @@
         "title": "Create a connection first",
         "description": "A saved SQL query must be linked to a saved database connection.",
         "action": "Add connection"
-      }
+    }
+  },
+  "edit": {
+    "headline": "Queries",
+    "title": "Edit saved SQL query",
+    "description": "Update a saved SQL query for your organisation.",
+    "card": {
+      "title": "Query details",
+      "description": "Review the encrypted SQL, test it again if needed, and save the updated query."
     },
-    "form": {
+    "loading": "Loading saved SQL query...",
+    "actions": {
+      "test": "Test query",
+      "testLoading": "Testing query...",
+      "save": "Save changes",
+      "saveLoading": "Saving changes...",
+      "cancel": "Cancel"
+    },
+    "success": "Saved SQL query loaded successfully.",
+    "errors": {
+      "loadTitle": "Could not load SQL query",
+      "forbidden": "You do not have permission to edit SQL queries for this organisation.",
+      "queryIdInvalid": "Query id is invalid.",
+      "notFound": "The requested saved SQL query could not be found.",
+      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+      "unexpected": "Unexpected error while loading the saved SQL query."
+    }
+  },
+  "form": {
       "fields": {
         "queryName": {
           "label": "Query name",
@@ -383,7 +414,7 @@
         "unexpected": "Unexpected error while testing the SQL query."
       }
     },
-    "save": {
+  "save": {
       "success": "SQL query saved successfully.",
       "notifications": {
         "successTitle": "Query saved",
@@ -404,10 +435,62 @@
         "notFound": "The selected connection could not be found.",
         "duplicateQueryName": "A query with this name already exists for the selected connection.",
         "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
-        "unexpected": "Unexpected error while saving the SQL query."
-      }
+      "unexpected": "Unexpected error while saving the SQL query."
+    }
+  },
+  "update": {
+    "success": "SQL query updated successfully.",
+    "notifications": {
+      "successTitle": "Query updated",
+      "errorTitle": "Update failed"
     },
-    "list": {
+    "errors": {
+      "forbidden": "You do not have permission to update SQL queries for this organisation.",
+      "bodyInvalid": "Request body is not valid JSON.",
+      "queryIdInvalid": "Query id is invalid.",
+      "queryNameInvalid": "Query name must be a string.",
+      "queryNameRequired": "Query name is required.",
+      "connectionIdInvalid": "Connection id is invalid.",
+      "sqlInvalid": "SQL must be a string.",
+      "sqlRequired": "SQL is required.",
+      "sqlTooLong": "SQL exceeds the maximum allowed length.",
+      "sqlInvalidCharacters": "SQL contains invalid characters.",
+      "sqlMultipleStatements": "Only a single SQL statement can be saved.",
+      "sqlNotReadOnly": "Only a single read-only SELECT query can be saved.",
+      "notFound": "The saved SQL query or selected connection could not be found.",
+      "duplicateQueryName": "A query with this name already exists for the selected connection.",
+      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+      "unexpected": "Unexpected error while updating the SQL query."
+    }
+  },
+  "delete": {
+    "success": "SQL query deleted successfully.",
+    "notifications": {
+      "successTitle": "Query deleted",
+      "errorTitle": "Delete failed"
+    },
+    "dialog": {
+      "title": "Delete saved SQL query",
+      "description": "Type {queryName} to confirm deletion.",
+      "confirmationLabel": "Query name",
+      "confirmationDescription": "This permanently removes the saved query metadata and encrypted SQL from normal use.",
+      "cancel": "Cancel",
+      "confirm": "Delete query",
+      "confirmLoading": "Deleting query..."
+    },
+    "errors": {
+      "forbidden": "You do not have permission to delete SQL queries for this organisation.",
+      "bodyInvalid": "Request body is not valid JSON.",
+      "queryIdInvalid": "Query id is invalid.",
+      "confirmationNameInvalid": "Confirmation name must be a string.",
+      "confirmationNameRequired": "Confirmation name is required.",
+      "confirmationMismatch": "The confirmation name does not match the saved query name.",
+      "notFound": "The requested saved SQL query could not be found.",
+      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+      "unexpected": "Unexpected error while deleting the SQL query."
+    }
+  },
+  "list": {
       "success": "Saved SQL queries loaded successfully.",
       "errors": {
         "forbidden": "You do not have permission to view SQL queries for this organisation.",

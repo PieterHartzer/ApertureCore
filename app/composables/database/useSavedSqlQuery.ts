@@ -1,15 +1,15 @@
-import type { ListSavedSqlQueriesResponse } from '~/types/saved-sql-queries'
+import type { SavedSqlQueryGetResponse } from '~/types/saved-sql-queries'
 
-const createUnexpectedResponse = (): ListSavedSqlQueriesResponse => ({
+const createUnexpectedResponse = (): SavedSqlQueryGetResponse => ({
   ok: false,
   code: 'unexpected_error',
-  message: 'queries.list.errors.unexpected',
-  messageKey: 'queries.list.errors.unexpected'
+  message: 'queries.edit.errors.unexpected',
+  messageKey: 'queries.edit.errors.unexpected'
 })
 
-const isListSavedSqlQueriesResponse = (
+const isGetSavedSqlQueryResponse = (
   value: unknown
-): value is ListSavedSqlQueriesResponse => {
+): value is SavedSqlQueryGetResponse => {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -24,20 +24,22 @@ type RequestFetch = <T>(
   options?: Record<string, unknown>
 ) => Promise<T>
 
-export const useSavedSqlQueries = (
+export const useSavedSqlQuery = (
   requestFetch: RequestFetch = $fetch
 ) => {
-  const listQueries = async (): Promise<ListSavedSqlQueriesResponse> => {
+  const getQuery = async (
+    queryId: string
+  ): Promise<SavedSqlQueryGetResponse> => {
     try {
-      return await requestFetch<ListSavedSqlQueriesResponse>(
-        '/api/queries'
+      return await requestFetch<SavedSqlQueryGetResponse>(
+        `/api/queries/${queryId}`
       )
     } catch (error) {
       if (
         typeof error === 'object' &&
         error !== null &&
         'data' in error &&
-        isListSavedSqlQueriesResponse(error.data)
+        isGetSavedSqlQueryResponse(error.data)
       ) {
         return error.data
       }
@@ -47,6 +49,6 @@ export const useSavedSqlQueries = (
   }
 
   return {
-    listQueries
+    getQuery
   }
 }

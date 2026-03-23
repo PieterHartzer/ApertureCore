@@ -26,6 +26,7 @@ export default defineConfig({
         'node_modules/**',
         '**/*.d.ts',
         'server/types/database-connections.ts',
+        'server/types/saved-sql-queries.ts',
         'server/services/database/types.ts',
       ],
     },

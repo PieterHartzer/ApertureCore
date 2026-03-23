@@ -97,10 +97,7 @@ const resetForm = (nextQuery: SavedSqlQueryInput) => {
   query.value = {
     ...nextQuery
   }
-  lastTestedQuerySignature.value =
-    props.mode === 'edit'
-      ? buildTestSignature(nextQuery)
-      : null
+  lastTestedQuerySignature.value = null
   testErrorMessage.value = ''
   testErrorDetails.value = ''
   testResult.value = null

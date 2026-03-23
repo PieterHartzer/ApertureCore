@@ -26,6 +26,15 @@ export interface SavedSqlQuerySummary {
   updatedAt: string
 }
 
+export interface SavedSqlQueryDetails {
+  id: string
+  queryName: string
+  connectionId: string
+  sql: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type SavedSqlQueryResultValue =
   | string
   | number
@@ -62,6 +71,175 @@ export type SaveSavedSqlQueryValidationResult =
       data: SaveSavedSqlQueryInput
     }
   | SaveSavedSqlQueryValidationError
+
+export interface SavedSqlQueryIdValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: 'query_id_invalid'
+  message: string
+  field: 'queryId'
+}
+
+export interface SavedSqlQueryIdValidationSuccess {
+  ok: true
+  data: {
+    queryId: string
+  }
+}
+
+export type SavedSqlQueryIdValidationResult =
+  | SavedSqlQueryIdValidationError
+  | SavedSqlQueryIdValidationSuccess
+
+export interface GetSavedSqlQueryResultSuccess {
+  ok: true
+  code: 'success'
+  query: SavedSqlQueryDetails
+}
+
+export interface SavedSqlQueryResultError<TCode extends string> {
+  ok: false
+  code: TCode
+  message: string
+}
+
+export type GetSavedSqlQueryResultCode =
+  | 'success'
+  | 'not_found'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type GetSavedSqlQueryResult =
+  | GetSavedSqlQueryResultSuccess
+  | SavedSqlQueryResultError<Exclude<GetSavedSqlQueryResultCode, 'success'>>
+
+export interface GetSavedSqlQueryApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'invalid_input'
+    | 'forbidden'
+    | Exclude<GetSavedSqlQueryResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: 'queryId'
+  issue?: 'query_id_invalid'
+  query?: SavedSqlQueryDetails
+}
+
+export interface UpdateSavedSqlQueryInput extends SaveSavedSqlQueryInput {
+  queryId: string
+}
+
+export type UpdateSavedSqlQueryField =
+  | keyof UpdateSavedSqlQueryInput
+  | 'body'
+
+export type UpdateSavedSqlQueryValidationIssue =
+  | 'body_invalid'
+  | 'query_id_invalid'
+  | SaveSavedSqlQueryValidationIssue
+
+export interface UpdateSavedSqlQueryValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: UpdateSavedSqlQueryValidationIssue
+  message: string
+  field?: UpdateSavedSqlQueryField
+}
+
+export type UpdateSavedSqlQueryValidationResult =
+  | {
+      ok: true
+      data: UpdateSavedSqlQueryInput
+    }
+  | UpdateSavedSqlQueryValidationError
+
+export type UpdateSavedSqlQueryResultCode =
+  | 'success'
+  | 'not_found'
+  | 'duplicate_query_name'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type UpdateSavedSqlQueryResult =
+  | {
+      ok: true
+      code: 'success'
+      query: SavedSqlQuerySummary
+    }
+  | SavedSqlQueryResultError<Exclude<UpdateSavedSqlQueryResultCode, 'success'>>
+
+export interface UpdateSavedSqlQueryApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'invalid_input'
+    | 'forbidden'
+    | Exclude<UpdateSavedSqlQueryResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: UpdateSavedSqlQueryField
+  issue?: UpdateSavedSqlQueryValidationIssue
+  query?: SavedSqlQuerySummary
+}
+
+export interface DeleteSavedSqlQueryInput {
+  queryId: string
+  confirmationName: string
+}
+
+export type DeleteSavedSqlQueryField =
+  | keyof DeleteSavedSqlQueryInput
+  | 'body'
+
+export type DeleteSavedSqlQueryValidationIssue =
+  | 'body_invalid'
+  | 'query_id_invalid'
+  | 'confirmation_name_invalid'
+  | 'confirmation_name_required'
+
+export interface DeleteSavedSqlQueryValidationError {
+  ok: false
+  code: 'invalid_input'
+  issue: DeleteSavedSqlQueryValidationIssue
+  message: string
+  field?: DeleteSavedSqlQueryField
+}
+
+export type DeleteSavedSqlQueryValidationResult =
+  | {
+      ok: true
+      data: DeleteSavedSqlQueryInput
+    }
+  | DeleteSavedSqlQueryValidationError
+
+export type DeleteSavedSqlQueryResultCode =
+  | 'success'
+  | 'confirmation_mismatch'
+  | 'not_found'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
+export type DeleteSavedSqlQueryResult =
+  | {
+      ok: true
+      code: 'success'
+    }
+  | SavedSqlQueryResultError<Exclude<DeleteSavedSqlQueryResultCode, 'success'>>
+
+export interface DeleteSavedSqlQueryApiResponse {
+  ok: boolean
+  code:
+    | 'success'
+    | 'invalid_input'
+    | 'forbidden'
+    | Exclude<DeleteSavedSqlQueryResultCode, 'success'>
+  message: string
+  messageKey?: string
+  field?: DeleteSavedSqlQueryField
+  issue?: DeleteSavedSqlQueryValidationIssue
+}
 
 export type TestSavedSqlQueryField =
   | keyof TestSavedSqlQueryInput
@@ -101,11 +279,7 @@ export type SaveSavedSqlQueryResult =
       code: 'success'
       query: SavedSqlQuerySummary
     }
-  | {
-      ok: false
-      code: Exclude<SaveSavedSqlQueryResultCode, 'success'>
-      message: string
-    }
+  | SavedSqlQueryResultError<Exclude<SaveSavedSqlQueryResultCode, 'success'>>
 
 export type TestSavedSqlQueryResultCode =
   | 'success'

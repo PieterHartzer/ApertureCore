@@ -2,12 +2,18 @@ import { randomUUID } from 'node:crypto'
 
 import type {
   AuthenticatedOrganizationContext,
+  DeleteSavedSqlQueryInput,
+  DeleteSavedSqlQueryResult,
+  GetSavedSqlQueryResult,
   ListSavedSqlQueriesResult,
   SaveSavedSqlQueryInput,
   SaveSavedSqlQueryResult,
+  SavedSqlQueryDetails,
   SavedSqlQuerySummary,
   TestSavedSqlQueryInput,
-  TestSavedSqlQueryResult
+  TestSavedSqlQueryResult,
+  UpdateSavedSqlQueryInput,
+  UpdateSavedSqlQueryResult
 } from '../types/saved-sql-queries'
 import type { DatabaseType } from '../types/database'
 import { testDatabaseReadOnlyQuery } from './database'
@@ -21,6 +27,7 @@ import {
 } from '../utils/database-connection-secrets'
 import {
   SavedSqlQueryEncryptionConfigurationError,
+  decryptSavedSqlQuerySecret,
   encryptSavedSqlQuerySecret
 } from '../utils/saved-sql-query-secrets'
 import {
@@ -37,12 +44,26 @@ interface SavedSqlQuerySummaryRow {
   updated_at: Date
 }
 
-interface SavedSqlQueryInsertRow {
+interface SavedSqlQueryWriteRow {
   query_id: string
   query_name: string
   connection_id: string
   created_at: Date
   updated_at: Date
+}
+
+interface SavedSqlQueryDetailsRow {
+  query_id: string
+  query_name: string
+  connection_id: string
+  encrypted_sql: string
+  created_at: Date
+  updated_at: Date
+}
+
+interface SavedSqlQueryIdentityRow {
+  query_id: string
+  query_name: string
 }
 
 interface SavedSqlQueryConnectionRow {
@@ -74,14 +95,26 @@ const mapSavedSqlQuerySummary = (
   updatedAt: new Date(row.updated_at).toISOString()
 })
 
-const mapSavedSqlQuerySummaryFromInsert = (
-  row: SavedSqlQueryInsertRow,
+const mapSavedSqlQuerySummaryFromWrite = (
+  row: SavedSqlQueryWriteRow,
   connectionName: string
 ): SavedSqlQuerySummary => ({
   id: row.query_id,
   queryName: row.query_name,
   connectionId: row.connection_id,
   connectionName,
+  createdAt: new Date(row.created_at).toISOString(),
+  updatedAt: new Date(row.updated_at).toISOString()
+})
+
+const mapSavedSqlQueryDetails = (
+  row: SavedSqlQueryDetailsRow,
+  sql: string
+): SavedSqlQueryDetails => ({
+  id: row.query_id,
+  queryName: row.query_name,
+  connectionId: row.connection_id,
+  sql,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString()
 })
@@ -143,6 +176,20 @@ const toClientVisibleQueryTestDetails = (
   }
 
   return `${normalizedDetails.slice(0, MAX_QUERY_TEST_DETAILS_LENGTH)}...`
+}
+
+const loadSavedSqlQueryConnection = async (
+  db: ReturnType<typeof getAppDatabase>,
+  organizationId: string,
+  connectionId: string
+) => {
+  return await db
+    .selectFrom('app_database_connections')
+    .select(['connection_id', 'connection_name'])
+    .where('organization_id', '=', organizationId)
+    .where('connection_id', '=', connectionId)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst() as SavedSqlQueryConnectionRow | undefined
 }
 
 /**
@@ -237,13 +284,11 @@ export const saveSavedSqlQuery = async (
 
     const db = getAppDatabase()
     const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
-    const connection = await db
-      .selectFrom('app_database_connections')
-      .select(['connection_id', 'connection_name'])
-      .where('organization_id', '=', organizationId)
-      .where('connection_id', '=', input.connectionId)
-      .where('deleted_at', 'is', null)
-      .executeTakeFirst() as SavedSqlQueryConnectionRow | undefined
+    const connection = await loadSavedSqlQueryConnection(
+      db,
+      organizationId,
+      input.connectionId
+    )
 
     if (!connection) {
       return {
@@ -274,7 +319,7 @@ export const saveSavedSqlQuery = async (
         'created_at',
         'updated_at'
       ])
-      .executeTakeFirst() as SavedSqlQueryInsertRow | undefined
+      .executeTakeFirst() as SavedSqlQueryWriteRow | undefined
 
     if (!savedQuery) {
       return {
@@ -287,7 +332,7 @@ export const saveSavedSqlQuery = async (
     return {
       ok: true,
       code: 'success',
-      query: mapSavedSqlQuerySummaryFromInsert(
+      query: mapSavedSqlQuerySummaryFromWrite(
         savedQuery,
         connection.connection_name
       )
@@ -314,6 +359,251 @@ export const saveSavedSqlQuery = async (
         ok: false,
         code: 'duplicate_query_name',
         message: 'duplicate_query_name'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Returns an explicitly requested saved SQL query and decrypts the stored SQL
+ * payload only for this edit-time UI read path.
+ */
+export const getSavedSqlQuery = async (
+  authContext: AuthenticatedOrganizationContext,
+  queryId: string
+): Promise<GetSavedSqlQueryResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const query = await db
+      .selectFrom('app_saved_sql_queries')
+      .select([
+        'query_id',
+        'query_name',
+        'connection_id',
+        'encrypted_sql',
+        'created_at',
+        'updated_at'
+      ])
+      .where('organization_id', '=', organizationId)
+      .where('query_id', '=', queryId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as SavedSqlQueryDetailsRow | undefined
+
+    if (!query) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    return {
+      ok: true,
+      code: 'success',
+      query: mapSavedSqlQueryDetails(
+        query,
+        decryptSavedSqlQuerySecret(query.encrypted_sql).sql
+      )
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Updates a saved SQL query for the authenticated organization and stores the
+ * SQL payload only in encrypted form.
+ */
+export const updateSavedSqlQuery = async (
+  authContext: AuthenticatedOrganizationContext,
+  input: UpdateSavedSqlQueryInput
+): Promise<UpdateSavedSqlQueryResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const existingQuery = await db
+      .selectFrom('app_saved_sql_queries')
+      .select(['query_id'])
+      .where('organization_id', '=', organizationId)
+      .where('query_id', '=', input.queryId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst()
+
+    if (!existingQuery) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    const connection = await loadSavedSqlQueryConnection(
+      db,
+      organizationId,
+      input.connectionId
+    )
+
+    if (!connection) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    const encryptedSql = encryptSavedSqlQuerySecret({
+      sql: input.sql
+    })
+    const updatedQuery = await db
+      .updateTable('app_saved_sql_queries')
+      .set({
+        connection_id: connection.connection_id,
+        query_name: input.queryName,
+        encrypted_sql: encryptedSql,
+        updated_by_user_id: authContext.userId
+      })
+      .where('organization_id', '=', organizationId)
+      .where('query_id', '=', input.queryId)
+      .where('deleted_at', 'is', null)
+      .returning([
+        'query_id',
+        'query_name',
+        'connection_id',
+        'created_at',
+        'updated_at'
+      ])
+      .executeTakeFirst() as SavedSqlQueryWriteRow | undefined
+
+    if (!updatedQuery) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    return {
+      ok: true,
+      code: 'success',
+      query: mapSavedSqlQuerySummaryFromWrite(
+        updatedQuery,
+        connection.connection_name
+      )
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
+      }
+    }
+
+    if (isConnectionForeignKeyError(error)) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    if (isDuplicateQueryNameError(error)) {
+      return {
+        ok: false,
+        code: 'duplicate_query_name',
+        message: 'duplicate_query_name'
+      }
+    }
+
+    console.error(error)
+
+    return {
+      ok: false,
+      code: 'unexpected_error',
+      message: 'unexpected_error'
+    }
+  }
+}
+
+/**
+ * Soft deletes a saved SQL query for the authenticated organization after the
+ * caller confirms the visible query name.
+ */
+export const deleteSavedSqlQuery = async (
+  authContext: AuthenticatedOrganizationContext,
+  input: DeleteSavedSqlQueryInput
+): Promise<DeleteSavedSqlQueryResult> => {
+  try {
+    const db = getAppDatabase()
+    const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+    const query = await db
+      .selectFrom('app_saved_sql_queries')
+      .select(['query_id', 'query_name'])
+      .where('organization_id', '=', organizationId)
+      .where('query_id', '=', input.queryId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst() as SavedSqlQueryIdentityRow | undefined
+
+    if (!query) {
+      return {
+        ok: false,
+        code: 'not_found',
+        message: 'not_found'
+      }
+    }
+
+    if (query.query_name !== input.confirmationName) {
+      return {
+        ok: false,
+        code: 'confirmation_mismatch',
+        message: 'confirmation_mismatch'
+      }
+    }
+
+    await db
+      .updateTable('app_saved_sql_queries')
+      .set({
+        deleted_at: new Date(),
+        updated_by_user_id: authContext.userId
+      })
+      .where('organization_id', '=', organizationId)
+      .where('query_id', '=', input.queryId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst()
+
+    return {
+      ok: true,
+      code: 'success'
+    }
+  } catch (error) {
+    if (isPersistenceConfigurationError(error)) {
+      return {
+        ok: false,
+        code: 'persistence_unavailable',
+        message: 'persistence_unavailable'
       }
     }
 

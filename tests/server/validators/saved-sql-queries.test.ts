@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  validateDeleteSavedSqlQueryInput,
+  validateSavedSqlQueryId,
   validateSaveSavedSqlQueryInput,
-  validateTestSavedSqlQueryInput
+  validateTestSavedSqlQueryInput,
+  validateUpdateSavedSqlQueryInput
 } from '../../../server/validators/saved-sql-queries'
 
 describe('validateSaveSavedSqlQueryInput', () => {
@@ -203,6 +206,145 @@ describe('validateTestSavedSqlQueryInput', () => {
       data: {
         connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
         sql: '  select id from customers where active = true\n'
+      }
+    })
+  })
+})
+
+describe('validateSavedSqlQueryId', () => {
+  it('requires a valid saved query id', () => {
+    expect(validateSavedSqlQueryId('bad-id')).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'query_id_invalid',
+      message: 'query_id_invalid',
+      field: 'queryId'
+    })
+  })
+
+  it('returns normalized saved query ids', () => {
+    expect(validateSavedSqlQueryId(' 2f8f9425-55cf-4d8e-a446-638848de1942 ')).toEqual({
+      ok: true,
+      data: {
+        queryId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+  })
+})
+
+describe('validateUpdateSavedSqlQueryInput', () => {
+  it('returns query id validation errors first', () => {
+    expect(validateUpdateSavedSqlQueryInput('bad-id', {})).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'query_id_invalid',
+      message: 'query_id_invalid',
+      field: 'queryId'
+    })
+  })
+
+  it('maps save validation errors into update validation errors', () => {
+    expect(validateUpdateSavedSqlQueryInput(
+      '2f8f9425-55cf-4d8e-a446-638848de1942',
+      {
+        queryName: 'Top customers',
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        sql: '   '
+      }
+    )).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'sql_required',
+      message: 'sql_required',
+      field: 'sql'
+    })
+  })
+
+  it('returns normalized update data when the payload is valid', () => {
+    expect(validateUpdateSavedSqlQueryInput(
+      ' 2f8f9425-55cf-4d8e-a446-638848de1942 ',
+      {
+        queryName: ' Top customers ',
+        connectionId: ' 7c6d9425-55cf-4d8e-a446-638848de1942 ',
+        sql: 'select * from customers'
+      }
+    )).toEqual({
+      ok: true,
+      data: {
+        queryId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        queryName: 'Top customers',
+        connectionId: '7c6d9425-55cf-4d8e-a446-638848de1942',
+        sql: 'select * from customers'
+      }
+    })
+  })
+})
+
+describe('validateDeleteSavedSqlQueryInput', () => {
+  it('returns query id validation errors first', () => {
+    expect(validateDeleteSavedSqlQueryInput('bad-id', {})).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'query_id_invalid',
+      message: 'query_id_invalid',
+      field: 'queryId'
+    })
+  })
+
+  it('requires the delete request body to be an object', () => {
+    expect(validateDeleteSavedSqlQueryInput(
+      '2f8f9425-55cf-4d8e-a446-638848de1942',
+      null
+    )).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'body_invalid',
+      message: 'body_invalid',
+      field: 'body'
+    })
+  })
+
+  it('requires a confirmation name string', () => {
+    expect(validateDeleteSavedSqlQueryInput(
+      '2f8f9425-55cf-4d8e-a446-638848de1942',
+      {
+        confirmationName: 42
+      }
+    )).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'confirmation_name_invalid',
+      message: 'confirmation_name_invalid',
+      field: 'confirmationName'
+    })
+  })
+
+  it('requires a non-empty confirmation name', () => {
+    expect(validateDeleteSavedSqlQueryInput(
+      '2f8f9425-55cf-4d8e-a446-638848de1942',
+      {
+        confirmationName: '   '
+      }
+    )).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'confirmation_name_required',
+      message: 'confirmation_name_required',
+      field: 'confirmationName'
+    })
+  })
+
+  it('returns normalized delete data when the payload is valid', () => {
+    expect(validateDeleteSavedSqlQueryInput(
+      ' 2f8f9425-55cf-4d8e-a446-638848de1942 ',
+      {
+        confirmationName: ' Top customers '
+      }
+    )).toEqual({
+      ok: true,
+      data: {
+        queryId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        confirmationName: 'Top customers'
       }
     })
   })
