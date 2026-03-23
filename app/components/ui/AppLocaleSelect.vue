@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { locale, locales } = useI18n()
+const { locale, localeCodes, locales, setLocale } = useI18n()
 
 const availableLocales = computed(() => {
   return locales.value.flatMap((entry) => {
@@ -24,11 +24,23 @@ const availableLocales = computed(() => {
     }]
   })
 })
+
+async function updateLocale(localeCode: string | undefined) {
+  if (!localeCode || localeCode === locale.value || !isLocaleCode(localeCode)) {
+    return
+  }
+
+  await setLocale(localeCode)
+}
+
+function isLocaleCode(localeCode: string): localeCode is typeof locale.value {
+  return localeCodes.value.some(code => code === localeCode)
+}
 </script>
 
 <template>
   <USelectMenu
-    v-model="locale"
+    :model-value="locale"
     :items="availableLocales"
     value-key="code"
     label-key="name"
@@ -36,5 +48,6 @@ const availableLocales = computed(() => {
     leading-icon="i-lucide-languages"
     size="sm"
     variant="outline"
+    @update:model-value="updateLocale"
   />
 </template>

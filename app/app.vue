@@ -2,21 +2,30 @@
 import { en } from '@nuxt/ui/locale'
 
 const { locale } = useI18n()
-const htmlLang = computed(() => {
-  return locale.value === 'pseudo' ? 'en-XA' : 'en'
+const pseudo = extendLocale(en, {
+  code: 'en-XA',
+  name: 'Pseudo'
+})
+const locales = {
+  en,
+  pseudo
+} as const
+
+const uiLocale = computed(() => {
+  return locales[locale.value] ?? en
 })
 
-useHead({
+useHead(() => ({
   htmlAttrs: {
-    lang: htmlLang,
-    dir: 'ltr'
+    lang: uiLocale.value.code,
+    dir: uiLocale.value.dir
   }
-})
+}))
 </script>
 
 <template>
   <UApp
-    :locale="en"
+    :locale="uiLocale"
     :toaster="{ position: 'top-right', duration: 5000 }"
   >
     <NuxtRouteAnnouncer />

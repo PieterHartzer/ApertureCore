@@ -95,7 +95,10 @@ export default defineNuxtConfig({
   i18n: {
     defaultLocale: 'en',
     strategy: 'no_prefix',
-    detectBrowserLanguage: false,
+    detectBrowserLanguage: {
+      cookieKey: 'autodash_locale',
+      useCookie: true
+    },
     langDir: 'locales',
     locales: [
       {
