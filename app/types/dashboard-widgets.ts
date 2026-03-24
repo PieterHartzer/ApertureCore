@@ -119,6 +119,17 @@ const cloneDashboardWidgetPluginConfig = (
   )
 }
 
+export const createDashboardWidgetDraftFromWidget = (
+  widget: DashboardWidget
+): DashboardWidgetDraft => ({
+  dashboardId: widget.dashboardId,
+  title: widget.title,
+  queryId: widget.queryId,
+  pluginId: widget.pluginId,
+  pluginConfig: cloneDashboardWidgetPluginConfig(widget.pluginConfig),
+  refreshIntervalSeconds: widget.refreshIntervalSeconds
+})
+
 export const normalizeDashboardWidgetPluginConfig = (
   plugin: Pick<UIPluginDefinition, 'inputSchema'> | null | undefined,
   pluginConfig: DashboardWidgetPluginConfig
@@ -187,6 +198,19 @@ export const createDashboardWidget = (
   createId: () => string = () => crypto.randomUUID()
 ): DashboardWidget => ({
   id: createId(),
+  dashboardId: draft.dashboardId.trim() || DEFAULT_DASHBOARD_ID,
+  title: draft.title.trim(),
+  queryId: draft.queryId.trim(),
+  pluginId: draft.pluginId.trim(),
+  pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
+  refreshIntervalSeconds: draft.refreshIntervalSeconds
+})
+
+export const updateDashboardWidget = (
+  widget: DashboardWidget,
+  draft: DashboardWidgetDraft
+): DashboardWidget => ({
+  ...widget,
   dashboardId: draft.dashboardId.trim() || DEFAULT_DASHBOARD_ID,
   title: draft.title.trim(),
   queryId: draft.queryId.trim(),

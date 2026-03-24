@@ -12,9 +12,11 @@ import type {
 } from '~/types/dashboard-widgets'
 import {
   createDashboardWidget,
+  createDashboardWidgetDraftFromWidget,
   createEmptyDashboardWidgetDraft,
   isDashboardWidgetPluginConfigComplete,
-  normalizeDashboardWidgetPluginConfig
+  normalizeDashboardWidgetPluginConfig,
+  updateDashboardWidget
 } from '~/types/dashboard-widgets'
 import type { SavedSqlQuerySummary } from '~/types/saved-sql-queries'
 import {
@@ -39,6 +41,7 @@ const { getPlugin, getPlugins } = useUIPlugins()
 const queryResults = useDashboardQueryResults()
 const widgets = useState<DashboardWidget[]>('dashboard-widgets', () => [])
 const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
+const editingWidgetId = ref<string | null>(null)
 const previewStateKey = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
@@ -105,6 +108,16 @@ const selectedPlugin = computed(() => {
     : null
 })
 
+const editingWidget = computed(() => {
+  if (!editingWidgetId.value) {
+    return null
+  }
+
+  return widgets.value.find((widget) => widget.id === editingWidgetId.value) ?? null
+})
+
+const isEditingWidget = computed(() => editingWidget.value !== null)
+
 const previewTarget = computed(() => {
   if (!selectedQuery.value) {
     return null
@@ -166,7 +179,7 @@ const selectedPluginDescription = computed(() => {
   return getPluginDefinitionDescription(selectedPlugin.value)
 })
 
-const addWidgetDisabled = computed(() => {
+const submitWidgetDisabled = computed(() => {
   return (
     !selectedQuery.value ||
     !selectedPlugin.value ||
@@ -176,6 +189,30 @@ const addWidgetDisabled = computed(() => {
       draft.value.pluginConfig
     )
   )
+})
+
+const builderTitle = computed(() => {
+  return isEditingWidget.value
+    ? t('pages.dashboard.builder.editTitle')
+    : t('pages.dashboard.builder.title')
+})
+
+const builderDescription = computed(() => {
+  return isEditingWidget.value
+    ? t('pages.dashboard.builder.editDescription')
+    : t('pages.dashboard.builder.description')
+})
+
+const submitWidgetActionLabel = computed(() => {
+  return isEditingWidget.value
+    ? t('pages.dashboard.builder.actions.save')
+    : t('pages.dashboard.builder.actions.add')
+})
+
+const submitWidgetActionIcon = computed(() => {
+  return isEditingWidget.value
+    ? 'i-lucide-save'
+    : 'i-lucide-plus'
 })
 
 const widgetTargets = computed(() => {
@@ -441,11 +478,21 @@ const refreshWidgets = async (force = false) => {
 }
 
 const resetDraft = () => {
+  editingWidgetId.value = null
   draft.value = createEmptyDashboardWidgetDraft()
 }
 
-const onAddWidget = async () => {
-  if (addWidgetDisabled.value || !selectedPlugin.value || !selectedQuery.value) {
+const onEditWidget = (widget: DashboardWidget) => {
+  editingWidgetId.value = widget.id
+  draft.value = createDashboardWidgetDraftFromWidget(widget)
+}
+
+const onCancelEditingWidget = () => {
+  resetDraft()
+}
+
+const onSubmitWidget = async () => {
+  if (submitWidgetDisabled.value || !selectedPlugin.value || !selectedQuery.value) {
     return
   }
 
@@ -456,23 +503,37 @@ const onAddWidget = async () => {
     pluginName: getPluginLabel(selectedPlugin.value.id)
   })
 
-  widgets.value = [
-    ...widgets.value,
-    createDashboardWidget({
-      ...draft.value,
-      pluginConfig: normalizeDashboardWidgetPluginConfig(
-        selectedPlugin.value,
-        draft.value.pluginConfig
-      ),
-      title: draft.value.title.trim() || defaultTitle
+  const normalizedDraft: DashboardWidgetDraft = {
+    ...draft.value,
+    pluginConfig: normalizeDashboardWidgetPluginConfig(
+      selectedPlugin.value,
+      draft.value.pluginConfig
+    ),
+    title: draft.value.title.trim() || defaultTitle
+  }
+
+  if (editingWidget.value) {
+    widgets.value = widgets.value.map((widget) => {
+      return widget.id === editingWidget.value?.id
+        ? updateDashboardWidget(widget, normalizedDraft)
+        : widget
     })
-  ]
+  } else {
+    widgets.value = [
+      ...widgets.value,
+      createDashboardWidget(normalizedDraft)
+    ]
+  }
 
   resetDraft()
   await refreshWidgets()
 }
 
 const onRemoveWidget = (widgetId: string) => {
+  if (editingWidgetId.value === widgetId) {
+    resetDraft()
+  }
+
   widgets.value = widgets.value.filter((widget) => widget.id !== widgetId)
 }
 
@@ -499,6 +560,15 @@ watch(
   },
   {
     immediate: true
+  }
+)
+
+watch(
+  editingWidget,
+  (widget) => {
+    if (editingWidgetId.value && !widget) {
+      resetDraft()
+    }
   }
 )
 
@@ -565,8 +635,8 @@ onBeforeUnmount(() => {
       >
         <UPageCard
           icon="i-lucide-sliders-horizontal"
-          :title="t('pages.dashboard.builder.title')"
-          :description="t('pages.dashboard.builder.description')"
+          :title="builderTitle"
+          :description="builderDescription"
         >
           <div class="space-y-6">
             <UFormField
@@ -707,10 +777,10 @@ onBeforeUnmount(() => {
 
             <div class="flex flex-wrap items-center gap-3">
               <UButton
-                icon="i-lucide-plus"
-                :label="t('pages.dashboard.builder.actions.add')"
-                :disabled="addWidgetDisabled"
-                @click="onAddWidget"
+                :icon="submitWidgetActionIcon"
+                :label="submitWidgetActionLabel"
+                :disabled="submitWidgetDisabled"
+                @click="onSubmitWidget"
               />
               <UButton
                 color="neutral"
@@ -719,6 +789,14 @@ onBeforeUnmount(() => {
                 :label="t('pages.dashboard.builder.actions.refreshPreview')"
                 :disabled="!selectedQuery"
                 @click="loadPreviewQuery(true)"
+              />
+              <UButton
+                v-if="isEditingWidget"
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-x"
+                :label="t('pages.dashboard.builder.actions.cancelEdit')"
+                @click="onCancelEditingWidget"
               />
             </div>
           </div>
@@ -814,6 +892,13 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="flex items-center gap-2">
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-pencil"
+                    :label="t('pages.dashboard.widgets.actions.edit')"
+                    @click="onEditWidget(widget)"
+                  />
                   <UButton
                     color="neutral"
                     variant="ghost"

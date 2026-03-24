@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import {
   createDashboardWidget,
+  createDashboardWidgetDraftFromWidget,
   createEmptyDashboardWidgetDraft,
   isDashboardWidgetPluginConfigComplete,
-  normalizeDashboardWidgetPluginConfig
+  normalizeDashboardWidgetPluginConfig,
+  updateDashboardWidget
 } from '../../../app/types/dashboard-widgets'
 
 describe('dashboard widget helpers', () => {
@@ -190,5 +192,71 @@ describe('dashboard widget helpers', () => {
 
     expect(widget.pluginConfig.visibleColumns).toEqual(['region', 'sales_total'])
     expect(widget.pluginConfig.visibleColumns).not.toBe(visibleColumns)
+  })
+
+  it('creates an editable draft from an existing widget', () => {
+    const widget = {
+      id: 'widget-1',
+      dashboardId: 'default-dashboard',
+      title: 'Revenue',
+      queryId: 'query-1',
+      pluginId: 'table',
+      pluginConfig: {
+        visibleColumns: ['region', 'sales_total']
+      },
+      refreshIntervalSeconds: 30
+    }
+
+    const draft = createDashboardWidgetDraftFromWidget(widget)
+
+    expect(draft).toEqual({
+      dashboardId: 'default-dashboard',
+      title: 'Revenue',
+      queryId: 'query-1',
+      pluginId: 'table',
+      pluginConfig: {
+        visibleColumns: ['region', 'sales_total']
+      },
+      refreshIntervalSeconds: 30
+    })
+    expect(draft.pluginConfig.visibleColumns).not.toBe(widget.pluginConfig.visibleColumns)
+  })
+
+  it('updates an existing widget without changing its identifier', () => {
+    const widget = {
+      id: 'widget-1',
+      dashboardId: 'default-dashboard',
+      title: 'Revenue',
+      queryId: 'query-1',
+      pluginId: 'table',
+      pluginConfig: {
+        visibleColumns: ['region']
+      },
+      refreshIntervalSeconds: 30
+    }
+    const updatedWidget = updateDashboardWidget(widget, {
+      dashboardId: 'default-dashboard',
+      title: ' Revenue by region ',
+      queryId: ' query-2 ',
+      pluginId: ' bar-chart ',
+      pluginConfig: {
+        xField: 'region',
+        yField: 'sales_total'
+      },
+      refreshIntervalSeconds: 60
+    })
+
+    expect(updatedWidget).toEqual({
+      id: 'widget-1',
+      dashboardId: 'default-dashboard',
+      title: 'Revenue by region',
+      queryId: 'query-2',
+      pluginId: 'bar-chart',
+      pluginConfig: {
+        xField: 'region',
+        yField: 'sales_total'
+      },
+      refreshIntervalSeconds: 60
+    })
   })
 })
