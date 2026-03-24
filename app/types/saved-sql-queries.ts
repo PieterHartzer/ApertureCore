@@ -34,6 +34,56 @@ export interface SavedSqlQueryConnectionOption {
   value: string
 }
 
+export interface SavedSqlQueryRunInput {
+  connectionId: string
+  queryId: string
+}
+
+export type SavedSqlQueryRunIssue =
+  | 'body_invalid'
+  | 'connection_id_invalid'
+  | 'query_id_invalid'
+
+export interface SavedSqlQueryRunSuccessResponse {
+  ok: true
+  code: 'success'
+  columns: string[]
+  rows: SavedSqlQueryResultRow[]
+  etag: string
+}
+
+export interface SavedSqlQueryRunNotModifiedResponse {
+  ok: true
+  code: 'not_modified'
+  etag: string
+}
+
+export interface SavedSqlQueryRunErrorResponse {
+  ok: false
+  code:
+    | 'invalid_input'
+    | 'forbidden'
+    | 'unsupported_database_type'
+    | 'authentication_failed'
+    | 'database_not_found'
+    | 'connection_failed'
+    | 'timeout'
+    | 'ssl_required'
+    | 'query_rejected'
+    | 'query_failed'
+    | 'persistence_unavailable'
+    | 'unexpected_error'
+  message: string
+  messageKey?: string
+  field?: 'connectionId' | 'queryId' | 'body'
+  issue?: SavedSqlQueryRunIssue
+}
+
+export type SavedSqlQueryRunResponse =
+  | SavedSqlQueryRunSuccessResponse
+  | SavedSqlQueryRunNotModifiedResponse
+  | SavedSqlQueryRunErrorResponse
+
 export type SavedSqlQueryGetIssue = 'query_id_invalid'
 
 export interface SavedSqlQueryGetResponse {

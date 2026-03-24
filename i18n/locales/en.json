@@ -26,7 +26,160 @@
     "dashboard": {
       "headline": "ApertureCore",
       "title": "Dashboard",
-      "description": "Create view-only dashboards, stats, and cards from your own database."
+      "description": "Create view-only dashboards, stats, and cards from your own database.",
+      "errors": {
+        "loadQueriesTitle": "Could not load dashboard queries"
+      },
+      "builder": {
+        "title": "Add widget",
+        "description": "Pick a saved query, choose a plugin, and map query fields into widget inputs.",
+        "fields": {
+          "query": {
+            "label": "Query",
+            "description": "The saved SQL query that powers this widget.",
+            "placeholder": "Select a saved query",
+            "option": "{queryName} ({connectionName})"
+          },
+          "plugin": {
+            "label": "Plugin",
+            "description": "The renderer used to display the query result.",
+            "placeholder": "Select a UI plugin"
+          },
+          "title": {
+            "label": "Widget title",
+            "description": "Optional. Leave blank to generate a title from the query and plugin.",
+            "placeholder": "Revenue trend"
+          },
+          "refresh": {
+            "label": "Refresh interval",
+            "description": "How often this widget should refresh when the dashboard is open."
+          }
+        },
+        "refresh": {
+          "option": "Every {seconds} seconds"
+        },
+        "mapping": {
+          "title": "Field mapping",
+          "description": "Map query result fields into the plugin inputs.",
+          "placeholder": "Select a query field",
+          "option": "{field} ({type})",
+          "emptyTitle": "Select a plugin first",
+          "emptyDescription": "Plugin-specific field mappings appear once a renderer has been selected.",
+          "noneTitle": "No field mapping required",
+          "noneDescription": "This plugin can render the query result without additional mapping.",
+          "types": {
+            "string": "string",
+            "number": "number",
+            "boolean": "boolean",
+            "date": "date",
+            "unknown": "unknown"
+          }
+        },
+        "defaultTitle": "{queryName} · {pluginName}",
+        "preview": {
+          "loadingTitle": "Loading query preview",
+          "loadingDescription": "Running the selected query so the field mappings and widget preview stay in sync.",
+          "errorTitle": "Could not load preview"
+        },
+        "actions": {
+          "add": "Add widget",
+          "refreshPreview": "Refresh preview"
+        }
+      },
+      "preview": {
+        "title": "Widget preview",
+        "description": "Preview the selected plugin with cached query results before adding it to the dashboard.",
+        "empty": "Select a query and plugin to preview a widget."
+      },
+      "widgets": {
+        "title": "Dashboard widgets",
+        "description": "Widgets reuse cached query results and refresh automatically while the dashboard stays open.",
+        "actions": {
+          "refreshAll": "Refresh all widgets",
+          "refreshOne": "Refresh",
+          "remove": "Remove"
+        },
+        "empty": {
+          "title": "No widgets yet",
+          "description": "Add a widget to connect a saved query to a dashboard plugin."
+        },
+        "card": {
+          "fallbackTitle": "Untitled widget",
+          "missingQuery": "The saved query for this widget is no longer available.",
+          "refreshEvery": "Refresh every {seconds} seconds",
+          "queryMissingTitle": "Query unavailable",
+          "queryMissingDescription": "This widget references a saved query that could not be found in the current organisation.",
+          "loadingTitle": "Loading widget",
+          "loadingDescription": "Running the saved query for this dashboard widget.",
+          "errorTitle": "Widget query failed",
+          "warningTitle": "Showing cached data"
+        }
+      },
+      "plugins": {
+        "shared": {
+          "loading": "Loading chart..."
+        },
+        "renderer": {
+          "unknownTitle": "Unknown plugin",
+          "unknownDescription": "This widget references a plugin that is not registered in the current app.",
+          "incompleteTitle": "Widget configuration incomplete",
+          "incompleteDescription": "Map all required plugin fields before rendering this widget."
+        },
+        "table": {
+          "name": "Table",
+          "description": "Render raw query rows in a table.",
+          "emptyColumns": "No columns are available for this query yet.",
+          "emptyRows": "No rows were returned for this widget."
+        },
+        "line-chart": {
+          "name": "Line chart",
+          "description": "Plot a numeric series against a label or date axis.",
+          "fields": {
+            "xField": {
+              "label": "X axis field"
+            },
+            "yField": {
+              "label": "Y axis field"
+            }
+          },
+          "emptyMapping": "Map both axes to query fields to render this chart.",
+          "emptyRows": "This chart needs rows with numeric values in the selected measure field."
+        },
+        "bar-chart": {
+          "name": "Bar chart",
+          "description": "Compare a numeric series across categories.",
+          "fields": {
+            "xField": {
+              "label": "Category field"
+            },
+            "yField": {
+              "label": "Value field"
+            }
+          },
+          "emptyMapping": "Map both fields to render this chart.",
+          "emptyRows": "This chart needs rows with numeric values in the selected value field."
+        },
+        "stat-card": {
+          "name": "Stat card",
+          "description": "Highlight a single metric from the first result row.",
+          "fields": {
+            "valueField": {
+              "label": "Value field"
+            },
+            "labelField": {
+              "label": "Label field"
+            }
+          },
+          "boolean": {
+            "true": "True",
+            "false": "False"
+          },
+          "emptyValue": "No value",
+          "emptyMapping": "Choose a value field to render this stat card.",
+          "emptyRows": "This widget needs at least one query row.",
+          "firstRowHint": "Showing the first row returned by this query."
+        }
+      }
     }
   },
   "login": {
@@ -412,6 +565,11 @@
         "details": "Database feedback: {details}",
         "persistenceUnavailable": "Saved SQL query testing is temporarily unavailable.",
         "unexpected": "Unexpected error while testing the SQL query."
+      }
+    },
+    "run": {
+      "errors": {
+        "unexpected": "Unexpected error while running the saved SQL query."
       }
     },
   "save": {
