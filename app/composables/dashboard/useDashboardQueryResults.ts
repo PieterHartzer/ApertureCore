@@ -85,6 +85,13 @@ const createDashboardQueryResultState = (
   lastFetchedAt: null
 })
 
+const getEffectiveRefreshIntervalMs = (
+  target: DashboardQueryResultTarget,
+  fallbackRefreshIntervalMs: number
+) => {
+  return target.refreshIntervalMs ?? fallbackRefreshIntervalMs
+}
+
 export const useDashboardQueryResults = (
   requestFetch: typeof $fetch = $fetch,
   options: {
@@ -115,7 +122,10 @@ export const useDashboardQueryResults = (
   ): Promise<DashboardQueryResultState> => {
     const state = getState(target)
     const key = state.key
-    const refreshIntervalMs = target.refreshIntervalMs ?? defaultRefreshIntervalMs
+    const refreshIntervalMs = getEffectiveRefreshIntervalMs(
+      target,
+      defaultRefreshIntervalMs
+    )
 
     if (inFlightRequests.has(key)) {
       return inFlightRequests.get(key) as Promise<DashboardQueryResultState>
@@ -193,10 +203,27 @@ export const useDashboardQueryResults = (
     const uniqueTargets = new Map<string, DashboardQueryResultTarget>()
 
     for (const target of targets) {
-      uniqueTargets.set(
-        buildDashboardQueryResultCacheKey(target, target.queryParameters),
-        target
+      const key = buildDashboardQueryResultCacheKey(
+        target,
+        target.queryParameters
       )
+      const existingTarget = uniqueTargets.get(key)
+
+      if (!existingTarget) {
+        uniqueTargets.set(key, target)
+        continue
+      }
+
+      const mergedRefreshIntervalMs = Math.min(
+        getEffectiveRefreshIntervalMs(existingTarget, defaultRefreshIntervalMs),
+        getEffectiveRefreshIntervalMs(target, defaultRefreshIntervalMs)
+      )
+
+      uniqueTargets.set(key, {
+        ...existingTarget,
+        ...target,
+        refreshIntervalMs: mergedRefreshIntervalMs
+      })
     }
 
     await Promise.all(

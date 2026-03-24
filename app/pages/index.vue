@@ -45,6 +45,7 @@ const queryResults = useDashboardQueryResults()
 const widgets = useState<DashboardWidget[]>('dashboard-widgets', () => [])
 const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
 const isDashboardEditing = ref(false)
+const isWidgetBuilderOpen = ref(false)
 const editingWidgetId = ref<string | null>(null)
 const previewStateKey = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
@@ -348,6 +349,22 @@ const getWidgetErrorMessage = (widget: DashboardWidget) => {
   )
 }
 
+const isWidgetRefreshing = (widget: DashboardWidget) => {
+  const state = getWidgetState(widget)
+
+  return state?.status === 'success' && state.isRefreshing === true
+}
+
+const getWidgetInlineErrorMessage = (widget: DashboardWidget) => {
+  const state = getWidgetState(widget)
+
+  if (!state?.errorMessage || state.status !== 'success') {
+    return ''
+  }
+
+  return getWidgetErrorMessage(widget)
+}
+
 const getPluginInputOptions = (
   input: PluginInputDefinition
 ): PluginInputSelectOption[] => {
@@ -492,21 +509,38 @@ const resetDraft = () => {
   draft.value = createEmptyDashboardWidgetDraft()
 }
 
+const openWidgetBuilder = () => {
+  if (!isDashboardEditing.value) {
+    return
+  }
+
+  resetDraft()
+  isWidgetBuilderOpen.value = true
+}
+
+const onBuilderOpenChange = (open: boolean) => {
+  isWidgetBuilderOpen.value = open
+}
+
 const onEditWidget = (widget: DashboardWidget) => {
-  isDashboardEditing.value = true
+  if (!isDashboardEditing.value) {
+    return
+  }
+
   editingWidgetId.value = widget.id
   draft.value = createDashboardWidgetDraftFromWidget(widget)
+  isWidgetBuilderOpen.value = true
 }
 
 const onCancelEditingWidget = () => {
-  resetDraft()
+  isWidgetBuilderOpen.value = false
 }
 
 const onToggleDashboardEditing = () => {
   isDashboardEditing.value = !isDashboardEditing.value
 
-  if (!isDashboardEditing.value && isEditingWidget.value) {
-    resetDraft()
+  if (!isDashboardEditing.value) {
+    isWidgetBuilderOpen.value = false
   }
 }
 
@@ -544,12 +578,14 @@ const onSubmitWidget = async () => {
     ]
   }
 
+  isWidgetBuilderOpen.value = false
   resetDraft()
   await refreshWidgets()
 }
 
 const onRemoveWidget = (widgetId: string) => {
   if (editingWidgetId.value === widgetId) {
+    isWidgetBuilderOpen.value = false
     resetDraft()
   }
 
@@ -593,6 +629,15 @@ const onRefreshWidget = async (widget: DashboardWidget) => {
 }
 
 watch(
+  isWidgetBuilderOpen,
+  (open) => {
+    if (!open) {
+      resetDraft()
+    }
+  }
+)
+
+watch(
   previewTarget,
   async () => {
     await loadPreviewQuery()
@@ -606,6 +651,7 @@ watch(
   editingWidget,
   (widget) => {
     if (editingWidgetId.value && !widget) {
+      isWidgetBuilderOpen.value = false
       resetDraft()
     }
   }
@@ -668,211 +714,225 @@ onBeforeUnmount(() => {
         {{ listErrorMessage }}
       </AppAlert>
 
-      <div
-        v-else
-        class="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]"
+      <UModal
+        :open="isWidgetBuilderOpen"
+        :title="builderTitle"
+        :description="builderDescription"
+        scrollable
+        :ui="{
+          content: 'w-[calc(100vw-2rem)] max-w-7xl rounded-2xl shadow-xl ring ring-default',
+          body: 'p-0',
+          footer: 'border-t border-default'
+        }"
+        @update:open="onBuilderOpenChange"
       >
-        <UPageCard
-          icon="i-lucide-sliders-horizontal"
-          :title="builderTitle"
-          :description="builderDescription"
-        >
-          <div class="space-y-6">
-            <UFormField
-              name="queryId"
-              :label="t('pages.dashboard.builder.fields.query.label')"
-              :description="t('pages.dashboard.builder.fields.query.description')"
+        <template #body>
+          <div class="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+            <UPageCard
+              icon="i-lucide-sliders-horizontal"
+              :title="builderTitle"
+              :description="builderDescription"
             >
-              <USelect
-                v-model="draft.queryId"
-                class="w-full"
-                :items="queryOptions"
-                :placeholder="t('pages.dashboard.builder.fields.query.placeholder')"
-              />
-            </UFormField>
-
-            <UFormField
-              name="pluginId"
-              :label="t('pages.dashboard.builder.fields.plugin.label')"
-              :description="t('pages.dashboard.builder.fields.plugin.description')"
-            >
-              <USelect
-                v-model="draft.pluginId"
-                class="w-full"
-                :items="pluginOptions"
-                :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')"
-              />
-            </UFormField>
-
-            <p
-              v-if="selectedPluginDescription"
-              class="text-sm leading-6 text-muted"
-            >
-              {{ selectedPluginDescription }}
-            </p>
-
-            <UFormField
-              name="title"
-              :label="t('pages.dashboard.builder.fields.title.label')"
-              :description="t('pages.dashboard.builder.fields.title.description')"
-            >
-              <UInput
-                v-model="draft.title"
-                class="w-full"
-                :placeholder="t('pages.dashboard.builder.fields.title.placeholder')"
-              />
-            </UFormField>
-
-            <UFormField
-              name="refreshIntervalSeconds"
-              :label="t('pages.dashboard.builder.fields.refresh.label')"
-              :description="t('pages.dashboard.builder.fields.refresh.description')"
-            >
-              <USelect
-                v-model="draft.refreshIntervalSeconds"
-                class="w-full"
-                :items="refreshIntervalOptions"
-              />
-            </UFormField>
-
-            <div class="space-y-4">
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-highlighted">
-                  {{ t('pages.dashboard.builder.mapping.title') }}
-                </p>
-                <p class="text-sm leading-6 text-muted">
-                  {{ t('pages.dashboard.builder.mapping.description') }}
-                </p>
-              </div>
-
-              <AppAlert
-                v-if="draft.queryId && previewState?.status === 'pending'"
-                kind="info"
-                :title="t('pages.dashboard.builder.preview.loadingTitle')"
-              >
-                {{ t('pages.dashboard.builder.preview.loadingDescription') }}
-              </AppAlert>
-
-              <AppAlert
-                v-else-if="previewErrorMessage"
-                kind="error"
-                :title="t('pages.dashboard.builder.preview.errorTitle')"
-              >
-                {{ previewErrorMessage }}
-              </AppAlert>
-
-              <AppAlert
-                v-else-if="!selectedPlugin"
-                kind="info"
-                :title="t('pages.dashboard.builder.mapping.emptyTitle')"
-              >
-                {{ t('pages.dashboard.builder.mapping.emptyDescription') }}
-              </AppAlert>
-
-              <AppAlert
-                v-else-if="selectedPlugin.inputSchema.length === 0"
-                kind="info"
-                :title="t('pages.dashboard.builder.mapping.noneTitle')"
-              >
-                {{ t('pages.dashboard.builder.mapping.noneDescription') }}
-              </AppAlert>
-
-              <div
-                v-else
-                class="space-y-4"
-              >
+              <div class="space-y-6">
                 <UFormField
-                  v-for="input in selectedPlugin.inputSchema"
-                  :key="input.key"
-                  :name="input.key"
-                  :label="getPluginInputLabel(input)"
-                  :description="getPluginInputDescription(input)"
-                  :required="input.required"
+                  name="queryId"
+                  :label="t('pages.dashboard.builder.fields.query.label')"
+                  :description="t('pages.dashboard.builder.fields.query.description')"
                 >
-                  <USelectMenu
-                    v-if="getUIPluginInputSelectionMode(input) === 'multiple'"
-                    :model-value="getDraftPluginConfigValues(input.key)"
-                    class="w-full"
-                    :items="getPluginInputOptions(input)"
-                    value-key="value"
-                    label-key="label"
-                    :search-input="false"
-                    multiple
-                    :placeholder="t('pages.dashboard.builder.mapping.multiplePlaceholder')"
-                    @update:model-value="setDraftPluginConfigValues(input.key, $event)"
-                  />
-
                   <USelect
-                    v-else
-                    :model-value="getDraftPluginConfigValue(input.key)"
+                    v-model="draft.queryId"
                     class="w-full"
-                    :items="getPluginInputOptions(input)"
-                    :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
-                    @update:model-value="setDraftPluginConfigValue(input.key, $event)"
+                    :items="queryOptions"
+                    :placeholder="t('pages.dashboard.builder.fields.query.placeholder')"
                   />
                 </UFormField>
+
+                <UFormField
+                  name="pluginId"
+                  :label="t('pages.dashboard.builder.fields.plugin.label')"
+                  :description="t('pages.dashboard.builder.fields.plugin.description')"
+                >
+                  <USelect
+                    v-model="draft.pluginId"
+                    class="w-full"
+                    :items="pluginOptions"
+                    :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')"
+                  />
+                </UFormField>
+
+                <p
+                  v-if="selectedPluginDescription"
+                  class="text-sm leading-6 text-muted"
+                >
+                  {{ selectedPluginDescription }}
+                </p>
+
+                <UFormField
+                  name="title"
+                  :label="t('pages.dashboard.builder.fields.title.label')"
+                  :description="t('pages.dashboard.builder.fields.title.description')"
+                >
+                  <UInput
+                    v-model="draft.title"
+                    class="w-full"
+                    :placeholder="t('pages.dashboard.builder.fields.title.placeholder')"
+                  />
+                </UFormField>
+
+                <UFormField
+                  name="refreshIntervalSeconds"
+                  :label="t('pages.dashboard.builder.fields.refresh.label')"
+                  :description="t('pages.dashboard.builder.fields.refresh.description')"
+                >
+                  <USelect
+                    v-model="draft.refreshIntervalSeconds"
+                    class="w-full"
+                    :items="refreshIntervalOptions"
+                  />
+                </UFormField>
+
+                <div class="space-y-4">
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium text-highlighted">
+                      {{ t('pages.dashboard.builder.mapping.title') }}
+                    </p>
+                    <p class="text-sm leading-6 text-muted">
+                      {{ t('pages.dashboard.builder.mapping.description') }}
+                    </p>
+                  </div>
+
+                  <AppAlert
+                    v-if="draft.queryId && previewState?.status === 'pending'"
+                    kind="info"
+                    :title="t('pages.dashboard.builder.preview.loadingTitle')"
+                  >
+                    {{ t('pages.dashboard.builder.preview.loadingDescription') }}
+                  </AppAlert>
+
+                  <AppAlert
+                    v-else-if="previewErrorMessage"
+                    kind="error"
+                    :title="t('pages.dashboard.builder.preview.errorTitle')"
+                  >
+                    {{ previewErrorMessage }}
+                  </AppAlert>
+
+                  <AppAlert
+                    v-else-if="!selectedPlugin"
+                    kind="info"
+                    :title="t('pages.dashboard.builder.mapping.emptyTitle')"
+                  >
+                    {{ t('pages.dashboard.builder.mapping.emptyDescription') }}
+                  </AppAlert>
+
+                  <AppAlert
+                    v-else-if="selectedPlugin.inputSchema.length === 0"
+                    kind="info"
+                    :title="t('pages.dashboard.builder.mapping.noneTitle')"
+                  >
+                    {{ t('pages.dashboard.builder.mapping.noneDescription') }}
+                  </AppAlert>
+
+                  <div
+                    v-else
+                    class="space-y-4"
+                  >
+                    <UFormField
+                      v-for="input in selectedPlugin.inputSchema"
+                      :key="input.key"
+                      :name="input.key"
+                      :label="getPluginInputLabel(input)"
+                      :description="getPluginInputDescription(input)"
+                      :required="input.required"
+                    >
+                      <USelectMenu
+                        v-if="getUIPluginInputSelectionMode(input) === 'multiple'"
+                        :model-value="getDraftPluginConfigValues(input.key)"
+                        class="w-full"
+                        :items="getPluginInputOptions(input)"
+                        value-key="value"
+                        label-key="label"
+                        :search-input="false"
+                        multiple
+                        :placeholder="t('pages.dashboard.builder.mapping.multiplePlaceholder')"
+                        @update:model-value="setDraftPluginConfigValues(input.key, $event)"
+                      />
+
+                      <USelect
+                        v-else
+                        :model-value="getDraftPluginConfigValue(input.key)"
+                        class="w-full"
+                        :items="getPluginInputOptions(input)"
+                        :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
+                        @update:model-value="setDraftPluginConfigValue(input.key, $event)"
+                      />
+                    </UFormField>
+                  </div>
+                </div>
               </div>
-            </div>
+            </UPageCard>
 
-            <div class="flex flex-wrap items-center gap-3">
-              <UButton
-                :icon="submitWidgetActionIcon"
-                :label="submitWidgetActionLabel"
-                :disabled="submitWidgetDisabled"
-                @click="onSubmitWidget"
-              />
-              <UButton
-                color="neutral"
-                variant="soft"
-                icon="i-lucide-rotate-cw"
-                :label="t('pages.dashboard.builder.actions.refreshPreview')"
-                :disabled="!selectedQuery"
-                @click="loadPreviewQuery(true)"
-              />
-              <UButton
-                v-if="isEditingWidget"
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-x"
-                :label="t('pages.dashboard.builder.actions.cancelEdit')"
-                @click="onCancelEditingWidget"
-              />
-            </div>
+            <UPageCard
+              icon="i-lucide-monitor-up"
+              :title="t('pages.dashboard.preview.title')"
+              :description="t('pages.dashboard.preview.description')"
+            >
+              <div class="space-y-4">
+                <div
+                  v-if="!selectedQuery"
+                  class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+                >
+                  {{ t('pages.dashboard.preview.empty') }}
+                </div>
+
+                <div
+                  v-else-if="previewState?.status === 'pending' && previewStateKey === selectedQuery.id"
+                  class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+                >
+                  {{ t('pages.dashboard.builder.preview.loadingDescription') }}
+                </div>
+
+                <PluginRenderer
+                  v-else
+                  :widget="{
+                    pluginId: draft.pluginId,
+                    pluginConfig: draft.pluginConfig
+                  }"
+                  :columns="previewState?.columns ?? []"
+                  :rows="previewState?.rows ?? []"
+                />
+              </div>
+            </UPageCard>
           </div>
-        </UPageCard>
+        </template>
 
-        <UPageCard
-          icon="i-lucide-monitor-up"
-          :title="t('pages.dashboard.preview.title')"
-          :description="t('pages.dashboard.preview.description')"
-        >
-          <div class="space-y-4">
-            <div
-              v-if="!selectedQuery"
-              class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
-            >
-              {{ t('pages.dashboard.preview.empty') }}
-            </div>
-
-            <div
-              v-else-if="previewState?.status === 'pending' && previewStateKey === selectedQuery.id"
-              class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
-            >
-              {{ t('pages.dashboard.builder.preview.loadingDescription') }}
-            </div>
-
-            <PluginRenderer
-              v-else
-              :widget="{
-                pluginId: draft.pluginId,
-                pluginConfig: draft.pluginConfig
-              }"
-              :columns="previewState?.columns ?? []"
-              :rows="previewState?.rows ?? []"
+        <template #footer>
+          <div class="flex w-full flex-wrap items-center justify-end gap-3">
+            <UButton
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-rotate-cw"
+              :label="t('pages.dashboard.builder.actions.refreshPreview')"
+              :disabled="!selectedQuery"
+              @click="loadPreviewQuery(true)"
+            />
+            <UButton
+              v-if="isEditingWidget"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-x"
+              :label="t('pages.dashboard.builder.actions.cancelEdit')"
+              @click="onCancelEditingWidget"
+            />
+            <UButton
+              :icon="submitWidgetActionIcon"
+              :label="submitWidgetActionLabel"
+              :disabled="submitWidgetDisabled"
+              @click="onSubmitWidget"
             />
           </div>
-        </UPageCard>
-      </div>
+        </template>
+      </UModal>
 
       <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -886,6 +946,12 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="flex items-center gap-2">
+            <UButton
+              v-if="isDashboardEditing"
+              icon="i-lucide-plus"
+              :label="t('pages.dashboard.builder.actions.add')"
+              @click="openWidgetBuilder"
+            />
             <UButton
               color="neutral"
               variant="soft"
@@ -985,12 +1051,6 @@ onBeforeUnmount(() => {
               </template>
 
               <div class="flex h-full min-h-0 flex-col gap-4">
-                <p class="text-xs uppercase tracking-[0.18em] text-muted">
-                  {{ t('pages.dashboard.widgets.card.refreshEvery', {
-                    seconds: widget.refreshIntervalSeconds
-                  }) }}
-                </p>
-
                 <AppAlert
                   v-if="!getWidgetQuery(widget)"
                   kind="warning"
@@ -1017,16 +1077,41 @@ onBeforeUnmount(() => {
 
                 <div
                   v-else
-                  class="min-h-0 flex-1"
+                  class="relative min-h-0 flex-1"
                 >
-                  <AppAlert
-                    v-if="getWidgetState(widget)?.errorMessage"
-                    kind="warning"
-                    :title="t('pages.dashboard.widgets.card.warningTitle')"
-                    class="mb-4"
+                  <div
+                    v-if="isWidgetRefreshing(widget) || getWidgetInlineErrorMessage(widget)"
+                    class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end p-3"
                   >
-                    {{ getWidgetErrorMessage(widget) }}
-                  </AppAlert>
+                    <div
+                      class="max-w-full rounded-lg border px-3 py-2 text-xs shadow-sm backdrop-blur"
+                      :class="isWidgetRefreshing(widget)
+                        ? 'border-default bg-default/90 text-muted'
+                        : 'border-error/30 bg-error/10 text-error'"
+                    >
+                      <div
+                        v-if="isWidgetRefreshing(widget)"
+                        class="flex items-center gap-2 font-medium uppercase tracking-[0.18em]"
+                      >
+                        <UIcon
+                          name="i-lucide-loader-circle"
+                          class="size-3.5 animate-spin"
+                        />
+                        <span>{{ t('pages.dashboard.widgets.card.refreshing') }}</span>
+                      </div>
+
+                      <div
+                        v-else
+                        class="flex items-start gap-2"
+                      >
+                        <UIcon
+                          name="i-lucide-triangle-alert"
+                          class="mt-0.5 size-4 shrink-0"
+                        />
+                        <span>{{ getWidgetInlineErrorMessage(widget) }}</span>
+                      </div>
+                    </div>
+                  </div>
 
                   <PluginRenderer
                     class="h-full min-h-0"

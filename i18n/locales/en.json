@@ -115,13 +115,12 @@
         "card": {
           "fallbackTitle": "Untitled widget",
           "missingQuery": "The saved query for this widget is no longer available.",
-          "refreshEvery": "Refresh every {seconds} seconds",
+          "refreshing": "Refreshing",
           "queryMissingTitle": "Query unavailable",
           "queryMissingDescription": "This widget references a saved query that could not be found in the current organisation.",
           "loadingTitle": "Loading widget",
           "loadingDescription": "Running the saved query for this dashboard widget.",
-          "errorTitle": "Widget query failed",
-          "warningTitle": "Showing cached data"
+          "errorTitle": "Widget query failed"
         }
       },
       "plugins": {
