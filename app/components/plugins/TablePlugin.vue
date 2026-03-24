@@ -12,9 +12,18 @@ const props = withDefaults(defineProps<{
 })
 
 const tableColumns = computed(() => {
-  const columnNames = props.columns.length > 0
+  const availableColumns = props.columns.length > 0
     ? props.columns
     : Object.keys(props.data[0] ?? {})
+  const selectedColumns = Array.isArray(props.config.visibleColumns)
+    ? props.config.visibleColumns.filter((value): value is string => {
+        return typeof value === 'string' && value.trim().length > 0
+      })
+    : []
+  const selectedColumnSet = new Set(selectedColumns)
+  const columnNames = selectedColumnSet.size > 0
+    ? availableColumns.filter((columnName) => selectedColumnSet.has(columnName))
+    : availableColumns
 
   return columnNames.map((columnName) => ({
     accessorKey: columnName,

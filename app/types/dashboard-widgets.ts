@@ -1,10 +1,18 @@
-import type { UIPluginDefinition } from '~/types/uiPlugin'
+import {
+  getUIPluginInputSource,
+  getUIPluginInputSelectionMode,
+  type UIPluginDefinition
+} from './uiPlugin'
 
-export type DashboardWidgetPluginConfigValue =
+export type DashboardWidgetPluginConfigPrimitive =
   | string
   | number
   | boolean
   | null
+
+export type DashboardWidgetPluginConfigValue =
+  | DashboardWidgetPluginConfigPrimitive
+  | Array<Exclude<DashboardWidgetPluginConfigPrimitive, null>>
 
 export type DashboardWidgetPluginConfig = Record<
   string,
@@ -42,6 +50,75 @@ export const createEmptyDashboardWidgetDraft = (): DashboardWidgetDraft => ({
   refreshIntervalSeconds: DEFAULT_WIDGET_REFRESH_INTERVAL_SECONDS
 })
 
+const normalizePluginConfigPrimitive = (
+  value: unknown
+): DashboardWidgetPluginConfigPrimitive => {
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value
+  }
+
+  return null
+}
+
+const normalizePluginConfigArray = (
+  value: unknown
+): Array<Exclude<DashboardWidgetPluginConfigPrimitive, null>> => {
+  const candidateValues = Array.isArray(value)
+    ? value
+    : value === null || value === undefined
+      ? []
+      : [value]
+
+  return candidateValues.flatMap((candidateValue) => {
+    const normalizedValue = normalizePluginConfigPrimitive(candidateValue)
+
+    if (normalizedValue === null) {
+      return []
+    }
+
+    if (typeof normalizedValue === 'string' && normalizedValue.length === 0) {
+      return []
+    }
+
+    return [normalizedValue]
+  })
+}
+
+const dedupePluginConfigArray = (
+  values: Array<Exclude<DashboardWidgetPluginConfigPrimitive, null>>
+) => {
+  const normalizedValues: Array<Exclude<DashboardWidgetPluginConfigPrimitive, null>> = []
+  const seenValues = new Set<Exclude<DashboardWidgetPluginConfigPrimitive, null>>()
+
+  for (const value of values) {
+    if (seenValues.has(value)) {
+      continue
+    }
+
+    seenValues.add(value)
+    normalizedValues.push(value)
+  }
+
+  return normalizedValues
+}
+
+const cloneDashboardWidgetPluginConfig = (
+  pluginConfig: DashboardWidgetPluginConfig
+): DashboardWidgetPluginConfig => {
+  return Object.fromEntries(
+    Object.entries(pluginConfig).map(([key, value]) => [
+      key,
+      Array.isArray(value)
+        ? [...value]
+        : value
+    ])
+  )
+}
+
 export const normalizeDashboardWidgetPluginConfig = (
   plugin: Pick<UIPluginDefinition, 'inputSchema'> | null | undefined,
   pluginConfig: DashboardWidgetPluginConfig
@@ -52,18 +129,29 @@ export const normalizeDashboardWidgetPluginConfig = (
 
   return plugin.inputSchema.reduce<DashboardWidgetPluginConfig>((config, input) => {
     const value = pluginConfig[input.key]
+    const optionValues = new Set((input.options ?? []).map((option) => option.value))
+    const isOptionInput = getUIPluginInputSource(input) === 'option'
 
-    if (typeof value === 'string') {
-      config[input.key] = value.trim()
+    if (getUIPluginInputSelectionMode(input) === 'multiple') {
+      const normalizedValues = dedupePluginConfigArray(
+        normalizePluginConfigArray(value)
+      )
+
+      config[input.key] = isOptionInput
+        ? normalizedValues.filter((normalizedValue) => optionValues.has(normalizedValue))
+        : normalizedValues
       return config
     }
 
-    if (typeof value === 'number' || typeof value === 'boolean') {
-      config[input.key] = value
-      return config
-    }
+    const normalizedValue = normalizePluginConfigPrimitive(value)
 
-    config[input.key] = null
+    config[input.key] = (
+      isOptionInput &&
+      normalizedValue !== null &&
+      !optionValues.has(normalizedValue)
+    )
+      ? null
+      : normalizedValue
 
     return config
   }, {})
@@ -84,6 +172,10 @@ export const isDashboardWidgetPluginConfigComplete = (
 
     const value = pluginConfig[input.key]
 
+    if (Array.isArray(value)) {
+      return value.length > 0
+    }
+
     return typeof value === 'string'
       ? value.trim().length > 0
       : typeof value === 'number' || typeof value === 'boolean'
@@ -99,8 +191,6 @@ export const createDashboardWidget = (
   title: draft.title.trim(),
   queryId: draft.queryId.trim(),
   pluginId: draft.pluginId.trim(),
-  pluginConfig: {
-    ...draft.pluginConfig
-  },
+  pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
   refreshIntervalSeconds: draft.refreshIntervalSeconds
 })

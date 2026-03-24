@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildUIPluginFieldOptions,
   filterUIPluginFieldOptions,
+  getUIPluginInputSelectionMode,
+  getUIPluginInputSource,
   inferUIPluginFieldType
 } from '../../../app/types/uiPlugin'
 
@@ -75,5 +77,10 @@ describe('uiPlugin helpers', () => {
         fieldType: 'unknown'
       }
     ])
+  })
+
+  it('defaults plugin inputs to single field selection', () => {
+    expect(getUIPluginInputSource({})).toBe('field')
+    expect(getUIPluginInputSelectionMode({})).toBe('single')
   })
 })

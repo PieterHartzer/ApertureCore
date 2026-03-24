@@ -12,7 +12,17 @@ export const DEFAULT_UI_PLUGINS: UIPluginDefinition[] = [
     description: 'Render raw query rows in a table.',
     descriptionKey: 'pages.dashboard.plugins.table.description',
     component: TablePlugin,
-    inputSchema: []
+    inputSchema: [
+      {
+        key: 'visibleColumns',
+        label: 'Visible columns',
+        labelKey: 'pages.dashboard.plugins.table.fields.visibleColumns.label',
+        description: 'Select the query columns to display. Leave empty to show every column.',
+        descriptionKey: 'pages.dashboard.plugins.table.fields.visibleColumns.description',
+        type: 'string',
+        selectionMode: 'multiple'
+      }
+    ]
   },
   {
     id: 'line-chart',

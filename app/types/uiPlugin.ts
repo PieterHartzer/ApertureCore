@@ -8,6 +8,13 @@ import type {
 export const UI_PLUGIN_INPUT_TYPES = ['string', 'number', 'date'] as const
 export type UIPluginInputType = (typeof UI_PLUGIN_INPUT_TYPES)[number]
 
+export const UI_PLUGIN_INPUT_SOURCES = ['field', 'option'] as const
+export type UIPluginInputSource = (typeof UI_PLUGIN_INPUT_SOURCES)[number]
+
+export const UI_PLUGIN_INPUT_SELECTION_MODES = ['single', 'multiple'] as const
+export type UIPluginInputSelectionMode =
+  (typeof UI_PLUGIN_INPUT_SELECTION_MODES)[number]
+
 export const UI_PLUGIN_FIELD_TYPES = [
   'string',
   'number',
@@ -18,15 +25,26 @@ export const UI_PLUGIN_FIELD_TYPES = [
 
 export type UIPluginFieldType = (typeof UI_PLUGIN_FIELD_TYPES)[number]
 
+export type PluginInputOptionValue = string | number | boolean
+
+export interface PluginInputOption {
+  label: string
+  labelKey?: string
+  value: PluginInputOptionValue
+}
+
 export interface PluginInputDefinition {
   key: string
   label: string
   labelKey?: string
   type: UIPluginInputType
+  source?: UIPluginInputSource
+  selectionMode?: UIPluginInputSelectionMode
   required?: boolean
   description?: string
   descriptionKey?: string
   compatibleFieldTypes?: UIPluginFieldType[]
+  options?: PluginInputOption[]
 }
 
 export interface UIPluginDefinition {
@@ -43,6 +61,18 @@ export interface UIPluginFieldOption {
   label: string
   value: string
   fieldType: UIPluginFieldType
+}
+
+export const getUIPluginInputSource = (
+  input: Pick<PluginInputDefinition, 'source'>
+): UIPluginInputSource => {
+  return input.source ?? 'field'
+}
+
+export const getUIPluginInputSelectionMode = (
+  input: Pick<PluginInputDefinition, 'selectionMode'>
+): UIPluginInputSelectionMode => {
+  return input.selectionMode ?? 'single'
 }
 
 const ISO_DATE_VALUE_PATTERN = /^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/

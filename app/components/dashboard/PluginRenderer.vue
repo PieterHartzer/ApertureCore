@@ -3,6 +3,7 @@ import AppAlert from '~/components/ui/AppAlert.vue'
 import { useUIPlugins } from '~/composables/useUIPlugins'
 import type { DashboardWidget } from '~/types/dashboard-widgets'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
+import { getUIPluginInputSelectionMode } from '~/types/uiPlugin'
 
 const { t } = useI18n()
 
@@ -33,7 +34,13 @@ const missingRequiredInputs = computed(() => {
 
     const value = props.widget.pluginConfig[input.key]
 
-    return typeof value !== 'string' || value.trim().length === 0
+    if (getUIPluginInputSelectionMode(input) === 'multiple') {
+      return !Array.isArray(value) || value.length === 0
+    }
+
+    return typeof value === 'string'
+      ? value.trim().length === 0
+      : typeof value !== 'number' && typeof value !== 'boolean'
   })
 })
 </script>

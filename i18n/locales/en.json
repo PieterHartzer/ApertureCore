@@ -59,14 +59,15 @@
           "option": "Every {seconds} seconds"
         },
         "mapping": {
-          "title": "Field mapping",
-          "description": "Map query result fields into the plugin inputs.",
-          "placeholder": "Select a query field",
+          "title": "Plugin configuration",
+          "description": "Map query fields and configure plugin inputs before rendering the widget.",
+          "placeholder": "Select a value",
+          "multiplePlaceholder": "Select one or more values",
           "option": "{field} ({type})",
           "emptyTitle": "Select a plugin first",
-          "emptyDescription": "Plugin-specific field mappings appear once a renderer has been selected.",
-          "noneTitle": "No field mapping required",
-          "noneDescription": "This plugin can render the query result without additional mapping.",
+          "emptyDescription": "Plugin-specific inputs appear once a renderer has been selected.",
+          "noneTitle": "No plugin configuration required",
+          "noneDescription": "This plugin can render the query result without additional configuration.",
           "types": {
             "string": "string",
             "number": "number",
@@ -123,11 +124,17 @@
           "unknownTitle": "Unknown plugin",
           "unknownDescription": "This widget references a plugin that is not registered in the current app.",
           "incompleteTitle": "Widget configuration incomplete",
-          "incompleteDescription": "Map all required plugin fields before rendering this widget."
+          "incompleteDescription": "Complete all required plugin inputs before rendering this widget."
         },
         "table": {
           "name": "Table",
           "description": "Render raw query rows in a table.",
+          "fields": {
+            "visibleColumns": {
+              "label": "Visible columns",
+              "description": "Select the query columns to display. Leave empty to show every column."
+            }
+          },
           "emptyColumns": "No columns are available for this query yet.",
           "emptyRows": "No rows were returned for this widget."
         },

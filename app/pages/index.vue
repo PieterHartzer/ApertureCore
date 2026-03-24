@@ -7,7 +7,8 @@ import { useSavedSqlQueries } from '~/composables/database/useSavedSqlQueries'
 import { useUIPlugins } from '~/composables/useUIPlugins'
 import type {
   DashboardWidget,
-  DashboardWidgetDraft
+  DashboardWidgetDraft,
+  DashboardWidgetPluginConfigPrimitive
 } from '~/types/dashboard-widgets'
 import {
   createDashboardWidget,
@@ -18,7 +19,10 @@ import {
 import type { SavedSqlQuerySummary } from '~/types/saved-sql-queries'
 import {
   buildUIPluginFieldOptions,
+  getUIPluginInputSelectionMode,
+  getUIPluginInputSource,
   type PluginInputDefinition,
+  type PluginInputOptionValue,
   filterUIPluginFieldOptions
 } from '~/types/uiPlugin'
 import { translateMessage } from '~/utils/translateMessage'
@@ -37,6 +41,16 @@ const widgets = useState<DashboardWidget[]>('dashboard-widgets', () => [])
 const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
 const previewStateKey = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+type PluginInputSelectValue = Exclude<
+  DashboardWidgetPluginConfigPrimitive,
+  null
+>
+
+interface PluginInputSelectOption {
+  label: string
+  value: PluginInputOptionValue
+}
 
 const { data: listResponse, status } = await useAsyncData(
   'dashboard-saved-sql-queries',
@@ -242,6 +256,19 @@ const getPluginInputDescription = (input: PluginInputDefinition) => {
   return input.description
 }
 
+const getPluginInputOptionLabel = (
+  option: {
+    label: string
+    labelKey?: string
+  }
+) => {
+  if (option.labelKey && te(option.labelKey)) {
+    return t(option.labelKey)
+  }
+
+  return option.label
+}
+
 const getWidgetQuery = (widget: DashboardWidget) => {
   return queryLookup.value.get(widget.queryId) ?? null
 }
@@ -274,37 +301,63 @@ const getWidgetErrorMessage = (widget: DashboardWidget) => {
   )
 }
 
-const getPluginInputOptions = (inputKey: string) => {
-  const input = selectedPlugin.value?.inputSchema.find((item) => item.key === inputKey)
-
-  if (!input) {
-    return []
+const getPluginInputOptions = (
+  input: PluginInputDefinition
+): PluginInputSelectOption[] => {
+  if (getUIPluginInputSource(input) === 'option') {
+    return (input.options ?? []).map((option) => ({
+      label: getPluginInputOptionLabel(option),
+      value: option.value
+    }))
   }
 
-  return filterUIPluginFieldOptions(input, previewFieldOptions.value).map((fieldOption) => {
-    return {
-      ...fieldOption,
-      label: t('pages.dashboard.builder.mapping.option', {
-        field: fieldOption.label,
-        type: t(`pages.dashboard.builder.mapping.types.${fieldOption.fieldType}`)
-      })
-    }
-  })
+  return filterUIPluginFieldOptions(input, previewFieldOptions.value).map((fieldOption) => ({
+    label: t('pages.dashboard.builder.mapping.option', {
+      field: fieldOption.label,
+      type: t(`pages.dashboard.builder.mapping.types.${fieldOption.fieldType}`)
+    }),
+    value: fieldOption.value
+  }))
 }
 
 const getDraftPluginConfigValue = (inputKey: string) => {
   const value = draft.value.pluginConfig[inputKey]
 
-  return typeof value === 'string'
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  )
     ? value
     : undefined
 }
 
+const getDraftPluginConfigValues = (inputKey: string) => {
+  const value = draft.value.pluginConfig[inputKey]
+
+  return Array.isArray(value)
+    ? value.filter((item): item is PluginInputSelectValue => {
+        return (
+          typeof item === 'string' ||
+          typeof item === 'number' ||
+          typeof item === 'boolean'
+        )
+      })
+    : []
+}
+
 const setDraftPluginConfigValue = (
   inputKey: string,
-  value: string | undefined
+  value: PluginInputSelectValue | undefined
 ) => {
   draft.value.pluginConfig[inputKey] = value ?? ''
+}
+
+const setDraftPluginConfigValues = (
+  inputKey: string,
+  value: PluginInputSelectValue[] | undefined
+) => {
+  draft.value.pluginConfig[inputKey] = value ?? []
 }
 
 const syncDraftPluginConfig = () => {
@@ -312,19 +365,45 @@ const syncDraftPluginConfig = () => {
     selectedPlugin.value,
     draft.value.pluginConfig
   )
-  const availableFields = new Set(previewFieldOptions.value.map((field) => field.value))
 
   if (selectedPlugin.value) {
     selectedPlugin.value.inputSchema.forEach((input) => {
+      const allowedValues = new Set(
+        getPluginInputOptions(input).map((option) => option.value)
+      )
       const value = normalizedConfig[input.key]
+      const shouldValidateSelection = (
+        getUIPluginInputSource(input) === 'option' ||
+        allowedValues.size > 0
+      )
+
+      if (getUIPluginInputSelectionMode(input) === 'multiple') {
+        if (!Array.isArray(value)) {
+          normalizedConfig[input.key] = []
+          return
+        }
+
+        if (!shouldValidateSelection) {
+          return
+        }
+
+        normalizedConfig[input.key] = value.filter((selectedValue) => {
+          return allowedValues.has(selectedValue)
+        })
+
+        return
+      }
 
       if (
-        typeof value === 'string' &&
-        value &&
-        availableFields.size > 0 &&
-        !availableFields.has(value)
+        shouldValidateSelection &&
+        (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
+        ) &&
+        !allowedValues.has(value)
       ) {
-        normalizedConfig[input.key] = ''
+        normalizedConfig[input.key] = null
       }
     })
   }
@@ -601,10 +680,24 @@ onBeforeUnmount(() => {
                   :description="getPluginInputDescription(input)"
                   :required="input.required"
                 >
+                  <USelectMenu
+                    v-if="getUIPluginInputSelectionMode(input) === 'multiple'"
+                    :model-value="getDraftPluginConfigValues(input.key)"
+                    class="w-full"
+                    :items="getPluginInputOptions(input)"
+                    value-key="value"
+                    label-key="label"
+                    :search-input="false"
+                    multiple
+                    :placeholder="t('pages.dashboard.builder.mapping.multiplePlaceholder')"
+                    @update:model-value="setDraftPluginConfigValues(input.key, $event)"
+                  />
+
                   <USelect
+                    v-else
                     :model-value="getDraftPluginConfigValue(input.key)"
                     class="w-full"
-                    :items="getPluginInputOptions(input.key)"
+                    :items="getPluginInputOptions(input)"
                     :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
                     @update:model-value="setDraftPluginConfigValue(input.key, $event)"
                   />
