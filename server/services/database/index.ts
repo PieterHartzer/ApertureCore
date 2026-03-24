@@ -21,6 +21,12 @@ export const testDatabaseConnection = async (
 export const testDatabaseReadOnlyQuery = async (
   input: ExecuteDatabaseReadOnlyQueryInput
 ): Promise<ExecuteDatabaseReadOnlyQueryResult> => {
+  return executeDatabaseReadOnlyQuery(input)
+}
+
+export const executeDatabaseReadOnlyQuery = async (
+  input: ExecuteDatabaseReadOnlyQueryInput
+): Promise<ExecuteDatabaseReadOnlyQueryResult> => {
   try {
     const executor = createDatabaseQueryExecutor(input.databaseType)
 

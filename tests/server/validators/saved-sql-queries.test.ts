@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   validateDeleteSavedSqlQueryInput,
+  validateRunSavedSqlQueryInput,
   validateSavedSqlQueryId,
   validateSaveSavedSqlQueryInput,
   validateTestSavedSqlQueryInput,
@@ -227,6 +228,57 @@ describe('validateSavedSqlQueryId', () => {
       ok: true,
       data: {
         queryId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+  })
+})
+
+describe('validateRunSavedSqlQueryInput', () => {
+  it('requires the request body to be an object', () => {
+    expect(validateRunSavedSqlQueryInput(null)).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'body_invalid',
+      message: 'body_invalid',
+      field: 'body'
+    })
+  })
+
+  it('requires a valid connection id', () => {
+    expect(validateRunSavedSqlQueryInput({
+      connectionId: 'bad-id',
+      queryId: '2f8f9425-55cf-4d8e-a446-638848de1942'
+    })).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'connection_id_invalid',
+      message: 'connection_id_invalid',
+      field: 'connectionId'
+    })
+  })
+
+  it('requires a valid query id', () => {
+    expect(validateRunSavedSqlQueryInput({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      queryId: 'bad-id'
+    })).toEqual({
+      ok: false,
+      code: 'invalid_input',
+      issue: 'query_id_invalid',
+      message: 'query_id_invalid',
+      field: 'queryId'
+    })
+  })
+
+  it('returns normalized data when the payload is valid', () => {
+    expect(validateRunSavedSqlQueryInput({
+      connectionId: ' 2f8f9425-55cf-4d8e-a446-638848de1942 ',
+      queryId: ' 7c6d9425-55cf-4d8e-a446-638848de1942 '
+    })).toEqual({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        queryId: '7c6d9425-55cf-4d8e-a446-638848de1942'
       }
     })
   })

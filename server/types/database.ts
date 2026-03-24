@@ -86,6 +86,8 @@ export interface ExecuteDatabaseReadOnlyQueryInput {
   password: string
   sslMode: DatabaseSslMode
   sql: string
+  maxRows?: number
+  timeoutMs?: number
 }
 
 export type DatabaseQueryResultValue =

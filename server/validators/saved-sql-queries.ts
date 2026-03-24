@@ -2,6 +2,10 @@ import type {
   DeleteSavedSqlQueryValidationError,
   DeleteSavedSqlQueryValidationIssue,
   DeleteSavedSqlQueryValidationResult,
+  RunSavedSqlQueryInput,
+  RunSavedSqlQueryValidationError,
+  RunSavedSqlQueryValidationIssue,
+  RunSavedSqlQueryValidationResult,
   SaveSavedSqlQueryInput,
   SaveSavedSqlQueryValidationError,
   SaveSavedSqlQueryValidationIssue,
@@ -33,6 +37,17 @@ const createTestValidationError = (
   issue: TestSavedSqlQueryValidationIssue,
   field?: TestSavedSqlQueryValidationError['field']
 ): TestSavedSqlQueryValidationError => ({
+  ok: false,
+  code: 'invalid_input',
+  issue,
+  message: issue,
+  field
+})
+
+const createRunValidationError = (
+  issue: RunSavedSqlQueryValidationIssue,
+  field?: RunSavedSqlQueryValidationError['field']
+): RunSavedSqlQueryValidationError => ({
   ok: false,
   code: 'invalid_input',
   issue,
@@ -267,6 +282,41 @@ export const validateTestSavedSqlQueryInput = (
   const normalizedInput: TestSavedSqlQueryInput = {
     connectionId: value.connectionId.trim(),
     sql: value.sql
+  }
+
+  return {
+    ok: true,
+    data: normalizedInput
+  }
+}
+
+export const validateRunSavedSqlQueryInput = (
+  value: unknown
+): RunSavedSqlQueryValidationResult => {
+  if (!isRecord(value)) {
+    return createRunValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
+  if (typeof value.connectionId !== 'string' || !isUuid(value.connectionId.trim())) {
+    return createRunValidationError(
+      'connection_id_invalid',
+      'connectionId'
+    )
+  }
+
+  if (typeof value.queryId !== 'string' || !isUuid(value.queryId.trim())) {
+    return createRunValidationError(
+      'query_id_invalid',
+      'queryId'
+    )
+  }
+
+  const normalizedInput: RunSavedSqlQueryInput = {
+    connectionId: value.connectionId.trim(),
+    queryId: value.queryId.trim()
   }
 
   return {

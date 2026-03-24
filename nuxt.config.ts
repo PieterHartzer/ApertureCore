@@ -1,3 +1,5 @@
+import { resolvePositiveInteger } from './server/utils/positive-integer'
+
 const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3300')
 const publicAppUrl = process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3300'
 const oidcAuthorizationUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL || ''
@@ -52,6 +54,18 @@ const oidcOrganizationNameClaim =
 const oidcOrganizationPrimaryDomainClaim =
   process.env.APP_OIDC_ORGANIZATION_PRIMARY_DOMAIN_CLAIM ||
   ''
+const queryCacheTtlSeconds = resolvePositiveInteger(
+  process.env.QUERY_CACHE_TTL_SECONDS,
+  60
+)
+const maxQueryRows = resolvePositiveInteger(
+  process.env.MAX_QUERY_ROWS,
+  1000
+)
+const queryTimeoutMs = resolvePositiveInteger(
+  process.env.QUERY_TIMEOUT_MS,
+  10_000
+)
 const oidcOptionalClaims = Array.from(new Set([
   'sub',
   oidcOrganizationIdClaim,
@@ -73,6 +87,9 @@ export default defineNuxtConfig({
     appDatabaseEncryptionKey:
       process.env.APP_DATABASE_ENCRYPTION_KEY ||
       '',
+    queryCacheTtlSeconds,
+    maxQueryRows,
+    queryTimeoutMs,
     oidcOrganizationClaims: {
       idClaim: oidcOrganizationIdClaim,
       nameClaim: oidcOrganizationNameClaim,

@@ -270,6 +270,51 @@ describe('PostgreSqlConnectionTester', () => {
     expect(poolInstance.end).toHaveBeenCalled()
   })
 
+  it('uses caller-provided row and timeout limits for wrapped queries', async () => {
+    poolClient.query
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({
+        fields: [{ name: 'id' }],
+        rows: [{ id: 1 }]
+      })
+      .mockResolvedValueOnce(undefined)
+
+    const { PostgreSqlConnectionTester } = await import(
+      '../../../../server/services/database/postgresql'
+    )
+
+    const tester = new PostgreSqlConnectionTester()
+
+    await expect(tester.executeReadOnlyQuery({
+      ...queryInput,
+      maxRows: 5,
+      timeoutMs: 12_000
+    })).resolves.toEqual({
+      ok: true,
+      code: 'success',
+      message: 'success',
+      columns: ['id'],
+      rows: [{ id: 1 }],
+      rowLimit: 5
+    })
+    expect(poolClient.query).toHaveBeenNthCalledWith(
+      2,
+      "set local statement_timeout = '12000ms'"
+    )
+    expect(poolClient.query).toHaveBeenNthCalledWith(
+      3,
+      "set local idle_in_transaction_session_timeout = '12000ms'"
+    )
+    expect(poolClient.query).toHaveBeenNthCalledWith(
+      6,
+      'select * from (select id, name, metadata, created_at, payload from customers) as aperture_query_result limit 5'
+    )
+  })
+
   it('allows wrapped common table expression queries', async () => {
     poolClient.query
       .mockResolvedValueOnce(undefined)
@@ -420,6 +465,60 @@ describe('PostgreSqlConnectionTester', () => {
     expect(poolClient.release).not.toHaveBeenCalled()
     expect(poolInstance.end).toHaveBeenCalled()
   })
+
+  it.each([
+    [
+      Object.assign(new Error('database missing'), { code: '3D000' }),
+      {
+        ok: false,
+        code: 'database_not_found',
+        message: 'database_not_found',
+        details: 'database missing'
+      }
+    ],
+    [
+      Object.assign(new Error('timed out'), { code: 'CONNECT_TIMEOUT' }),
+      {
+        ok: false,
+        code: 'timeout',
+        message: 'timeout',
+        details: 'timed out'
+      }
+    ],
+    [
+      Object.assign(new Error('connect ECONNRESET'), { code: 'ECONNRESET' }),
+      {
+        ok: false,
+        code: 'connection_failed',
+        message: 'connection_failed',
+        details: 'connect ECONNRESET'
+      }
+    ],
+    [
+      new Error('mystery failure'),
+      {
+        ok: false,
+        code: 'unexpected_error',
+        message: 'unexpected_error',
+        details: 'mystery failure'
+      }
+    ]
+  ])(
+    'maps query execution connection error %# to the expected result',
+    async (error, expected) => {
+      poolInstance.connect.mockRejectedValueOnce(error)
+
+      const { PostgreSqlConnectionTester } = await import(
+        '../../../../server/services/database/postgresql'
+      )
+
+      const tester = new PostgreSqlConnectionTester()
+
+      await expect(tester.executeReadOnlyQuery(queryInput)).resolves.toEqual(expected)
+      expect(poolClient.release).not.toHaveBeenCalled()
+      expect(poolInstance.end).toHaveBeenCalled()
+    }
+  )
 
   it('returns unexpected_error for non-Error query execution failures', async () => {
     poolInstance.connect.mockRejectedValueOnce('boom')

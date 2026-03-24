@@ -17,6 +17,11 @@ export interface TestSavedSqlQueryInput {
   sql: string
 }
 
+export interface RunSavedSqlQueryInput {
+  connectionId: string
+  queryId: string
+}
+
 export interface SavedSqlQuerySummary {
   id: string
   queryName: string
@@ -245,11 +250,20 @@ export type TestSavedSqlQueryField =
   | keyof TestSavedSqlQueryInput
   | 'body'
 
+export type RunSavedSqlQueryField =
+  | keyof RunSavedSqlQueryInput
+  | 'body'
+
 export type TestSavedSqlQueryValidationIssue =
   | 'body_invalid'
   | 'connection_id_invalid'
   | 'sql_invalid'
   | 'sql_required'
+
+export type RunSavedSqlQueryValidationIssue =
+  | 'body_invalid'
+  | 'connection_id_invalid'
+  | 'query_id_invalid'
 
 export type TestSavedSqlQueryValidationError = {
   ok: false
@@ -259,12 +273,27 @@ export type TestSavedSqlQueryValidationError = {
   field?: TestSavedSqlQueryField
 }
 
+export type RunSavedSqlQueryValidationError = {
+  ok: false
+  code: 'invalid_input'
+  issue: RunSavedSqlQueryValidationIssue
+  message: string
+  field?: RunSavedSqlQueryField
+}
+
 export type TestSavedSqlQueryValidationResult =
   | {
       ok: true
       data: TestSavedSqlQueryInput
     }
   | TestSavedSqlQueryValidationError
+
+export type RunSavedSqlQueryValidationResult =
+  | {
+      ok: true
+      data: RunSavedSqlQueryInput
+    }
+  | RunSavedSqlQueryValidationError
 
 export type SaveSavedSqlQueryResultCode =
   | 'success'
@@ -295,6 +324,20 @@ export type TestSavedSqlQueryResultCode =
   | 'persistence_unavailable'
   | 'unexpected_error'
 
+export type RunSavedSqlQueryResultCode =
+  | 'success'
+  | 'forbidden'
+  | 'unsupported_database_type'
+  | 'authentication_failed'
+  | 'database_not_found'
+  | 'connection_failed'
+  | 'timeout'
+  | 'ssl_required'
+  | 'query_rejected'
+  | 'query_failed'
+  | 'persistence_unavailable'
+  | 'unexpected_error'
+
 export type TestSavedSqlQueryResult =
   | {
       ok: true
@@ -306,6 +349,21 @@ export type TestSavedSqlQueryResult =
   | {
       ok: false
       code: Exclude<TestSavedSqlQueryResultCode, 'success'>
+      message: string
+      details?: string
+    }
+
+export type RunSavedSqlQueryResult =
+  | {
+      ok: true
+      code: 'success'
+      columns: string[]
+      rows: SavedSqlQueryResultRow[]
+      rowLimit: number
+    }
+  | {
+      ok: false
+      code: Exclude<RunSavedSqlQueryResultCode, 'success'>
       message: string
       details?: string
     }

@@ -19,11 +19,12 @@ import type {
   DatabaseQueryExecutor
 } from './types'
 import { normalizeReadOnlySql } from '../../utils/read-only-sql'
+import { resolvePositiveInteger } from '../../utils/positive-integer'
 
 const CONNECT_TIMEOUT_SECONDS = 5
-const QUERY_TIMEOUT_MS = 5_000
+const DEFAULT_QUERY_TIMEOUT_MS = 5_000
 const QUERY_LOCK_TIMEOUT_MS = 1_000
-const QUERY_RESULT_SAMPLE_ROW_LIMIT = 25
+const DEFAULT_QUERY_RESULT_ROW_LIMIT = 25
 const MAX_RESULT_VALUE_LENGTH = 2_000
 const QUERY_RESULT_ALIAS = 'aperture_query_result'
 
@@ -211,10 +212,10 @@ const sanitizeResultRow = (
   return sanitizedRow
 }
 
-const buildLimitedQuery = (sql: string) => {
-  // Always return a small preview from the tested query, even if the inner SQL
-  // specifies a larger limit. This keeps test responses bounded.
-  return `select * from (${sql}) as ${QUERY_RESULT_ALIAS} limit ${QUERY_RESULT_SAMPLE_ROW_LIMIT}`
+const buildLimitedQuery = (sql: string, rowLimit: number) => {
+  // Bound result size at the adapter layer so callers cannot accidentally
+  // execute an unbounded dashboard query.
+  return `select * from (${sql}) as ${QUERY_RESULT_ALIAS} limit ${rowLimit}`
 }
 
 const mapPostgreSqlQueryError = (
@@ -330,6 +331,14 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     input: ExecuteDatabaseReadOnlyQueryInput
   ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
     const normalizedQuery = normalizeReadOnlySql(input.sql)
+    const queryTimeoutMs = resolvePositiveInteger(
+      input.timeoutMs,
+      DEFAULT_QUERY_TIMEOUT_MS
+    )
+    const rowLimit = resolvePositiveInteger(
+      input.maxRows,
+      DEFAULT_QUERY_RESULT_ROW_LIMIT
+    )
 
     if (!normalizedQuery.ok) {
       return {
@@ -347,10 +356,10 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
       client = await pool.connect()
       await client.query('begin')
       await client.query(
-        `set local statement_timeout = '${QUERY_TIMEOUT_MS}ms'`
+        `set local statement_timeout = '${queryTimeoutMs}ms'`
       )
       await client.query(
-        `set local idle_in_transaction_session_timeout = '${QUERY_TIMEOUT_MS}ms'`
+        `set local idle_in_transaction_session_timeout = '${queryTimeoutMs}ms'`
       )
       await client.query(
         `set local lock_timeout = '${QUERY_LOCK_TIMEOUT_MS}ms'`
@@ -358,7 +367,7 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
       await client.query('set local transaction read only')
 
       const result = await client.query<QueryResultRow>(
-        buildLimitedQuery(normalizedQuery.sql)
+        buildLimitedQuery(normalizedQuery.sql, rowLimit)
       )
       const columns = result.fields.map((field: FieldDef) => field.name)
 
@@ -370,7 +379,7 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
         message: 'success',
         columns,
         rows: result.rows.map((row: QueryResultRow) => sanitizeResultRow(row, columns)),
-        rowLimit: QUERY_RESULT_SAMPLE_ROW_LIMIT
+        rowLimit
       }
     } catch (error) {
       if (client) {
