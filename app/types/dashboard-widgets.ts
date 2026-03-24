@@ -21,6 +21,26 @@ export type DashboardWidgetPluginConfig = Record<
 
 export const DEFAULT_DASHBOARD_ID = 'default-dashboard'
 export const DEFAULT_WIDGET_REFRESH_INTERVAL_SECONDS = 60
+export const DEFAULT_DASHBOARD_WIDGET_WIDTH = 6
+export const DEFAULT_DASHBOARD_WIDGET_HEIGHT = 4
+export const DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH = 3
+export const DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT = 3
+
+export interface DashboardWidgetLayout {
+  x?: number
+  y?: number
+  w: number
+  h: number
+  minW?: number
+  maxW?: number
+  minH?: number
+  maxH?: number
+}
+
+export interface DashboardWidgetLayoutUpdate {
+  widgetId: string
+  layout: DashboardWidgetLayout
+}
 
 export interface DashboardWidget {
   id: string
@@ -29,6 +49,7 @@ export interface DashboardWidget {
   queryId: string
   pluginId: string
   pluginConfig: DashboardWidgetPluginConfig
+  layout: DashboardWidgetLayout
   refreshIntervalSeconds: number
 }
 
@@ -49,6 +70,64 @@ export const createEmptyDashboardWidgetDraft = (): DashboardWidgetDraft => ({
   pluginConfig: {},
   refreshIntervalSeconds: DEFAULT_WIDGET_REFRESH_INTERVAL_SECONDS
 })
+
+const normalizePositiveInteger = (
+  value: unknown,
+  fallback?: number
+) => {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? value
+    : fallback
+}
+
+const normalizeNonNegativeInteger = (
+  value: unknown,
+  fallback?: number
+) => {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
+    ? value
+    : fallback
+}
+
+const cloneDashboardWidgetLayout = (
+  layout: DashboardWidgetLayout
+): DashboardWidgetLayout => ({
+  ...layout
+})
+
+export const normalizeDashboardWidgetLayout = (
+  layout?: Partial<DashboardWidgetLayout> | null
+): DashboardWidgetLayout => {
+  const minW = normalizePositiveInteger(
+    layout?.minW,
+    DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH
+  )
+  const minH = normalizePositiveInteger(
+    layout?.minH,
+    DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT
+  )
+  const w = Math.max(
+    normalizePositiveInteger(layout?.w, DEFAULT_DASHBOARD_WIDGET_WIDTH) ?? DEFAULT_DASHBOARD_WIDGET_WIDTH,
+    minW ?? DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH
+  )
+  const h = Math.max(
+    normalizePositiveInteger(layout?.h, DEFAULT_DASHBOARD_WIDGET_HEIGHT) ?? DEFAULT_DASHBOARD_WIDGET_HEIGHT,
+    minH ?? DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT
+  )
+  const maxW = normalizePositiveInteger(layout?.maxW)
+  const maxH = normalizePositiveInteger(layout?.maxH)
+
+  return {
+    x: normalizeNonNegativeInteger(layout?.x),
+    y: normalizeNonNegativeInteger(layout?.y),
+    w,
+    h,
+    minW,
+    minH,
+    ...(maxW && maxW >= w ? { maxW } : {}),
+    ...(maxH && maxH >= h ? { maxH } : {})
+  }
+}
 
 const normalizePluginConfigPrimitive = (
   value: unknown
@@ -203,6 +282,7 @@ export const createDashboardWidget = (
   queryId: draft.queryId.trim(),
   pluginId: draft.pluginId.trim(),
   pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
+  layout: normalizeDashboardWidgetLayout(),
   refreshIntervalSeconds: draft.refreshIntervalSeconds
 })
 
@@ -216,5 +296,17 @@ export const updateDashboardWidget = (
   queryId: draft.queryId.trim(),
   pluginId: draft.pluginId.trim(),
   pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
+  layout: cloneDashboardWidgetLayout(widget.layout),
   refreshIntervalSeconds: draft.refreshIntervalSeconds
+})
+
+export const updateDashboardWidgetLayout = (
+  widget: DashboardWidget,
+  layout: Partial<DashboardWidgetLayout>
+): DashboardWidget => ({
+  ...widget,
+  layout: normalizeDashboardWidgetLayout({
+    ...widget.layout,
+    ...layout
+  })
 })

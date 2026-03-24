@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
@@ -8,6 +9,7 @@ import { useUIPlugins } from '~/composables/useUIPlugins'
 import type {
   DashboardWidget,
   DashboardWidgetDraft,
+  DashboardWidgetLayoutUpdate,
   DashboardWidgetPluginConfigPrimitive
 } from '~/types/dashboard-widgets'
 import {
@@ -16,7 +18,8 @@ import {
   createEmptyDashboardWidgetDraft,
   isDashboardWidgetPluginConfigComplete,
   normalizeDashboardWidgetPluginConfig,
-  updateDashboardWidget
+  updateDashboardWidget,
+  updateDashboardWidgetLayout
 } from '~/types/dashboard-widgets'
 import type { SavedSqlQuerySummary } from '~/types/saved-sql-queries'
 import {
@@ -41,6 +44,7 @@ const { getPlugin, getPlugins } = useUIPlugins()
 const queryResults = useDashboardQueryResults()
 const widgets = useState<DashboardWidget[]>('dashboard-widgets', () => [])
 const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
+const isDashboardEditing = ref(false)
 const editingWidgetId = ref<string | null>(null)
 const previewStateKey = ref('')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
@@ -213,6 +217,12 @@ const submitWidgetActionIcon = computed(() => {
   return isEditingWidget.value
     ? 'i-lucide-save'
     : 'i-lucide-plus'
+})
+
+const dashboardEditActionLabel = computed(() => {
+  return isDashboardEditing.value
+    ? t('pages.dashboard.widgets.actions.doneEditing')
+    : t('pages.dashboard.widgets.actions.editDashboard')
 })
 
 const widgetTargets = computed(() => {
@@ -483,12 +493,21 @@ const resetDraft = () => {
 }
 
 const onEditWidget = (widget: DashboardWidget) => {
+  isDashboardEditing.value = true
   editingWidgetId.value = widget.id
   draft.value = createDashboardWidgetDraftFromWidget(widget)
 }
 
 const onCancelEditingWidget = () => {
   resetDraft()
+}
+
+const onToggleDashboardEditing = () => {
+  isDashboardEditing.value = !isDashboardEditing.value
+
+  if (!isDashboardEditing.value && isEditingWidget.value) {
+    resetDraft()
+  }
 }
 
 const onSubmitWidget = async () => {
@@ -535,6 +554,26 @@ const onRemoveWidget = (widgetId: string) => {
   }
 
   widgets.value = widgets.value.filter((widget) => widget.id !== widgetId)
+}
+
+const onWidgetLayoutChange = (
+  updates: DashboardWidgetLayoutUpdate[]
+) => {
+  if (updates.length === 0) {
+    return
+  }
+
+  const layoutUpdates = new Map(
+    updates.map((update) => [update.widgetId, update.layout])
+  )
+
+  widgets.value = widgets.value.map((widget) => {
+    const nextLayout = layoutUpdates.get(widget.id)
+
+    return nextLayout
+      ? updateDashboardWidgetLayout(widget, nextLayout)
+      : widget
+  })
 }
 
 const onRefreshWidget = async (widget: DashboardWidget) => {
@@ -846,14 +885,23 @@ onBeforeUnmount(() => {
             </p>
           </div>
 
-          <UButton
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-rotate-cw"
-            :label="t('pages.dashboard.widgets.actions.refreshAll')"
-            :disabled="widgets.length === 0 || status === 'pending'"
-            @click="refreshWidgets(true)"
-          />
+          <div class="flex items-center gap-2">
+            <UButton
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-pen-square"
+              :label="dashboardEditActionLabel"
+              @click="onToggleDashboardEditing"
+            />
+            <UButton
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-rotate-cw"
+              :label="t('pages.dashboard.widgets.actions.refreshAll')"
+              :disabled="widgets.length === 0 || status === 'pending'"
+              @click="refreshWidgets(true)"
+            />
+          </div>
         </div>
 
         <UPageCard
@@ -863,110 +911,134 @@ onBeforeUnmount(() => {
           :description="t('pages.dashboard.widgets.empty.description')"
         />
 
-        <div
+        <WidgetGrid
           v-else
-          class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3"
+          :editable="isDashboardEditing"
+          :widgets="widgets"
+          @layout-change="onWidgetLayoutChange"
         >
-          <UCard
-            v-for="widget in widgets"
-            :key="widget.id"
-            class="h-full"
-          >
-            <template #header>
-              <div class="flex items-start justify-between gap-4">
-                <div class="space-y-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="font-semibold text-highlighted">
-                      {{ widget.title || getWidgetQuery(widget)?.queryName || t('pages.dashboard.widgets.card.fallbackTitle') }}
-                    </h3>
-                    <UBadge
-                      color="neutral"
-                      variant="subtle"
+          <template #item="{ widget }">
+            <UCard
+              class="h-full w-full"
+              :ui="{
+                root: 'flex h-full min-h-0 w-full flex-col overflow-hidden',
+                header: 'flex-none p-4 sm:px-6 sm:py-4',
+                body: 'flex min-h-0 flex-1 flex-col p-4 sm:p-6'
+              }"
+            >
+              <template #header>
+                <div class="flex min-w-0 items-start justify-between gap-3">
+                  <h3 class="min-w-0 truncate font-semibold text-highlighted">
+                    {{ widget.title || getWidgetQuery(widget)?.queryName || t('pages.dashboard.widgets.card.fallbackTitle') }}
+                  </h3>
+
+                  <div
+                    v-if="isDashboardEditing"
+                    class="flex items-center gap-1"
+                  >
+                    <div
+                      data-dashboard-widget-drag-handle
+                      class="inline-flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted transition hover:bg-elevated hover:text-highlighted active:cursor-grabbing"
+                      :title="t('pages.dashboard.widgets.actions.drag')"
                     >
-                      {{ getPluginLabel(widget.pluginId) }}
-                    </UBadge>
+                      <UIcon
+                        name="i-lucide-grip"
+                        class="size-3.5"
+                      />
+                      <span class="sr-only">
+                        {{ t('pages.dashboard.widgets.actions.drag') }}
+                      </span>
+                    </div>
+
+                    <UButton
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      square
+                      icon="i-lucide-pencil"
+                      :aria-label="t('pages.dashboard.widgets.actions.edit')"
+                      :title="t('pages.dashboard.widgets.actions.edit')"
+                      @click="onEditWidget(widget)"
+                    />
+                    <UButton
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      square
+                      icon="i-lucide-rotate-cw"
+                      :aria-label="t('pages.dashboard.widgets.actions.refreshOne')"
+                      :title="t('pages.dashboard.widgets.actions.refreshOne')"
+                      @click="onRefreshWidget(widget)"
+                    />
+                    <UButton
+                      color="error"
+                      variant="ghost"
+                      size="xs"
+                      square
+                      icon="i-lucide-trash-2"
+                      :aria-label="t('pages.dashboard.widgets.actions.remove')"
+                      :title="t('pages.dashboard.widgets.actions.remove')"
+                      @click="onRemoveWidget(widget.id)"
+                    />
                   </div>
-                  <p class="text-sm leading-6 text-muted">
-                    {{ getWidgetQuery(widget)?.queryName ?? t('pages.dashboard.widgets.card.missingQuery') }}
-                  </p>
                 </div>
+              </template>
 
-                <div class="flex items-center gap-2">
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-pencil"
-                    :label="t('pages.dashboard.widgets.actions.edit')"
-                    @click="onEditWidget(widget)"
-                  />
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-rotate-cw"
-                    :label="t('pages.dashboard.widgets.actions.refreshOne')"
-                    @click="onRefreshWidget(widget)"
-                  />
-                  <UButton
-                    color="error"
-                    variant="ghost"
-                    icon="i-lucide-trash-2"
-                    :label="t('pages.dashboard.widgets.actions.remove')"
-                    @click="onRemoveWidget(widget.id)"
-                  />
-                </div>
-              </div>
-            </template>
+              <div class="flex h-full min-h-0 flex-col gap-4">
+                <p class="text-xs uppercase tracking-[0.18em] text-muted">
+                  {{ t('pages.dashboard.widgets.card.refreshEvery', {
+                    seconds: widget.refreshIntervalSeconds
+                  }) }}
+                </p>
 
-            <div class="space-y-4">
-              <p class="text-xs uppercase tracking-[0.18em] text-muted">
-                {{ t('pages.dashboard.widgets.card.refreshEvery', {
-                  seconds: widget.refreshIntervalSeconds
-                }) }}
-              </p>
-
-              <AppAlert
-                v-if="!getWidgetQuery(widget)"
-                kind="warning"
-                :title="t('pages.dashboard.widgets.card.queryMissingTitle')"
-              >
-                {{ t('pages.dashboard.widgets.card.queryMissingDescription') }}
-              </AppAlert>
-
-              <AppAlert
-                v-else-if="getWidgetState(widget)?.status === 'pending'"
-                kind="info"
-                :title="t('pages.dashboard.widgets.card.loadingTitle')"
-              >
-                {{ t('pages.dashboard.widgets.card.loadingDescription') }}
-              </AppAlert>
-
-              <AppAlert
-                v-else-if="getWidgetState(widget)?.status === 'error'"
-                kind="error"
-                :title="t('pages.dashboard.widgets.card.errorTitle')"
-              >
-                {{ getWidgetErrorMessage(widget) }}
-              </AppAlert>
-
-              <div v-else>
                 <AppAlert
-                  v-if="getWidgetState(widget)?.errorMessage"
+                  v-if="!getWidgetQuery(widget)"
                   kind="warning"
-                  :title="t('pages.dashboard.widgets.card.warningTitle')"
-                  class="mb-4"
+                  :title="t('pages.dashboard.widgets.card.queryMissingTitle')"
+                >
+                  {{ t('pages.dashboard.widgets.card.queryMissingDescription') }}
+                </AppAlert>
+
+                <AppAlert
+                  v-else-if="getWidgetState(widget)?.status === 'pending'"
+                  kind="info"
+                  :title="t('pages.dashboard.widgets.card.loadingTitle')"
+                >
+                  {{ t('pages.dashboard.widgets.card.loadingDescription') }}
+                </AppAlert>
+
+                <AppAlert
+                  v-else-if="getWidgetState(widget)?.status === 'error'"
+                  kind="error"
+                  :title="t('pages.dashboard.widgets.card.errorTitle')"
                 >
                   {{ getWidgetErrorMessage(widget) }}
                 </AppAlert>
 
-                <PluginRenderer
-                  :widget="widget"
-                  :columns="getWidgetState(widget)?.columns ?? []"
-                  :rows="getWidgetState(widget)?.rows ?? []"
-                />
+                <div
+                  v-else
+                  class="min-h-0 flex-1"
+                >
+                  <AppAlert
+                    v-if="getWidgetState(widget)?.errorMessage"
+                    kind="warning"
+                    :title="t('pages.dashboard.widgets.card.warningTitle')"
+                    class="mb-4"
+                  >
+                    {{ getWidgetErrorMessage(widget) }}
+                  </AppAlert>
+
+                  <PluginRenderer
+                    class="h-full min-h-0"
+                    :widget="widget"
+                    :columns="getWidgetState(widget)?.columns ?? []"
+                    :rows="getWidgetState(widget)?.rows ?? []"
+                  />
+                </div>
               </div>
-            </div>
-          </UCard>
-        </div>
+            </UCard>
+          </template>
+        </WidgetGrid>
       </section>
     </UPageBody>
   </UPage>

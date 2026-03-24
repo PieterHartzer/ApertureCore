@@ -5,7 +5,12 @@ import type { DashboardWidget } from '~/types/dashboard-widgets'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 import { getUIPluginInputSelectionMode } from '~/types/uiPlugin'
 
+defineOptions({
+  inheritAttrs: false
+})
+
 const { t } = useI18n()
+const attrs = useAttrs()
 
 const props = withDefaults(defineProps<{
   widget: Pick<DashboardWidget, 'pluginId' | 'pluginConfig'>
@@ -46,27 +51,32 @@ const missingRequiredInputs = computed(() => {
 </script>
 
 <template>
-  <AppAlert
-    v-if="!plugin"
-    kind="warning"
-    :title="t('pages.dashboard.plugins.renderer.unknownTitle')"
+  <div
+    v-bind="attrs"
+    class="h-full min-h-0 w-full"
   >
-    {{ t('pages.dashboard.plugins.renderer.unknownDescription') }}
-  </AppAlert>
+    <AppAlert
+      v-if="!plugin"
+      kind="warning"
+      :title="t('pages.dashboard.plugins.renderer.unknownTitle')"
+    >
+      {{ t('pages.dashboard.plugins.renderer.unknownDescription') }}
+    </AppAlert>
 
-  <AppAlert
-    v-else-if="missingRequiredInputs.length > 0"
-    kind="info"
-    :title="t('pages.dashboard.plugins.renderer.incompleteTitle')"
-  >
-    {{ t('pages.dashboard.plugins.renderer.incompleteDescription') }}
-  </AppAlert>
+    <AppAlert
+      v-else-if="missingRequiredInputs.length > 0"
+      kind="info"
+      :title="t('pages.dashboard.plugins.renderer.incompleteTitle')"
+    >
+      {{ t('pages.dashboard.plugins.renderer.incompleteDescription') }}
+    </AppAlert>
 
-  <component
-    :is="plugin.component"
-    v-else
-    :data="rows"
-    :columns="columns"
-    :config="widget.pluginConfig"
-  />
+    <component
+      :is="plugin.component"
+      v-else
+      :data="rows"
+      :columns="columns"
+      :config="widget.pluginConfig"
+    />
+  </div>
 </template>

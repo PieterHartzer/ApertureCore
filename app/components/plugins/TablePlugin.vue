@@ -35,15 +35,19 @@ const tableColumns = computed(() => {
 <template>
   <div
     v-if="tableColumns.length === 0"
-    class="flex min-h-48 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+    class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
   >
     {{ t('pages.dashboard.plugins.table.emptyColumns') }}
   </div>
 
-  <UTable
+  <div
     v-else
-    :data="data"
-    :columns="tableColumns"
-    :empty="t('pages.dashboard.plugins.table.emptyRows')"
-  />
+    class="h-full min-h-0 overflow-auto"
+  >
+    <UTable
+      :data="data"
+      :columns="tableColumns"
+      :empty="t('pages.dashboard.plugins.table.emptyRows')"
+    />
+  </div>
 </template>

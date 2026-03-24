@@ -5,8 +5,10 @@ import {
   createDashboardWidgetDraftFromWidget,
   createEmptyDashboardWidgetDraft,
   isDashboardWidgetPluginConfigComplete,
+  normalizeDashboardWidgetLayout,
   normalizeDashboardWidgetPluginConfig,
-  updateDashboardWidget
+  updateDashboardWidget,
+  updateDashboardWidgetLayout
 } from '../../../app/types/dashboard-widgets'
 
 describe('dashboard widget helpers', () => {
@@ -18,6 +20,35 @@ describe('dashboard widget helpers', () => {
       pluginId: '',
       pluginConfig: {},
       refreshIntervalSeconds: 60
+    })
+  })
+
+  it('normalizes widget layouts with sane defaults', () => {
+    expect(normalizeDashboardWidgetLayout()).toEqual({
+      x: undefined,
+      y: undefined,
+      w: 6,
+      h: 4,
+      minW: 3,
+      minH: 3
+    })
+
+    expect(normalizeDashboardWidgetLayout({
+      x: -1,
+      y: 2,
+      w: 1,
+      h: 2,
+      minW: 4,
+      minH: 5,
+      maxW: 3,
+      maxH: 4
+    })).toEqual({
+      x: undefined,
+      y: 2,
+      w: 4,
+      h: 5,
+      minW: 4,
+      minH: 5
     })
   })
 
@@ -173,6 +204,14 @@ describe('dashboard widget helpers', () => {
         valueField: 'total_sales',
         visibleColumns: ['region', 'sales_total']
       },
+      layout: {
+        x: undefined,
+        y: undefined,
+        w: 6,
+        h: 4,
+        minW: 3,
+        minH: 3
+      },
       refreshIntervalSeconds: 30
     })
   })
@@ -192,6 +231,14 @@ describe('dashboard widget helpers', () => {
 
     expect(widget.pluginConfig.visibleColumns).toEqual(['region', 'sales_total'])
     expect(widget.pluginConfig.visibleColumns).not.toBe(visibleColumns)
+    expect(widget.layout).toEqual({
+      x: undefined,
+      y: undefined,
+      w: 6,
+      h: 4,
+      minW: 3,
+      minH: 3
+    })
   })
 
   it('creates an editable draft from an existing widget', () => {
@@ -203,6 +250,14 @@ describe('dashboard widget helpers', () => {
       pluginId: 'table',
       pluginConfig: {
         visibleColumns: ['region', 'sales_total']
+      },
+      layout: {
+        x: 0,
+        y: 1,
+        w: 8,
+        h: 5,
+        minW: 3,
+        minH: 3
       },
       refreshIntervalSeconds: 30
     }
@@ -232,6 +287,14 @@ describe('dashboard widget helpers', () => {
       pluginConfig: {
         visibleColumns: ['region']
       },
+      layout: {
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 4,
+        minW: 3,
+        minH: 3
+      },
       refreshIntervalSeconds: 30
     }
     const updatedWidget = updateDashboardWidget(widget, {
@@ -256,7 +319,56 @@ describe('dashboard widget helpers', () => {
         xField: 'region',
         yField: 'sales_total'
       },
+      layout: {
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 4,
+        minW: 3,
+        minH: 3
+      },
       refreshIntervalSeconds: 60
+    })
+  })
+
+  it('updates widget layout independently of the edit draft', () => {
+    const widget = {
+      id: 'widget-1',
+      dashboardId: 'default-dashboard',
+      title: 'Revenue',
+      queryId: 'query-1',
+      pluginId: 'table',
+      pluginConfig: {},
+      layout: {
+        w: 6,
+        h: 4,
+        minW: 3,
+        minH: 3
+      },
+      refreshIntervalSeconds: 30
+    }
+
+    expect(updateDashboardWidgetLayout(widget, {
+      x: 2,
+      y: 3,
+      w: 8,
+      h: 5
+    })).toEqual({
+      id: 'widget-1',
+      dashboardId: 'default-dashboard',
+      title: 'Revenue',
+      queryId: 'query-1',
+      pluginId: 'table',
+      pluginConfig: {},
+      layout: {
+        x: 2,
+        y: 3,
+        w: 8,
+        h: 5,
+        minW: 3,
+        minH: 3
+      },
+      refreshIntervalSeconds: 30
     })
   })
 })

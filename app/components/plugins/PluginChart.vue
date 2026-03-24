@@ -28,7 +28,7 @@ withDefaults(defineProps<{
   option: EChartsOption
   heightClass?: string
 }>(), {
-  heightClass: 'min-h-[320px]'
+  heightClass: 'h-full min-h-0'
 })
 </script>
 
@@ -37,13 +37,13 @@ withDefaults(defineProps<{
     <VChart
       autoresize
       :option="option"
-      class="w-full"
+      class="h-full min-h-0 w-full"
       :class="heightClass"
     />
 
     <template #fallback>
       <div
-        class="flex w-full items-center justify-center rounded-xl border border-dashed border-default px-6 py-12 text-sm text-muted"
+        class="flex h-full min-h-0 w-full items-center justify-center rounded-xl border border-dashed border-default px-6 py-12 text-sm text-muted"
         :class="heightClass"
       >
         {{ t('pages.dashboard.plugins.shared.loading') }}

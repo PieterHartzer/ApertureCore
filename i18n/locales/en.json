@@ -98,9 +98,12 @@
       },
       "widgets": {
         "title": "Dashboard widgets",
-        "description": "Widgets reuse cached query results and refresh automatically while the dashboard stays open.",
+        "description": "Widgets reuse cached query results, can be rearranged on the grid, and refresh automatically while the dashboard stays open.",
         "actions": {
+          "drag": "Drag widget",
           "edit": "Edit",
+          "editDashboard": "Edit dashboard",
+          "doneEditing": "Done editing",
           "refreshAll": "Refresh all widgets",
           "refreshOne": "Refresh",
           "remove": "Remove"
