@@ -16,7 +16,7 @@
 - `app/components/dashboard/WidgetGrid.vue`
   - Wraps GridStack, enhances the Vue-rendered widget cards on the client, and emits normalized layout changes back into widget state.
 - `app/pages/index.vue`
-  - Provides the first widget builder, widget editing flow, and GridStack-backed dashboard layout UI.
+  - Provides the dashboard edit mode, modal widget builder flow, widget editing flow, and GridStack-backed dashboard layout UI.
 - `app/types/dashboard-widgets.ts`
   - Stores widget plugin config plus shared widget layout metadata so drag/resize state can be persisted later without depending on GridStack DOM attributes.
 
@@ -29,6 +29,8 @@
 6. Widget cards render through `PluginRenderer` and reuse the same cached query result store as the preview flow.
 7. Widgets can be edited, dragged, and resized on a GridStack layout, and the resulting layout is written back into widget state.
 8. Widget controls are only shown while the dashboard is in edit mode, and chart plugins adapt their axes/margins to smaller widget sizes to avoid clipped rendering.
+9. Widget creation and editing now happen in a large modal with live preview, so the main dashboard page only shows widgets unless edit mode is active.
+10. Widget cards show live refresh/error status inline instead of a fixed "refresh every N seconds" label, while still falling back to full alerts when a widget cannot render at all.
 
 ## Future Extension Points
 - Persist dashboard widgets server-side without changing the plugin interface.
