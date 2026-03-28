@@ -7,7 +7,8 @@ const PUBLIC_API_PATHS = new Set([
 ])
 
 const PUBLIC_API_PREFIXES = [
-  '/api/_nuxt_icon'
+  '/api/_nuxt_icon',
+  '/api/embed/'
 ]
 
 const isProtectedApiRequest = (path: string) => {

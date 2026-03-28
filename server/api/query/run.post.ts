@@ -9,15 +9,15 @@ import type {
 
 import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
 import { executeQuery } from '../../utils/database/executeQuery'
-import { pickString } from '../../utils/pick-string'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
+import {
+  buildQueryResultEtag,
+  isCachedQueryResult,
+  matchesIfNoneMatch,
+  pickRequestHeader,
+  type CachedQueryResult
+} from '../../utils/query-result-cache'
 import { validateRunSavedSqlQueryInput } from '../../validators/saved-sql-queries'
-
-interface QueryRunSuccessResponse {
-  columns: string[]
-  rows: Array<Record<string, string | number | boolean | null>>
-  etag: string
-}
 
 type QueryRunErrorCode =
   | 'invalid_input'
@@ -146,57 +146,6 @@ const buildCacheKey = (
   return `query:${organizationScope}:${input.queryId}:${input.connectionId}:${parametersHash}`
 }
 
-const buildEtag = (response: Omit<QueryRunSuccessResponse, 'etag'>) => {
-  return `"${createHash('sha256')
-    .update(JSON.stringify(response))
-    .digest('hex')}"`
-}
-
-const isCachedQueryRunResponse = (
-  value: unknown
-): value is QueryRunSuccessResponse => {
-  const response = value as Partial<QueryRunSuccessResponse> | null
-
-  return (
-    typeof response === 'object' &&
-    response !== null &&
-    Array.isArray(response.columns) &&
-    Array.isArray(response.rows) &&
-    typeof response.etag === 'string'
-  )
-}
-
-const pickRequestHeader = (
-  event: H3Event,
-  headerName: string
-) => {
-  const headerValue = event.node.req.headers[headerName]
-
-  if (Array.isArray(headerValue)) {
-    return pickString(headerValue[0])
-  }
-
-  return pickString(headerValue)
-}
-
-const normalizeEtag = (value: string) => {
-  return value.trim().replace(/^W\//, '')
-}
-
-const matchesIfNoneMatch = (
-  requestHeaderValue: string | undefined,
-  etag: string
-) => {
-  if (!requestHeaderValue) {
-    return false
-  }
-
-  return requestHeaderValue
-    .split(',')
-    .map((value) => value.trim())
-    .some((value) => value === '*' || normalizeEtag(value) === normalizeEtag(etag))
-}
-
 export default defineEventHandler(async (event) => {
   let body: unknown
 
@@ -235,9 +184,9 @@ export default defineEventHandler(async (event) => {
       runtimeConfig.queryCacheTtlSeconds,
       DEFAULT_QUERY_CACHE_TTL_SECONDS
     )
-    const cachedResponse = await cache.getItem<QueryRunSuccessResponse>(cacheKey)
+    const cachedResponse = await cache.getItem<CachedQueryResult>(cacheKey)
 
-    if (isCachedQueryRunResponse(cachedResponse)) {
+    if (isCachedQueryResult(cachedResponse)) {
       setResponseHeader(event, 'etag', cachedResponse.etag)
 
       if (matchesIfNoneMatch(ifNoneMatch, cachedResponse.etag)) {
@@ -261,9 +210,9 @@ export default defineEventHandler(async (event) => {
       columns: result.columns,
       rows: result.rows
     }
-    const response: QueryRunSuccessResponse = {
+    const response: CachedQueryResult = {
       ...responseWithoutEtag,
-      etag: buildEtag(responseWithoutEtag)
+      etag: buildQueryResultEtag(responseWithoutEtag)
     }
 
     await cache.setItem(cacheKey, response, {

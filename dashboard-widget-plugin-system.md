@@ -31,9 +31,11 @@
 8. Widget controls are only shown while the dashboard is in edit mode, and chart plugins adapt their axes/margins to smaller widget sizes to avoid clipped rendering.
 9. Widget creation and editing now happen in a large modal with live preview, so the main dashboard page only shows widgets unless edit mode is active.
 10. Widget cards show live refresh/error status inline instead of a fixed "refresh every N seconds" label, while still falling back to full alerts when a widget cannot render at all.
+11. Dashboards are now persisted server-side, and the page supports creating, selecting, renaming, and autosaving multiple dashboards through a top-of-page selector plus dashboard settings modal.
+12. Each dashboard now has a separate embed GUID and explicit embed-enabled flag, and a wrapperless public route can render the dashboard in an iframe without the normal app page chrome.
 
 ## Future Extension Points
 - Persist dashboard widgets server-side without changing the plugin interface.
 - Add richer plugin input types beyond field mapping.
-- Persist multiple dashboards and layout presets using the current widget layout model.
+- Add dashboard deletion, duplication, embed GUID rotation, and explicit share/access policies on top of the persisted dashboard model.
 - Support query parameters and row-level security by extending the existing dashboard query cache key and widget config model.

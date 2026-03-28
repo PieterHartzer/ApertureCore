@@ -13,7 +13,7 @@ export class AppDatabaseConfigurationError extends Error {
   }
 }
 
-interface AppDatabase {
+export interface AppDatabase {
   app_organizations: {
     organization_id: string
     organization_name: string
@@ -47,9 +47,34 @@ interface AppDatabase {
     updated_at: Generated<Date>
     deleted_at: Date | null
   }
+  app_dashboards: {
+    dashboard_id: Generated<string>
+    organization_id: string
+    dashboard_name: string
+    embed_id: Generated<string>
+    embed_enabled: Generated<boolean>
+    created_by_user_id: string
+    updated_by_user_id: string
+    created_at: Generated<Date>
+    updated_at: Generated<Date>
+    deleted_at: Date | null
+  }
+  app_dashboard_widgets: {
+    widget_id: string
+    dashboard_id: string
+    query_id: string
+    widget_title: string
+    plugin_id: string
+    plugin_config: unknown
+    layout: unknown
+    refresh_interval_seconds: number
+    created_at: Generated<Date>
+    updated_at: Generated<Date>
+    deleted_at: Date | null
+  }
 }
 
-type AppDatabaseClient = Kysely<AppDatabase>
+export type AppDatabaseClient = Kysely<AppDatabase>
 
 declare global {
   var __apertureCoreAppDatabase: AppDatabaseClient | undefined

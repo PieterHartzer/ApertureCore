@@ -28,7 +28,107 @@
       "title": "Dashboard",
       "description": "Create view-only dashboards, stats, and cards from your own database.",
       "errors": {
-        "loadQueriesTitle": "Could not load dashboard queries"
+        "loadQueriesTitle": "Could not load dashboard queries",
+        "loadDashboardsTitle": "Could not load dashboards",
+        "loadDashboardTitle": "Could not load the selected dashboard"
+      },
+      "states": {
+        "loadingDashboardsTitle": "Loading dashboards",
+        "loadingDashboardsDescription": "Fetching the dashboards available to your organisation.",
+        "loadingDashboardTitle": "Loading dashboard",
+        "loadingDashboardDescription": "Fetching widgets and layout for the selected dashboard."
+      },
+      "status": {
+        "ready": "Changes save automatically while you edit.",
+        "saving": "Saving dashboard changes...",
+        "saved": "Dashboard saved."
+      },
+      "empty": {
+        "title": "No dashboards yet",
+        "description": "Create a dashboard to start arranging widgets and sharing embedded views.",
+        "action": "Create dashboard"
+      },
+      "selector": {
+        "placeholder": "Select a dashboard",
+        "option": "{dashboardName} ({widgetCount} widgets)",
+        "actions": {
+          "new": "New dashboard",
+          "settings": "Dashboard settings"
+        },
+        "create": {
+          "title": "Create dashboard",
+          "description": "Start a new dashboard for a separate set of widgets, layout, and embed settings.",
+          "errorTitle": "Could not create dashboard",
+          "fields": {
+            "dashboardName": {
+              "label": "Dashboard name",
+              "description": "Use a clear name so it stays easy to find in the dashboard selector.",
+              "placeholder": "Executive overview"
+            }
+          },
+          "actions": {
+            "cancel": "Cancel",
+            "submit": "Create dashboard"
+          }
+        },
+        "settings": {
+          "title": "Dashboard settings",
+          "description": "Rename this dashboard and control whether it can be embedded publicly with its GUID.",
+          "errorTitle": "Could not save dashboard settings",
+          "fields": {
+            "dashboardName": {
+              "label": "Dashboard name",
+              "description": "Update the dashboard label shown in the selector.",
+              "placeholder": "Executive overview"
+            },
+            "embedEnabled": {
+              "label": "Enable embedding",
+              "description": "Allow this dashboard to be rendered publicly through its embed GUID."
+            }
+          },
+          "actions": {
+            "cancel": "Cancel",
+            "save": "Save settings",
+            "delete": "Delete dashboard"
+          }
+        },
+        "delete": {
+          "title": "Delete dashboard",
+          "description": "Delete {dashboardName} for this organisation. This removes its saved widget layout and embed access.",
+          "errorTitle": "Could not delete dashboard",
+          "confirmationLabel": "Type the dashboard name to confirm",
+          "confirmationDescription": "This action is destructive and cannot be undone from the UI.",
+          "actions": {
+            "cancel": "Cancel",
+            "confirm": "Delete dashboard",
+            "confirmLoading": "Deleting..."
+          }
+        },
+        "embed": {
+          "guidLabel": "Embed GUID",
+          "guidDescription": "This is the public identifier used by the iframe route.",
+          "urlLabel": "Embed URL",
+          "urlDescription": "Use this URL in an iframe to render the dashboard without the regular app chrome.",
+          "enabledHint": "Embedding is enabled for this dashboard.",
+          "disabledHint": "Turn on embedding before copying or using the public iframe URL.",
+          "copied": "Embed URL copied to the clipboard.",
+          "actions": {
+            "copy": "Copy URL"
+          }
+        }
+      },
+      "notifications": {
+        "saveErrorTitle": "Dashboard save failed",
+        "loadErrorTitle": "Dashboard load failed",
+        "createSuccessTitle": "Dashboard created",
+        "deleteSuccessTitle": "Dashboard deleted",
+        "settingsSavedTitle": "Settings saved",
+        "embedCopiedTitle": "Embed URL copied"
+      },
+      "embed": {
+        "errorTitle": "Could not load embedded dashboard",
+        "loading": "Loading embedded dashboard...",
+        "empty": "This embedded dashboard is not available."
       },
       "builder": {
         "title": "Add widget",
@@ -192,6 +292,97 @@
           "emptyMapping": "Choose a value field to render this stat card.",
           "emptyRows": "This widget needs at least one query row.",
           "firstRowHint": "Showing the first row returned by this query."
+        }
+      }
+    }
+  },
+  "dashboards": {
+    "list": {
+      "success": "Dashboards loaded.",
+      "errors": {
+        "forbidden": "You do not have access to dashboards for this organisation.",
+        "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+        "unexpected": "Could not load dashboards right now."
+      }
+    },
+    "get": {
+      "success": "Dashboard loaded.",
+      "errors": {
+        "dashboardIdInvalid": "The dashboard identifier is invalid.",
+        "forbidden": "You do not have access to this dashboard.",
+        "notFound": "The requested dashboard could not be found.",
+        "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+        "unexpected": "Could not load the requested dashboard."
+      }
+    },
+    "create": {
+      "success": "Dashboard created.",
+      "errors": {
+        "bodyInvalid": "The dashboard request body is invalid.",
+        "dashboardNameInvalid": "Enter a valid dashboard name.",
+        "dashboardNameRequired": "Enter a dashboard name.",
+        "forbidden": "You do not have permission to create dashboards for this organisation.",
+        "duplicateDashboardName": "A dashboard with this name already exists.",
+        "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+        "unexpected": "Could not create the dashboard."
+      }
+    },
+    "save": {
+      "success": "Dashboard saved.",
+      "errors": {
+        "bodyInvalid": "The dashboard update body is invalid.",
+        "dashboardIdInvalid": "The dashboard identifier is invalid.",
+        "dashboardNameInvalid": "Enter a valid dashboard name.",
+        "dashboardNameRequired": "Enter a dashboard name.",
+        "embedEnabledInvalid": "The embed setting is invalid.",
+        "widgetsInvalid": "The widget payload is invalid.",
+        "widgetInvalid": "One or more widgets are invalid.",
+        "forbidden": "You do not have access to this dashboard.",
+        "notFound": "The requested dashboard could not be found.",
+        "duplicateDashboardName": "A dashboard with this name already exists.",
+        "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+        "unexpected": "Could not save the dashboard."
+      }
+    },
+    "delete": {
+      "success": "Dashboard deleted.",
+      "errors": {
+        "bodyInvalid": "The dashboard delete request body is invalid.",
+        "dashboardIdInvalid": "The dashboard identifier is invalid.",
+        "confirmationNameInvalid": "Enter the dashboard name to confirm deletion.",
+        "confirmationNameRequired": "Enter the dashboard name to confirm deletion.",
+        "confirmationMismatch": "The confirmation name does not match this dashboard.",
+        "forbidden": "You do not have access to this dashboard.",
+        "notFound": "The requested dashboard could not be found.",
+        "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+        "unexpected": "Could not delete the dashboard."
+      }
+    },
+    "embed": {
+      "get": {
+        "success": "Embedded dashboard loaded.",
+        "errors": {
+          "embedIdInvalid": "The embed GUID is invalid.",
+          "notFound": "The embedded dashboard could not be found.",
+          "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+          "unexpected": "Could not load the embedded dashboard."
+        }
+      },
+      "run": {
+        "errors": {
+          "embedIdInvalid": "The embed GUID is invalid.",
+          "widgetIdInvalid": "The widget identifier is invalid.",
+          "notFound": "The embedded widget query could not be found.",
+          "unsupportedDatabaseType": "This widget uses an unsupported database type.",
+          "authenticationFailed": "ApertureCore could not authenticate with the database server.",
+          "databaseNotFound": "The configured database could not be found.",
+          "connectionFailed": "ApertureCore could not reach the database server.",
+          "timeout": "The widget query timed out before it completed.",
+          "sslRequired": "The database server requires SSL for this connection.",
+          "queryRejected": "The widget query was rejected because it is not read-only.",
+          "queryFailed": "The widget query failed on the database server.",
+          "persistenceUnavailable": "Dashboard storage is currently unavailable.",
+          "unexpected": "Could not run the embedded widget query."
         }
       }
     }

@@ -70,6 +70,17 @@ describe('server OIDC auth middleware', () => {
     expect(requireUserSessionMock).not.toHaveBeenCalled()
   })
 
+  it('skips public embed api routes', async () => {
+    const middleware = await loadMiddleware()
+    const event = {
+      path: '/api/embed/dashboards/2f8f9425-55cf-4d8e-a446-638848de1942',
+      context: {}
+    }
+
+    await expect(middleware(event)).resolves.toBeUndefined()
+    expect(requireUserSessionMock).not.toHaveBeenCalled()
+  })
+
   it('attaches the authenticated user to the event context for protected api routes', async () => {
     const middleware = await loadMiddleware()
     const event = {

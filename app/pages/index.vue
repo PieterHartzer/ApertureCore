@@ -1,11 +1,23 @@
 <script setup lang="ts">
+import DeleteDashboardDialog from '~/components/dashboard/DeleteDashboardDialog.vue'
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
 import { useDashboardQueryResults } from '~/composables/dashboard/useDashboardQueryResults'
+import { useDashboards } from '~/composables/dashboard/useDashboards'
 import { useSavedSqlQueries } from '~/composables/database/useSavedSqlQueries'
+import { useNotifications } from '~/composables/ui/useNotifications'
 import { useUIPlugins } from '~/composables/useUIPlugins'
+import type {
+  DashboardCreateInput,
+  DashboardDetails,
+  DashboardSummary
+} from '~/types/dashboards'
+import {
+  createEmptyDashboardCreateInput,
+  toDashboardSaveInput
+} from '~/types/dashboards'
 import type {
   DashboardWidget,
   DashboardWidgetDraft,
@@ -24,31 +36,70 @@ import {
 import type { SavedSqlQuerySummary } from '~/types/saved-sql-queries'
 import {
   buildUIPluginFieldOptions,
+  filterUIPluginFieldOptions,
   getUIPluginInputSelectionMode,
   getUIPluginInputSource,
   type PluginInputDefinition,
-  type PluginInputOptionValue,
-  filterUIPluginFieldOptions
+  type PluginInputOptionValue
 } from '~/types/uiPlugin'
 import { translateMessage } from '~/utils/translateMessage'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
+const DASHBOARD_LAYOUT_SAVE_DEBOUNCE_MS = 800
 const WIDGET_REFRESH_INTERVAL_OPTIONS = [15, 30, 60, 300]
 
 const { t, te } = useI18n()
+const { success, error } = useNotifications()
 const requestFetch = import.meta.server
   ? useRequestFetch()
   : $fetch
+const requestUrl = useRequestURL()
 const { listQueries } = useSavedSqlQueries(requestFetch)
+const {
+  createDashboard: createDashboardRequest,
+  deleteDashboard: deleteDashboardRequest,
+  getDashboard,
+  listDashboards,
+  saveDashboard: saveDashboardRequest
+} = useDashboards(requestFetch)
 const { getPlugin, getPlugins } = useUIPlugins()
 const queryResults = useDashboardQueryResults()
-const widgets = useState<DashboardWidget[]>('dashboard-widgets', () => [])
+
 const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
+const dashboards = ref<DashboardSummary[]>([])
+const selectedDashboard = ref<DashboardDetails | null>(null)
+const selectedDashboardId = ref('')
+const dashboardListStatus = ref<'pending' | 'success' | 'error'>('pending')
+const dashboardListErrorMessage = ref('')
+const dashboardStatus = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
+const dashboardErrorMessage = ref('')
+const dashboardSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const dashboardSaveErrorMessage = ref('')
 const isDashboardEditing = ref(false)
 const isWidgetBuilderOpen = ref(false)
+const isCreateDashboardOpen = ref(false)
+const isDashboardSettingsOpen = ref(false)
+const isDeleteDashboardOpen = ref(false)
+const isCreatingDashboard = ref(false)
+const isSavingDashboardSettings = ref(false)
+const isDeletingDashboard = ref(false)
 const editingWidgetId = ref<string | null>(null)
 const previewStateKey = ref('')
+const createDashboardInput = ref<DashboardCreateInput>(
+  createEmptyDashboardCreateInput()
+)
+const createDashboardErrorMessage = ref('')
+const dashboardSettingsInput = ref({
+  dashboardName: '',
+  embedEnabled: false
+})
+const dashboardSettingsErrorMessage = ref('')
+const deleteDashboardErrorMessage = ref('')
+
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+let scheduledDashboardSave: ReturnType<typeof setTimeout> | null = null
+let dashboardSavePromise: Promise<boolean> | null = null
+let dashboardSaveQueued = false
 
 type PluginInputSelectValue = Exclude<
   DashboardWidgetPluginConfigPrimitive,
@@ -60,14 +111,14 @@ interface PluginInputSelectOption {
   value: PluginInputOptionValue
 }
 
-const { data: listResponse, status } = await useAsyncData(
+const { data: queryListResponse, status: queryListStatus } = await useAsyncData(
   'dashboard-saved-sql-queries',
   listQueries
 )
 
 const queries = computed<SavedSqlQuerySummary[]>(() => {
-  return listResponse.value?.ok
-    ? listResponse.value.queries ?? []
+  return queryListResponse.value?.ok
+    ? queryListResponse.value.queries ?? []
     : []
 })
 
@@ -76,6 +127,28 @@ const queryLookup = computed(() => {
 })
 
 const pluginDefinitions = computed(() => getPlugins())
+
+const widgets = computed(() => {
+  return selectedDashboard.value?.widgets ?? []
+})
+
+const hasSelectedDashboard = computed(() => {
+  return selectedDashboard.value !== null
+})
+
+const selectedDashboardName = computed(() => {
+  return selectedDashboard.value?.dashboardName ?? ''
+})
+
+const dashboardSelectOptions = computed(() => {
+  return dashboards.value.map((dashboard) => ({
+    label: t('pages.dashboard.selector.option', {
+      dashboardName: dashboard.dashboardName,
+      widgetCount: dashboard.widgetCount
+    }),
+    value: dashboard.id
+  }))
+})
 
 const queryOptions = computed(() => {
   return queries.value.map((query) => ({
@@ -152,14 +225,14 @@ const previewFieldOptions = computed(() => {
   )
 })
 
-const listErrorMessage = computed(() => {
-  if (!listResponse.value || listResponse.value.ok) {
+const queryListErrorMessage = computed(() => {
+  if (!queryListResponse.value || queryListResponse.value.ok) {
     return ''
   }
 
   return translateMessage(
     t,
-    listResponse.value.messageKey,
+    queryListResponse.value.messageKey,
     'queries.list.errors.unexpected'
   )
 })
@@ -186,6 +259,7 @@ const selectedPluginDescription = computed(() => {
 
 const submitWidgetDisabled = computed(() => {
   return (
+    !hasSelectedDashboard.value ||
     !selectedQuery.value ||
     !selectedPlugin.value ||
     previewState.value?.status !== 'success' ||
@@ -240,6 +314,37 @@ const widgetTargets = computed(() => {
       refreshIntervalMs: widget.refreshIntervalSeconds * 1000
     }]
   })
+})
+
+const dashboardSaveStatusMessage = computed(() => {
+  if (!hasSelectedDashboard.value) {
+    return ''
+  }
+
+  if (dashboardSaveState.value === 'saving') {
+    return t('pages.dashboard.status.saving')
+  }
+
+  if (dashboardSaveState.value === 'error') {
+    return dashboardSaveErrorMessage.value
+  }
+
+  if (dashboardSaveState.value === 'saved') {
+    return t('pages.dashboard.status.saved')
+  }
+
+  return t('pages.dashboard.status.ready')
+})
+
+const dashboardEmbedUrl = computed(() => {
+  if (!selectedDashboard.value) {
+    return ''
+  }
+
+  return new URL(
+    `/embed/dashboard/${selectedDashboard.value.embedId}`,
+    requestUrl.origin
+  ).toString()
 })
 
 const getPluginLabel = (pluginId: string) => {
@@ -504,13 +609,245 @@ const refreshWidgets = async (force = false) => {
   await queryResults.refreshStale(widgetTargets.value)
 }
 
+const sortDashboards = (items: DashboardSummary[]) => {
+  return [...items].sort((left, right) => {
+    return left.dashboardName.localeCompare(right.dashboardName, undefined, {
+      sensitivity: 'base'
+    })
+  })
+}
+
+const mapDashboardSummary = (dashboard: DashboardDetails): DashboardSummary => ({
+  id: dashboard.id,
+  dashboardName: dashboard.dashboardName,
+  embedId: dashboard.embedId,
+  embedEnabled: dashboard.embedEnabled,
+  widgetCount: dashboard.widgets.length,
+  createdAt: dashboard.createdAt,
+  updatedAt: dashboard.updatedAt
+})
+
+const upsertDashboardSummary = (dashboard: DashboardDetails) => {
+  const nextSummary = mapDashboardSummary(dashboard)
+  const existingIndex = dashboards.value.findIndex((item) => item.id === dashboard.id)
+
+  dashboards.value = sortDashboards(
+    existingIndex >= 0
+      ? dashboards.value.map((item, index) => {
+          return index === existingIndex
+            ? nextSummary
+            : item
+        })
+      : [...dashboards.value, nextSummary]
+  )
+}
+
 const resetDraft = () => {
   editingWidgetId.value = null
   draft.value = createEmptyDashboardWidgetDraft()
+  draft.value.dashboardId = selectedDashboard.value?.id ?? ''
+}
+
+const setSelectedDashboardWidgets = (nextWidgets: DashboardWidget[]) => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  selectedDashboard.value = {
+    ...selectedDashboard.value,
+    widgets: nextWidgets,
+    widgetCount: nextWidgets.length
+  }
+  upsertDashboardSummary(selectedDashboard.value)
+}
+
+const refreshDashboardList = async () => {
+  dashboardListStatus.value = 'pending'
+  dashboardListErrorMessage.value = ''
+
+  const response = await listDashboards()
+
+  if (response.ok) {
+    dashboards.value = sortDashboards(response.dashboards ?? [])
+    dashboardListStatus.value = 'success'
+    return true
+  }
+
+  dashboardListStatus.value = 'error'
+  dashboardListErrorMessage.value = translateMessage(
+    t,
+    response.messageKey,
+    'dashboards.list.errors.unexpected'
+  )
+
+  return false
+}
+
+const loadSelectedDashboard = async (dashboardId: string) => {
+  dashboardStatus.value = 'pending'
+  dashboardErrorMessage.value = ''
+
+  const response = await getDashboard(dashboardId)
+
+  if (response.ok && response.dashboard) {
+    selectedDashboard.value = response.dashboard
+    selectedDashboardId.value = response.dashboard.id
+    dashboardStatus.value = 'success'
+    dashboardSaveState.value = 'idle'
+    dashboardSaveErrorMessage.value = ''
+    resetDraft()
+    return true
+  }
+
+  dashboardStatus.value = 'error'
+  dashboardErrorMessage.value = translateMessage(
+    t,
+    response.messageKey,
+    'dashboards.get.errors.unexpected'
+  )
+
+  return false
+}
+
+const initializeDashboards = async () => {
+  const loadedList = await refreshDashboardList()
+
+  if (!loadedList || dashboards.value.length === 0) {
+    selectedDashboard.value = null
+    selectedDashboardId.value = ''
+    dashboardStatus.value = dashboards.value.length === 0
+      ? 'idle'
+      : 'error'
+    resetDraft()
+    return
+  }
+
+  const firstDashboard = dashboards.value[0]
+
+  if (!firstDashboard) {
+    return
+  }
+
+  await loadSelectedDashboard(firstDashboard.id)
+}
+
+const persistDashboard = async (
+  dashboardSnapshot: DashboardDetails,
+  options: {
+    notifyError?: boolean
+  } = {}
+) => {
+  if (scheduledDashboardSave) {
+    clearTimeout(scheduledDashboardSave)
+    scheduledDashboardSave = null
+  }
+
+  if (dashboardSavePromise) {
+    dashboardSaveQueued = true
+    return dashboardSavePromise
+  }
+
+  dashboardSaveState.value = 'saving'
+  dashboardSaveErrorMessage.value = ''
+
+  dashboardSavePromise = (async () => {
+    const response = await saveDashboardRequest(
+      dashboardSnapshot.id,
+      toDashboardSaveInput(dashboardSnapshot)
+    )
+
+    if (response.ok && response.dashboard) {
+      upsertDashboardSummary(response.dashboard)
+
+      if (selectedDashboard.value?.id === response.dashboard.id) {
+        selectedDashboard.value = response.dashboard
+        selectedDashboardId.value = response.dashboard.id
+      }
+
+      dashboardSaveState.value = 'saved'
+      dashboardSaveErrorMessage.value = ''
+      return true
+    }
+
+    const message = translateMessage(
+      t,
+      response.messageKey,
+      'dashboards.save.errors.unexpected'
+    )
+
+    dashboardSaveState.value = 'error'
+    dashboardSaveErrorMessage.value = message
+
+    if (options.notifyError !== false) {
+      error(
+        message,
+        t('pages.dashboard.notifications.saveErrorTitle')
+      )
+    }
+
+    return false
+  })()
+
+  const result = await dashboardSavePromise
+
+  dashboardSavePromise = null
+
+  if (dashboardSaveQueued) {
+    dashboardSaveQueued = false
+
+    if (selectedDashboard.value) {
+      void persistDashboard(selectedDashboard.value, {
+        notifyError: false
+      })
+    }
+  }
+
+  return result
+}
+
+const scheduleDashboardSave = () => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  if (scheduledDashboardSave) {
+    clearTimeout(scheduledDashboardSave)
+  }
+
+  scheduledDashboardSave = setTimeout(() => {
+    scheduledDashboardSave = null
+
+    if (selectedDashboard.value) {
+      void persistDashboard(selectedDashboard.value, {
+        notifyError: false
+      })
+    }
+  }, DASHBOARD_LAYOUT_SAVE_DEBOUNCE_MS)
+}
+
+const waitForPendingDashboardSave = async () => {
+  await flushScheduledDashboardSave()
+
+  if (dashboardSavePromise) {
+    await dashboardSavePromise
+  }
+}
+
+const flushScheduledDashboardSave = async () => {
+  if (!scheduledDashboardSave || !selectedDashboard.value) {
+    return
+  }
+
+  clearTimeout(scheduledDashboardSave)
+  scheduledDashboardSave = null
+
+  await persistDashboard(selectedDashboard.value, {
+    notifyError: false
+  })
 }
 
 const openWidgetBuilder = () => {
-  if (!isDashboardEditing.value) {
+  if (!isDashboardEditing.value || !selectedDashboard.value) {
     return
   }
 
@@ -529,6 +866,7 @@ const onEditWidget = (widget: DashboardWidget) => {
 
   editingWidgetId.value = widget.id
   draft.value = createDashboardWidgetDraftFromWidget(widget)
+  draft.value.dashboardId = selectedDashboard.value?.id ?? ''
   isWidgetBuilderOpen.value = true
 }
 
@@ -537,6 +875,10 @@ const onCancelEditingWidget = () => {
 }
 
 const onToggleDashboardEditing = () => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
   isDashboardEditing.value = !isDashboardEditing.value
 
   if (!isDashboardEditing.value) {
@@ -545,7 +887,12 @@ const onToggleDashboardEditing = () => {
 }
 
 const onSubmitWidget = async () => {
-  if (submitWidgetDisabled.value || !selectedPlugin.value || !selectedQuery.value) {
+  if (
+    submitWidgetDisabled.value ||
+    !selectedPlugin.value ||
+    !selectedQuery.value ||
+    !selectedDashboard.value
+  ) {
     return
   }
 
@@ -558,6 +905,7 @@ const onSubmitWidget = async () => {
 
   const normalizedDraft: DashboardWidgetDraft = {
     ...draft.value,
+    dashboardId: selectedDashboard.value.id,
     pluginConfig: normalizeDashboardWidgetPluginConfig(
       selectedPlugin.value,
       draft.value.pluginConfig
@@ -565,37 +913,49 @@ const onSubmitWidget = async () => {
     title: draft.value.title.trim() || defaultTitle
   }
 
-  if (editingWidget.value) {
-    widgets.value = widgets.value.map((widget) => {
-      return widget.id === editingWidget.value?.id
-        ? updateDashboardWidget(widget, normalizedDraft)
-        : widget
-    })
-  } else {
-    widgets.value = [
-      ...widgets.value,
-      createDashboardWidget(normalizedDraft)
-    ]
-  }
+  const nextWidgets = editingWidget.value
+    ? widgets.value.map((widget) => {
+        return widget.id === editingWidget.value?.id
+          ? updateDashboardWidget(widget, normalizedDraft)
+          : widget
+      })
+    : [
+        ...widgets.value,
+        createDashboardWidget(normalizedDraft)
+      ]
+
+  setSelectedDashboardWidgets(nextWidgets)
 
   isWidgetBuilderOpen.value = false
   resetDraft()
   await refreshWidgets()
+
+  if (selectedDashboard.value) {
+    await persistDashboard(selectedDashboard.value)
+  }
 }
 
-const onRemoveWidget = (widgetId: string) => {
+const onRemoveWidget = async (widgetId: string) => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
   if (editingWidgetId.value === widgetId) {
     isWidgetBuilderOpen.value = false
     resetDraft()
   }
 
-  widgets.value = widgets.value.filter((widget) => widget.id !== widgetId)
+  setSelectedDashboardWidgets(
+    widgets.value.filter((widget) => widget.id !== widgetId)
+  )
+
+  await persistDashboard(selectedDashboard.value)
 }
 
 const onWidgetLayoutChange = (
   updates: DashboardWidgetLayoutUpdate[]
 ) => {
-  if (updates.length === 0) {
+  if (updates.length === 0 || !selectedDashboard.value) {
     return
   }
 
@@ -603,13 +963,17 @@ const onWidgetLayoutChange = (
     updates.map((update) => [update.widgetId, update.layout])
   )
 
-  widgets.value = widgets.value.map((widget) => {
-    const nextLayout = layoutUpdates.get(widget.id)
+  setSelectedDashboardWidgets(
+    widgets.value.map((widget) => {
+      const nextLayout = layoutUpdates.get(widget.id)
 
-    return nextLayout
-      ? updateDashboardWidgetLayout(widget, nextLayout)
-      : widget
-  })
+      return nextLayout
+        ? updateDashboardWidgetLayout(widget, nextLayout)
+        : widget
+    })
+  )
+
+  scheduleDashboardSave()
 }
 
 const onRefreshWidget = async (widget: DashboardWidget) => {
@@ -626,6 +990,257 @@ const onRefreshWidget = async (widget: DashboardWidget) => {
   }, {
     force: true
   })
+}
+
+const onDashboardSelectionChange = async (dashboardId: string | undefined) => {
+  if (!dashboardId || dashboardId === selectedDashboardId.value) {
+    return
+  }
+
+  await waitForPendingDashboardSave()
+
+  const previousDashboard = selectedDashboard.value
+  const previousDashboardId = selectedDashboardId.value
+  const loaded = await loadSelectedDashboard(dashboardId)
+
+  if (!loaded) {
+    selectedDashboard.value = previousDashboard
+    selectedDashboardId.value = previousDashboardId
+    dashboardStatus.value = previousDashboard ? 'success' : 'error'
+
+    error(
+      dashboardErrorMessage.value || t('dashboards.get.errors.unexpected'),
+      t('pages.dashboard.notifications.loadErrorTitle')
+    )
+  }
+}
+
+const openCreateDashboardDialog = () => {
+  createDashboardInput.value = createEmptyDashboardCreateInput()
+  createDashboardErrorMessage.value = ''
+  isCreateDashboardOpen.value = true
+}
+
+const onCreateDashboardOpenChange = (open: boolean) => {
+  isCreateDashboardOpen.value = open
+
+  if (!open) {
+    createDashboardInput.value = createEmptyDashboardCreateInput()
+    createDashboardErrorMessage.value = ''
+  }
+}
+
+const onCreateDashboard = async () => {
+  if (!createDashboardInput.value.dashboardName.trim()) {
+    createDashboardErrorMessage.value = t(
+      'dashboards.create.errors.dashboardNameRequired'
+    )
+    return
+  }
+
+  isCreatingDashboard.value = true
+  createDashboardErrorMessage.value = ''
+
+  try {
+    const response = await createDashboardRequest({
+      dashboardName: createDashboardInput.value.dashboardName.trim()
+    })
+
+    if (response.ok && response.dashboard) {
+      upsertDashboardSummary(response.dashboard)
+      selectedDashboard.value = response.dashboard
+      selectedDashboardId.value = response.dashboard.id
+      dashboardStatus.value = 'success'
+      isCreateDashboardOpen.value = false
+      isDashboardEditing.value = true
+      resetDraft()
+      success(
+        translateMessage(
+          t,
+          response.messageKey,
+          'dashboards.create.success'
+        ),
+        t('pages.dashboard.notifications.createSuccessTitle')
+      )
+      return
+    }
+
+    createDashboardErrorMessage.value = translateMessage(
+      t,
+      response.messageKey,
+      'dashboards.create.errors.unexpected'
+    )
+  } finally {
+    isCreatingDashboard.value = false
+  }
+}
+
+const openDashboardSettings = () => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  dashboardSettingsInput.value = {
+    dashboardName: selectedDashboard.value.dashboardName,
+    embedEnabled: selectedDashboard.value.embedEnabled
+  }
+  dashboardSettingsErrorMessage.value = ''
+  isDashboardSettingsOpen.value = true
+}
+
+const onDashboardSettingsOpenChange = (open: boolean) => {
+  isDashboardSettingsOpen.value = open
+
+  if (!open) {
+    dashboardSettingsErrorMessage.value = ''
+    if (!isDeletingDashboard.value) {
+      isDeleteDashboardOpen.value = false
+      deleteDashboardErrorMessage.value = ''
+    }
+  }
+}
+
+const openDeleteDashboardDialog = () => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  deleteDashboardErrorMessage.value = ''
+  isDeleteDashboardOpen.value = true
+}
+
+const onDeleteDashboardOpenChange = (open: boolean) => {
+  if (isDeletingDashboard.value && !open) {
+    return
+  }
+
+  isDeleteDashboardOpen.value = open
+
+  if (!open) {
+    deleteDashboardErrorMessage.value = ''
+  }
+}
+
+const onSaveDashboardSettings = async () => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  const dashboardName = dashboardSettingsInput.value.dashboardName.trim()
+
+  if (!dashboardName) {
+    dashboardSettingsErrorMessage.value = t(
+      'dashboards.save.errors.dashboardNameRequired'
+    )
+    return
+  }
+
+  isSavingDashboardSettings.value = true
+  dashboardSettingsErrorMessage.value = ''
+
+  try {
+    const nextDashboard: DashboardDetails = {
+      ...selectedDashboard.value,
+      dashboardName,
+      embedEnabled: dashboardSettingsInput.value.embedEnabled
+    }
+
+    const saved = await persistDashboard(nextDashboard, {
+      notifyError: false
+    })
+
+    if (saved) {
+      isDashboardSettingsOpen.value = false
+      success(
+        t('dashboards.save.success'),
+        t('pages.dashboard.notifications.settingsSavedTitle')
+      )
+      return
+    }
+
+    dashboardSettingsErrorMessage.value = dashboardSaveErrorMessage.value
+  } finally {
+    isSavingDashboardSettings.value = false
+  }
+}
+
+const onDeleteDashboard = async (
+  payload: {
+    confirmationName: string
+  }
+) => {
+  if (!selectedDashboard.value) {
+    return
+  }
+
+  const dashboardId = selectedDashboard.value.id
+  const remainingDashboards = dashboards.value.filter((dashboard) => {
+    return dashboard.id !== dashboardId
+  })
+  const nextDashboardId = remainingDashboards[0]?.id ?? ''
+
+  isDeletingDashboard.value = true
+  deleteDashboardErrorMessage.value = ''
+
+  try {
+    await waitForPendingDashboardSave()
+
+    const response = await deleteDashboardRequest(dashboardId, {
+      confirmationName: payload.confirmationName
+    })
+
+    if (response.ok) {
+      dashboards.value = remainingDashboards
+      isDeleteDashboardOpen.value = false
+      isDashboardSettingsOpen.value = false
+      isWidgetBuilderOpen.value = false
+      isDashboardEditing.value = false
+      dashboardSaveState.value = 'idle'
+      dashboardSaveErrorMessage.value = ''
+      dashboardSettingsErrorMessage.value = ''
+      dashboardErrorMessage.value = ''
+      selectedDashboard.value = null
+      selectedDashboardId.value = ''
+
+      if (nextDashboardId) {
+        await loadSelectedDashboard(nextDashboardId)
+      } else {
+        dashboardStatus.value = 'idle'
+        resetDraft()
+      }
+
+      success(
+        t('dashboards.delete.success'),
+        t('pages.dashboard.notifications.deleteSuccessTitle')
+      )
+      return
+    }
+
+    deleteDashboardErrorMessage.value = translateMessage(
+      t,
+      response.messageKey,
+      'dashboards.delete.errors.unexpected'
+    )
+  } finally {
+    isDeletingDashboard.value = false
+  }
+}
+
+const onCopyEmbedUrl = async () => {
+  if (
+    !dashboardEmbedUrl.value ||
+    !selectedDashboard.value?.embedEnabled ||
+    !import.meta.client ||
+    !navigator.clipboard
+  ) {
+    return
+  }
+
+  await navigator.clipboard.writeText(dashboardEmbedUrl.value)
+  success(
+    t('pages.dashboard.selector.embed.copied'),
+    t('pages.dashboard.notifications.embedCopiedTitle')
+  )
 }
 
 watch(
@@ -671,7 +1286,9 @@ watch(
 )
 
 watch(
-  () => widgetTargets.value.map((target) => target.queryId).join('|'),
+  () => widgetTargets.value.map((target) => {
+    return `${target.queryId}:${target.refreshIntervalMs ?? ''}`
+  }).join('|'),
   async () => {
     await refreshWidgets()
   },
@@ -679,6 +1296,8 @@ watch(
     immediate: true
   }
 )
+
+await initializeDashboards()
 
 onMounted(() => {
   refreshTimer = setInterval(() => {
@@ -689,6 +1308,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (refreshTimer) {
     clearInterval(refreshTimer)
+  }
+
+  if (scheduledDashboardSave) {
+    clearTimeout(scheduledDashboardSave)
   }
 })
 </script>
@@ -701,18 +1324,231 @@ onBeforeUnmount(() => {
       :description="t('pages.dashboard.description')"
     >
       <template #links>
-        <AppLocaleSelect />
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <AppLocaleSelect />
+
+          <USelect
+            :model-value="selectedDashboardId || undefined"
+            class="w-full min-w-0 sm:w-72"
+            :items="dashboardSelectOptions"
+            :placeholder="t('pages.dashboard.selector.placeholder')"
+            :disabled="dashboardListStatus === 'pending' || dashboards.length === 0"
+            @update:model-value="onDashboardSelectionChange"
+          />
+
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-plus"
+            :label="t('pages.dashboard.selector.actions.new')"
+            @click="openCreateDashboardDialog"
+          />
+
+          <UButton
+            v-if="hasSelectedDashboard"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-settings-2"
+            :label="t('pages.dashboard.selector.actions.settings')"
+            @click="openDashboardSettings"
+          />
+
+          <UButton
+            v-if="hasSelectedDashboard"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-pen-square"
+            :label="dashboardEditActionLabel"
+            @click="onToggleDashboardEditing"
+          />
+        </div>
       </template>
     </UPageHeader>
 
     <UPageBody class="space-y-8">
       <AppAlert
-        v-if="listErrorMessage"
+        v-if="dashboardListErrorMessage"
+        kind="error"
+        :title="t('pages.dashboard.errors.loadDashboardsTitle')"
+      >
+        {{ dashboardListErrorMessage }}
+      </AppAlert>
+
+      <AppAlert
+        v-if="queryListErrorMessage"
         kind="error"
         :title="t('pages.dashboard.errors.loadQueriesTitle')"
       >
-        {{ listErrorMessage }}
+        {{ queryListErrorMessage }}
       </AppAlert>
+
+      <UModal
+        :open="isCreateDashboardOpen"
+        :title="t('pages.dashboard.selector.create.title')"
+        :description="t('pages.dashboard.selector.create.description')"
+        @update:open="onCreateDashboardOpenChange"
+      >
+        <template #body>
+          <div class="space-y-4">
+            <AppAlert
+              v-if="createDashboardErrorMessage"
+              kind="error"
+              :title="t('pages.dashboard.selector.create.errorTitle')"
+            >
+              {{ createDashboardErrorMessage }}
+            </AppAlert>
+
+            <UFormField
+              name="dashboardName"
+              :label="t('pages.dashboard.selector.create.fields.dashboardName.label')"
+              :description="t('pages.dashboard.selector.create.fields.dashboardName.description')"
+            >
+              <UInput
+                v-model="createDashboardInput.dashboardName"
+                class="w-full"
+                :placeholder="t('pages.dashboard.selector.create.fields.dashboardName.placeholder')"
+              />
+            </UFormField>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex w-full justify-end gap-3">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :label="t('pages.dashboard.selector.create.actions.cancel')"
+              @click="onCreateDashboardOpenChange(false)"
+            />
+            <UButton
+              icon="i-lucide-plus"
+              :loading="isCreatingDashboard"
+              :label="t('pages.dashboard.selector.create.actions.submit')"
+              @click="onCreateDashboard"
+            />
+          </div>
+        </template>
+      </UModal>
+
+      <UModal
+        :open="isDashboardSettingsOpen"
+        :title="t('pages.dashboard.selector.settings.title')"
+        :description="t('pages.dashboard.selector.settings.description')"
+        @update:open="onDashboardSettingsOpenChange"
+      >
+        <template #body>
+          <div class="space-y-6">
+            <AppAlert
+              v-if="dashboardSettingsErrorMessage"
+              kind="error"
+              :title="t('pages.dashboard.selector.settings.errorTitle')"
+            >
+              {{ dashboardSettingsErrorMessage }}
+            </AppAlert>
+
+            <UFormField
+              name="dashboardName"
+              :label="t('pages.dashboard.selector.settings.fields.dashboardName.label')"
+              :description="t('pages.dashboard.selector.settings.fields.dashboardName.description')"
+            >
+              <UInput
+                v-model="dashboardSettingsInput.dashboardName"
+                class="w-full"
+                :placeholder="t('pages.dashboard.selector.settings.fields.dashboardName.placeholder')"
+              />
+            </UFormField>
+
+            <UFormField
+              name="embedEnabled"
+              :label="t('pages.dashboard.selector.settings.fields.embedEnabled.label')"
+              :description="t('pages.dashboard.selector.settings.fields.embedEnabled.description')"
+            >
+              <USwitch v-model="dashboardSettingsInput.embedEnabled" />
+            </UFormField>
+
+            <UFormField
+              name="embedId"
+              :label="t('pages.dashboard.selector.embed.guidLabel')"
+              :description="t('pages.dashboard.selector.embed.guidDescription')"
+            >
+              <UInput
+                :model-value="selectedDashboard?.embedId ?? ''"
+                readonly
+                class="w-full font-mono text-xs"
+              />
+            </UFormField>
+
+            <UFormField
+              name="embedUrl"
+              :label="t('pages.dashboard.selector.embed.urlLabel')"
+              :description="t('pages.dashboard.selector.embed.urlDescription')"
+            >
+              <div class="flex flex-col gap-3 sm:flex-row">
+                <UInput
+                  :model-value="dashboardEmbedUrl"
+                  readonly
+                  class="w-full font-mono text-xs"
+                />
+                <UButton
+                  color="neutral"
+                  variant="soft"
+                  icon="i-lucide-copy"
+                  :label="t('pages.dashboard.selector.embed.actions.copy')"
+                  :disabled="!selectedDashboard?.embedEnabled"
+                  @click="onCopyEmbedUrl"
+                />
+              </div>
+
+              <p class="mt-2 text-xs text-muted">
+                {{
+                  selectedDashboard?.embedEnabled
+                    ? t('pages.dashboard.selector.embed.enabledHint')
+                    : t('pages.dashboard.selector.embed.disabledHint')
+                }}
+              </p>
+            </UFormField>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <UButton
+              color="error"
+              variant="ghost"
+              icon="i-lucide-trash-2"
+              :label="t('pages.dashboard.selector.settings.actions.delete')"
+              :disabled="isSavingDashboardSettings || isDeletingDashboard"
+              @click="openDeleteDashboardDialog"
+            />
+
+            <div class="flex justify-end gap-3">
+              <UButton
+                color="neutral"
+                variant="ghost"
+                :label="t('pages.dashboard.selector.settings.actions.cancel')"
+                :disabled="isSavingDashboardSettings || isDeletingDashboard"
+                @click="onDashboardSettingsOpenChange(false)"
+              />
+              <UButton
+                icon="i-lucide-save"
+                :loading="isSavingDashboardSettings"
+                :disabled="isDeletingDashboard"
+                :label="t('pages.dashboard.selector.settings.actions.save')"
+                @click="onSaveDashboardSettings"
+              />
+            </div>
+          </div>
+        </template>
+      </UModal>
+
+      <DeleteDashboardDialog
+        :open="isDeleteDashboardOpen"
+        :dashboard-name="selectedDashboardName"
+        :is-deleting="isDeletingDashboard"
+        :error-message="deleteDashboardErrorMessage"
+        @update:open="onDeleteDashboardOpenChange"
+        @confirm="onDeleteDashboard"
+      />
 
       <UModal
         :open="isWidgetBuilderOpen"
@@ -935,17 +1771,27 @@ onBeforeUnmount(() => {
       </UModal>
 
       <section class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="space-y-1">
             <h2 class="text-lg font-semibold text-highlighted">
-              {{ t('pages.dashboard.widgets.title') }}
+              {{
+                selectedDashboardName ||
+                  t('pages.dashboard.widgets.title')
+              }}
             </h2>
             <p class="text-sm leading-6 text-muted">
-              {{ t('pages.dashboard.widgets.description') }}
+              {{
+                hasSelectedDashboard
+                  ? dashboardSaveStatusMessage
+                  : t('pages.dashboard.widgets.description')
+              }}
             </p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div
+            v-if="hasSelectedDashboard"
+            class="flex flex-wrap items-center gap-2"
+          >
             <UButton
               v-if="isDashboardEditing"
               icon="i-lucide-plus"
@@ -955,23 +1801,51 @@ onBeforeUnmount(() => {
             <UButton
               color="neutral"
               variant="soft"
-              icon="i-lucide-pen-square"
-              :label="dashboardEditActionLabel"
-              @click="onToggleDashboardEditing"
-            />
-            <UButton
-              color="neutral"
-              variant="soft"
               icon="i-lucide-rotate-cw"
               :label="t('pages.dashboard.widgets.actions.refreshAll')"
-              :disabled="widgets.length === 0 || status === 'pending'"
+              :disabled="widgets.length === 0 || queryListStatus === 'pending'"
               @click="refreshWidgets(true)"
             />
           </div>
         </div>
 
         <UPageCard
-          v-if="widgets.length === 0"
+          v-if="dashboardListStatus === 'pending'"
+          icon="i-lucide-loader-circle"
+          :title="t('pages.dashboard.states.loadingDashboardsTitle')"
+          :description="t('pages.dashboard.states.loadingDashboardsDescription')"
+        />
+
+        <UPageCard
+          v-else-if="dashboards.length === 0"
+          icon="i-lucide-layout-dashboard"
+          :title="t('pages.dashboard.empty.title')"
+          :description="t('pages.dashboard.empty.description')"
+        >
+          <UButton
+            icon="i-lucide-plus"
+            :label="t('pages.dashboard.empty.action')"
+            @click="openCreateDashboardDialog"
+          />
+        </UPageCard>
+
+        <AppAlert
+          v-else-if="dashboardStatus === 'error'"
+          kind="error"
+          :title="t('pages.dashboard.errors.loadDashboardTitle')"
+        >
+          {{ dashboardErrorMessage }}
+        </AppAlert>
+
+        <UPageCard
+          v-else-if="dashboardStatus === 'pending'"
+          icon="i-lucide-loader-circle"
+          :title="t('pages.dashboard.states.loadingDashboardTitle')"
+          :description="t('pages.dashboard.states.loadingDashboardDescription')"
+        />
+
+        <UPageCard
+          v-else-if="widgets.length === 0"
           icon="i-lucide-layout-dashboard"
           :title="t('pages.dashboard.widgets.empty.title')"
           :description="t('pages.dashboard.widgets.empty.description')"
@@ -995,7 +1869,7 @@ onBeforeUnmount(() => {
               <template #header>
                 <div class="flex min-w-0 items-start justify-between gap-3">
                   <h3 class="min-w-0 truncate font-semibold text-highlighted">
-                    {{ widget.title || getWidgetQuery(widget)?.queryName || t('pages.dashboard.widgets.card.fallbackTitle') }}
+                    {{ widget.title || t('pages.dashboard.widgets.card.fallbackTitle') }}
                   </h3>
 
                   <div
