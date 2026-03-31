@@ -1,8 +1,7 @@
-<script setup lang="ts">
-import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
-import ConectionTestForm from '~/components/database/ConectionTestForm.vue'
+<script>
+import component from '~/view-models/pages/connections/new'
 
-const { t } = useI18n()
+export default component
 </script>
 
 <template>

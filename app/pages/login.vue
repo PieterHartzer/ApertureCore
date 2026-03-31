@@ -1,35 +1,11 @@
-<script setup lang="ts">
-import AppAlert from '~/components/ui/AppAlert.vue'
-import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+<script>
+import component from '~/view-models/pages/login'
 
 definePageMeta({
   public: true
 })
 
-const config = useRuntimeConfig()
-const oidcConfigured = config.public.oidcConfigured
-const route = useRoute()
-const { t } = useI18n()
-
-const callbackRedirectUrl =
-  typeof route.query.callbackRedirectUrl === 'string' && route.query.callbackRedirectUrl.startsWith('/')
-    ? route.query.callbackRedirectUrl
-    : '/'
-
-if (oidcConfigured) {
-  await navigateTo(
-    {
-      path: '/auth/oidc/login',
-      query: {
-        callbackRedirectUrl
-      }
-    },
-    {
-      external: true,
-      replace: true
-    }
-  )
-}
+export default component
 </script>
 
 <template>

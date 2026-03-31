@@ -1,19 +1,7 @@
-<script lang="ts" setup>
-import type { FeedbackKind } from '~/theme/feedback'
+<script>
+import component from '~/view-models/components/ui/AppAlert'
 
-import { FEEDBACK_THEME } from '~/theme/feedback'
-
-const props = withDefaults(defineProps<{
-  kind?: FeedbackKind
-  title?: string
-}>(), {
-  kind: 'info',
-  title: undefined
-})
-
-const tone = computed(() => {
-  return FEEDBACK_THEME[props.kind]
-})
+export default component
 </script>
 
 <template>

@@ -1,7 +1,5 @@
 import { createHash } from 'node:crypto'
 
-import type { H3Event } from 'h3'
-
 import type {
   RunSavedSqlQueryInput,
   RunSavedSqlQueryValidationError

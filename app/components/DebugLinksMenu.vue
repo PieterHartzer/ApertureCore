@@ -1,28 +1,7 @@
-<script setup lang="ts">
-const isOpen = ref(false)
-const showMenu = ref(false)
-const {
-  public: { devToolsLinks },
-} = useRuntimeConfig()
+<script>
+import component from '~/view-models/components/DebugLinksMenu'
 
-onMounted(() => {
-  showMenu.value = import.meta.dev && Boolean(devToolsLinks?.enabled)
-})
-
-const links = computed(() => {
-  const items = [
-    {
-      href: devToolsLinks?.mailInboxUrl,
-      label: 'Mail Inbox',
-    },
-    {
-      href: devToolsLinks?.providerConsoleUrl,
-      label: 'Dev Provider Console',
-    },
-  ]
-
-  return items.filter((item) => Boolean(item.href))
-})
+export default component
 </script>
 
 <template>

@@ -1,35 +1,7 @@
-<script setup lang="ts">
-import type { EChartsOption } from 'echarts'
+<script>
+import component from '~/view-models/components/plugins/PluginChart'
 
-import { BarChart, LineChart } from 'echarts/charts'
-import {
-  GridComponent,
-  LegendComponent,
-  TitleComponent,
-  TooltipComponent
-} from 'echarts/components'
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import VChart from 'vue-echarts'
-
-use([
-  BarChart,
-  CanvasRenderer,
-  GridComponent,
-  LegendComponent,
-  LineChart,
-  TitleComponent,
-  TooltipComponent
-])
-
-const { t } = useI18n()
-
-withDefaults(defineProps<{
-  option: EChartsOption
-  heightClass?: string
-}>(), {
-  heightClass: 'h-full min-h-0'
-})
+export default component
 </script>
 
 <template>

@@ -1,76 +1,7 @@
-<script setup lang="ts">
-import AppAlert from '~/components/ui/AppAlert.vue'
+<script>
+import component from '~/view-models/components/dashboard/DeleteDashboardDialog'
 
-interface DeleteDashboardDialogProps {
-  open: boolean
-  dashboardName: string
-  isDeleting?: boolean
-  errorMessage?: string
-}
-
-interface DeleteDashboardDialogConfirmPayload {
-  confirmationName: string
-}
-
-const props = withDefaults(
-  defineProps<DeleteDashboardDialogProps>(),
-  {
-    isDeleting: false,
-    errorMessage: ''
-  }
-)
-
-const emit = defineEmits<{
-  'update:open': [value: boolean]
-  confirm: [payload: DeleteDashboardDialogConfirmPayload]
-}>()
-
-const { t } = useI18n()
-const confirmationName = ref('')
-
-const isConfirmationMatch = computed(() => {
-  return confirmationName.value.trim() === props.dashboardName
-})
-
-const resetForm = () => {
-  confirmationName.value = ''
-}
-
-watch(
-  () => props.open,
-  (open) => {
-    if (open) {
-      resetForm()
-    }
-  }
-)
-
-watch(
-  () => props.dashboardName,
-  () => {
-    if (props.open) {
-      resetForm()
-    }
-  }
-)
-
-const closeDialog = () => {
-  if (props.isDeleting) {
-    return
-  }
-
-  emit('update:open', false)
-}
-
-const onConfirm = () => {
-  if (!isConfirmationMatch.value || props.isDeleting) {
-    return
-  }
-
-  emit('confirm', {
-    confirmationName: confirmationName.value.trim()
-  })
-}
+export default component
 </script>
 
 <template>
