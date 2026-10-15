@@ -15,6 +15,13 @@ export default component
         <div class="flex items-center gap-3">
           <AppLocaleSelect />
           <UButton
+            to="/connections"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-database"
+            label="Connections"
+          />
+          <UButton
             to="/queries/new"
             icon="i-lucide-plus"
             :label="t('queries.index.actions.new')"

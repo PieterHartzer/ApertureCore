@@ -13,6 +13,13 @@ export default component
     >
       <template #links>
         <AppLocaleSelect />
+        <UButton
+          to="/connections/new"
+          color="neutral"
+          variant="soft"
+          icon="i-lucide-database"
+          label="New Connection"
+        />
       </template>
     </UPageHeader>
 

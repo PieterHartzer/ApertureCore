@@ -16,6 +16,14 @@ export default component
           <AppLocaleSelect />
 
           <UButton
+            to="/Connections"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-database"
+            label="Connections"
+          />
+
+          <UButton
             to="/Queries"
             color="neutral"
             variant="soft"
