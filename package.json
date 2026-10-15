@@ -19,6 +19,7 @@
     "typecheck": "pnpm exec nuxi typecheck"
   },
   "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.86",
     "@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/icon": "2.2.1",
     "@nuxt/ui": "^4.5.1",

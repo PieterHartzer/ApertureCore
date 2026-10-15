@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module'
+import { dirname } from 'node:path'
 import { resolvePositiveInteger } from './server/utils/positive-integer'
 
 const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3300')
@@ -75,6 +77,13 @@ const oidcOptionalClaims = Array.from(new Set([
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  nitro: {
+    // Serve the self-contained runtime without Vite transforming its embedded WASM.
+    publicAssets: [{
+      dir: dirname(createRequire(import.meta.url).resolve('@mlc-ai/web-llm')),
+      baseURL: '/vendor/web-llm'
+    }]
+  },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],

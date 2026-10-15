@@ -15,6 +15,14 @@ export default component
         <div class="flex flex-wrap items-center justify-end gap-2">
           <AppLocaleSelect />
 
+          <UButton
+            to="/Queries"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-code"
+            label="SQL Queries"
+          />
+
           <USelect
             :model-value="selectedDashboardId || undefined"
             class="w-full min-w-0 sm:w-72"

@@ -32,3 +32,8 @@ logs
 # Local planning artifacts
 notes.md
 task_plan.md
+
+.agents
+
+# AI Project to course files
+aperturecore-course

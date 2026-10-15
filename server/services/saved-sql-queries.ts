@@ -198,7 +198,8 @@ const loadSavedSqlQueryConnection = async (
  */
 export const testSavedSqlQuery = async (
   authContext: AuthenticatedOrganizationContext,
-  input: TestSavedSqlQueryInput
+  input: TestSavedSqlQueryInput,
+  options: { maxRows?: number } = {}
 ): Promise<TestSavedSqlQueryResult> => {
   try {
     const db = getAppDatabase()
@@ -228,7 +229,8 @@ export const testSavedSqlQuery = async (
       username: secret.username,
       password: secret.password,
       sslMode: secret.sslMode,
-      sql: input.sql
+      sql: input.sql,
+      ...options
     })
 
     if (!result.ok) {
