@@ -9,15 +9,15 @@ export default component
 </script>
 
 <template>
-  <main class="flex min-h-dvh items-center justify-center px-6">
+  <main class="flex min-h-dvh items-center justify-center px-4 sm:px-6 lg:px-8">
     <UCard class="w-full max-w-md">
       <template #header>
-        <div class="flex items-start justify-between gap-4">
-          <div class="space-y-2">
-            <h1 class="text-2xl font-semibold text-highlighted">
+        <div class="flex items-start justify-between gap-4 sm:gap-6">
+          <div class="space-y-3 sm:space-y-4">
+            <h1 class="text-2xl sm:text-3xl font-semibold text-highlighted">
               {{ t('login.title') }}
             </h1>
-            <p class="text-sm leading-6 text-muted">
+            <p class="text-sm sm:text-base leading-6 text-muted">
               {{ t('login.description') }}
             </p>
           </div>
@@ -28,7 +28,7 @@ export default component
 
       <p
         v-if="oidcConfigured"
-        class="text-sm leading-6 text-muted"
+        class="text-sm sm:text-base leading-6 text-muted"
       >
         {{ t('login.refreshHint') }}
       </p>

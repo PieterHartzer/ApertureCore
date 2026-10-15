@@ -117,15 +117,21 @@ const save = async () => {
 </script>
 
 <template>
-  <UPage>
-    <UPageHeader title="SQL workspace" description="Ask a question, refine the SQL, and test it against your database.">
+  <UPage class="px-4 sm:px-6 lg:px-8">
+    <UPageHeader 
+      title="SQL workspace" 
+      description="Ask a question, refine the SQL, and test it against your database."
+      class="pb-6"
+    >
       <template #links>
-        <UButton to="/" color="neutral" variant="soft" icon="i-lucide-arrow-left" label="Dashboard" />
-        <UButton to="/queries" color="neutral" variant="outline" icon="i-lucide-library" label="Saved queries" />
-        <UButton to="/connections" color="neutral" variant="outline" icon="i-lucide-database" label="Connections" />
+        <div class="flex items-center gap-2 sm:gap-3">
+          <UButton to="/" color="neutral" variant="soft" icon="i-lucide-arrow-left" label="Dashboard" />
+          <UButton to="/queries" color="neutral" variant="outline" icon="i-lucide-library" label="Saved queries" />
+          <UButton to="/connections" color="neutral" variant="outline" icon="i-lucide-database" label="Connections" />
+        </div>
       </template>
     </UPageHeader>
-    <UPageBody>
+    <UPageBody class="space-y-6 sm:space-y-8">
       <div v-if="error || modelError" role="alert" aria-live="assertive" class="sticky top-2 z-30 mb-6">
         <AppAlert kind="error" :title="error ? errorTitle : 'Local model unavailable'">
           <p>{{ error || modelError }}</p>
@@ -141,24 +147,24 @@ const save = async () => {
       </UPageCard>
       <div v-else class="grid min-w-0 gap-6 lg:grid-cols-2">
         <div class="min-w-0 space-y-6">
-          <UPageCard title="1. Choose your database" icon="i-lucide-database">
+          <UPageCard title="1. Choose your database" icon="i-lucide-database" class="space-y-4 sm:space-y-6">
             <UFormField label="Database connection" name="connection">
               <USelect v-model="connectionId" :items="connectionOptions" :disabled="busy" class="w-full" />
             </UFormField>
             <UButton v-if="connectionId" :to="`/connections/${connectionId}`" color="neutral" variant="link" icon="i-lucide-settings-2" label="Edit or test this connection" />
             <AppAlert v-if="schemaError" kind="error" title="Schema unavailable">{{ schemaError }}</AppAlert>
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-4">
               <UButton label="Read schema" color="neutral" variant="outline" :loading="schemaLoading" :disabled="busy || !connectionId" @click="inspectSchema" />
               <span v-if="schemaColumns" class="text-sm text-muted">{{ schemaColumns }} columns available</span>
             </div>
             <details v-if="schema" class="text-sm">
               <summary class="cursor-pointer font-medium">Database schema</summary>
-              <pre class="mt-3 max-h-64 overflow-auto rounded-lg bg-elevated p-3 text-xs">{{ schema }}</pre>
+              <pre class="mt-3 max-h-64 overflow-auto rounded-lg bg-elevated p-4 sm:p-6 text-xs">{{ schema }}</pre>
             </details>
             <p v-else-if="schemaLoaded && schemaColumns === 0" class="text-sm text-muted">No accessible tables found.</p>
           </UPageCard>
 
-          <UPageCard title="2. Ask in plain English" icon="i-lucide-sparkles" description="Optional. Generate SQL locally in your browser.">
+          <UPageCard title="2. Ask in plain English" icon="i-lucide-sparkles" description="Optional. Generate SQL locally in your browser." class="space-y-4 sm:space-y-6">
             <p v-if="checking" role="status" class="text-sm text-muted">Checking for downloaded models…</p>
             <AppAlert v-else-if="!supported" kind="warning" title="Local AI is unavailable">
               Use a browser with WebGPU enabled on HTTPS or localhost. You can still write and test SQL below.
@@ -171,7 +177,7 @@ const save = async () => {
               <UFormField label="Local model" name="model" description="Smaller models use less memory. GPU memory estimates are not download sizes.">
                 <USelect v-model="selectedModel" :items="models" :disabled="loading || busy" class="w-full" />
               </UFormField>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2 sm:gap-3">
                 <UButton v-if="!ready" :label="selectedCached ? 'Load cached model' : 'Download and load model'" color="neutral" variant="outline" icon="i-lucide-download" :loading="loading" :disabled="loading || busy || !models.length" @click="load" />
                 <UButton v-if="loading" label="Cancel download" color="neutral" variant="ghost" @click="stop" />
                 <UBadge v-if="ready" label="Model ready · runs locally" color="success" variant="subtle" />
@@ -186,22 +192,22 @@ const save = async () => {
             <AppAlert v-if="modelError" kind="error" title="Model could not be loaded">{{ modelError }}</AppAlert>
           </UPageCard>
 
-          <UPageCard title="3. Edit and test SQL" icon="i-lucide-code" description="Generated SQL appears here. Edit it freely, or write your own query.">
+          <UPageCard title="3. Edit and test SQL" icon="i-lucide-code" description="Generated SQL appears here. Edit it freely, or write your own query." class="space-y-4 sm:space-y-6">
             <UFormField label="SQL query" name="sql" description="Tests run as read-only queries with a row limit and timeout.">
               <UTextarea v-model="sql" :rows="12" :maxlength="20000" :disabled="busy" spellcheck="false" placeholder="SELECT ..." class="w-full" :ui="{ base: 'font-mono text-sm' }" />
             </UFormField>
             <AppAlert v-if="error" kind="error" title="Could not complete the request">{{ error }}</AppAlert>
             <UButton label="Test SQL" icon="i-lucide-play" :loading="testing" :disabled="busy || !connectionId || !sql.trim()" @click="runTest" />
-            <div class="border-t border-default pt-4">
+            <div class="border-t border-default pt-6 sm:pt-8">
               <UFormField label="Query name" name="queryName" description="Save this query to make it available when adding a dashboard widget.">
                 <UInput v-model="queryName" placeholder="Monthly sales" :disabled="busy" class="w-full" />
               </UFormField>
-              <UButton class="mt-3" label="Save query" color="neutral" variant="outline" icon="i-lucide-save" :loading="saving" :disabled="busy || saved || !queryName.trim() || !sql.trim() || !connectionId" @click="save" />
-              <p v-if="saved" role="status" class="mt-3 text-sm text-success">Query saved. It is now available in the dashboard widget builder.</p>
+              <UButton class="mt-4 sm:mt-6" label="Save query" color="neutral" variant="outline" icon="i-lucide-save" :loading="saving" :disabled="busy || saved || !queryName.trim() || !sql.trim() || !connectionId" @click="save" />
+              <p v-if="saved" role="status" class="mt-4 sm:mt-6 text-sm text-success">Query saved. It is now available in the dashboard widget builder.</p>
             </div>
           </UPageCard>
         </div>
-        <UPageCard class="min-w-0 self-start lg:sticky lg:top-28" title="Query results" icon="i-lucide-table-2" description="Results from your latest SQL test appear here.">
+        <UPageCard class="min-w-0 self-start lg:sticky lg:top-28 space-y-4 sm:space-y-6" title="Query results" icon="i-lucide-table-2" description="Results from your latest SQL test appear here.">
           <div v-if="testing" role="status" class="py-16 text-center text-muted">Running your query…</div>
           <template v-else-if="result?.ok">
             <p role="status" class="text-sm text-muted">{{ result.rows?.length ?? 0 }} rows returned · Preview limited to {{ result.rowLimit }} rows</p>
@@ -209,11 +215,11 @@ const save = async () => {
               <table class="w-full text-left text-sm">
                 <caption class="sr-only">SQL test results</caption>
                 <thead class="sticky top-0 bg-elevated">
-                  <tr><th v-for="column in result.columns" :key="column" scope="col" class="whitespace-nowrap px-4 py-3 font-semibold">{{ column }}</th></tr>
+                  <tr><th v-for="column in result.columns" :key="column" scope="col" class="whitespace-nowrap px-4 sm:px-6 py-3 font-semibold">{{ column }}</th></tr>
                 </thead>
                 <tbody class="divide-y divide-default">
                   <tr v-for="(row, index) in result.rows" :key="index">
-                    <td v-for="column in result.columns" :key="column" class="max-w-96 whitespace-pre-wrap break-words px-4 py-3 align-top tabular-nums">{{ row[column] === null ? 'NULL' : String(row[column]) }}</td>
+                    <td v-for="column in result.columns" :key="column" class="max-w-96 whitespace-pre-wrap break-words px-4 sm:px-6 py-3 align-top tabular-nums">{{ row[column] === null ? 'NULL' : String(row[column]) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -221,7 +227,7 @@ const save = async () => {
             <p v-else class="py-12 text-center text-muted">The query succeeded but returned no rows.</p>
           </template>
           <p v-else-if="result && !result.ok" role="status" class="py-12 text-center text-muted">The test failed. Review the error beside the SQL editor and try again.</p>
-          <div v-else class="space-y-3 py-16 text-center text-muted">
+          <div v-else class="space-y-4 sm:space-y-6 py-16 text-center text-muted">
             <UIcon name="i-lucide-table-2" class="size-10" />
             <p>Write or generate SQL, then select Test SQL.</p>
           </div>

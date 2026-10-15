@@ -5,14 +5,15 @@ export default component
 </script>
 
 <template>
-  <UPage>
+  <UPage class="px-4 sm:px-6 lg:px-8">
     <UPageHeader
       :headline="t('pages.dashboard.headline')"
       :title="t('pages.dashboard.title')"
       :description="t('pages.dashboard.description')"
+      class="pb-6"
     >
       <template #links>
-        <div class="flex flex-wrap items-center justify-end gap-2">
+        <div class="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
           <AppLocaleSelect />
 
           <UButton
@@ -69,7 +70,7 @@ export default component
       </template>
     </UPageHeader>
 
-    <UPageBody class="space-y-8">
+    <UPageBody class="space-y-8 sm:space-y-10 lg:space-y-12">
       <AppAlert
         v-if="dashboardListErrorMessage"
         kind="error"
@@ -93,7 +94,7 @@ export default component
         @update:open="onCreateDashboardOpenChange"
       >
         <template #body>
-          <div class="space-y-4">
+          <div class="space-y-4 sm:space-y-6">
             <AppAlert
               v-if="createDashboardErrorMessage"
               kind="error"
@@ -141,7 +142,7 @@ export default component
         @update:open="onDashboardSettingsOpenChange"
       >
         <template #body>
-          <div class="space-y-6">
+          <div class="space-y-6 sm:space-y-8">
             <AppAlert
               v-if="dashboardSettingsErrorMessage"
               kind="error"
@@ -566,8 +567,8 @@ export default component
               class="h-full w-full"
               :ui="{
                 root: 'flex h-full min-h-0 w-full flex-col overflow-hidden',
-                header: 'flex-none p-4 sm:px-6 sm:py-4',
-                body: 'flex min-h-0 flex-1 flex-col p-4 sm:p-6'
+                header: 'flex-none p-4 sm:p-6',
+                body: 'flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:p-8'
               }"
             >
               <template #header>

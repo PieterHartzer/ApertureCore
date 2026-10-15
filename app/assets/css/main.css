@@ -80,6 +80,191 @@ body {
   color: var(--color-foreground);
 }
 
+/* Page Container Padding - Improved Spacing */
+.nuxt-page {
+  padding: var(--space-lg) var(--space-xl);
+}
+
+@media (max-width: 640px) {
+  .nuxt-page {
+    padding: var(--space-md) var(--space-sm);
+  }
+}
+
+/* Page Body Padding */
+.upage-body {
+  padding: var(--space-lg) 0;
+}
+
+/* Page Header Padding */
+.upage-header {
+  padding-bottom: var(--space-lg);
+}
+
+/* Page Card Padding */
+.upage-card {
+  padding: var(--space-lg);
+}
+
+@media (max-width: 640px) {
+  .upage-card {
+    padding: var(--space-md);
+  }
+}
+
+/* Card Content Padding */
+.card-header {
+  padding: var(--space-md) var(--space-lg);
+}
+
+.card-body {
+  padding: var(--space-lg);
+}
+
+@media (max-width: 640px) {
+  .card-header {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .card-body {
+    padding: var(--space-md);
+  }
+}
+
+/* Modal Padding */
+.umodal-body {
+  padding: var(--space-lg);
+}
+
+.umodal-footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+  .umodal-body,
+  .umodal-footer {
+    padding: var(--space-md);
+  }
+}
+
+/* Form Field Padding */
+.uform-field {
+  padding-bottom: var(--space-md);
+}
+
+.uform-field:last-child {
+  padding-bottom: 0;
+}
+
+/* Input Padding */
+.uinput {
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Button Padding */
+.ubtn {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.ubtn-sm {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.ubtn-lg {
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* Table Padding */
+.utable {
+  padding: var(--space-sm);
+}
+
+.utable tbody td,
+.utable thead th {
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Alert Padding */
+.ualert {
+  padding: var(--space-md);
+}
+
+/* Select Padding */
+.uselect {
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Textarea Padding */
+.utea {
+  padding: var(--space-md);
+}
+
+/* Grid Gap Improvements */
+.grid {
+  gap: var(--space-lg);
+}
+
+@media (max-width: 640px) {
+  .grid {
+    gap: var(--space-md);
+  }
+}
+
+/* Flex Gap Improvements */
+.flex {
+  gap: var(--space-md);
+}
+
+.flex-sm {
+  gap: var(--space-sm);
+}
+
+.flex-lg {
+  gap: var(--space-lg);
+}
+
+/* Space Between Elements */
+.space-y-8 > * + * {
+  margin-top: var(--space-xl);
+}
+
+.space-y-6 > * + * {
+  margin-top: var(--space-lg);
+}
+
+.space-y-4 > * + * {
+  margin-top: var(--space-md);
+}
+
+.space-y-3 > * + * {
+  margin-top: var(--space-sm);
+}
+
+/* Responsive Container Padding */
+.container {
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+/* Login Page Specific Padding */
+.login-container {
+  padding: var(--space-xl);
+}
+
+@media (max-width: 640px) {
+  .login-container {
+    padding: var(--space-lg);
+  }
+}
+
 /* Focus States - Accessible */
 *:focus-visible {
   outline: 2px solid var(--color-primary);

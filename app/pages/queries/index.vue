@@ -5,14 +5,15 @@ export default component
 </script>
 
 <template>
-  <UPage>
+  <UPage class="px-4 sm:px-6 lg:px-8">
     <UPageHeader
       :headline="t('queries.index.headline')"
       :title="t('queries.index.title')"
       :description="t('queries.index.description')"
+      class="pb-6"
     >
       <template #links>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 sm:gap-4">
           <AppLocaleSelect />
           <UButton
             to="/connections"
@@ -30,7 +31,7 @@ export default component
       </template>
     </UPageHeader>
 
-    <UPageBody>
+    <UPageBody class="space-y-6 sm:space-y-8">
       <AppAlert
         v-if="listErrorMessage"
         kind="error"
@@ -44,6 +45,7 @@ export default component
         icon="i-lucide-file-code-2"
         :title="t('queries.index.table.title')"
         :description="t('queries.index.table.description')"
+        class="space-y-4 sm:space-y-6"
       >
         <UTable
           :data="queries"
@@ -52,7 +54,7 @@ export default component
           :empty="t('queries.index.table.empty')"
         >
           <template #actions-cell="{ row }">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 sm:gap-3">
               <UButton
                 :to="`/queries/${row.original.id}`"
                 color="neutral"
