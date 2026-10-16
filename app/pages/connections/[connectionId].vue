@@ -10,11 +10,7 @@ export default component
       :headline="t('connections.edit.headline')"
       :title="t('connections.edit.title')"
       :description="t('connections.edit.description')"
-    >
-      <template #links>
-        <AppLocaleSelect />
-      </template>
-    </UPageHeader>
+     />
 
     <UPageBody>
       <AppAlert
@@ -22,7 +18,7 @@ export default component
         kind="error"
         :title="t('connections.edit.errors.loadTitle')"
       >
-        {{ loadErrorMessage }}
+        {{ localizeAppMessage($t, loadErrorMessage) }}
       </AppAlert>
 
       <UPageCard

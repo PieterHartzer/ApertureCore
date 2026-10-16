@@ -14,16 +14,10 @@ export default component
     >
       <template #links>
         <div class="flex items-center gap-3 sm:gap-4">
-          <AppLocaleSelect />
+
+
           <UButton
-            to="/connections"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-database"
-            label="Connections"
-          />
-          <UButton
-            to="/queries/new"
+            to="/sql-workspace"
             icon="i-lucide-plus"
             :label="t('queries.index.actions.new')"
           />
@@ -37,7 +31,7 @@ export default component
         kind="error"
         :title="t('queries.index.errors.loadTitle')"
       >
-        {{ listErrorMessage }}
+        {{ localizeAppMessage($t, listErrorMessage) }}
       </AppAlert>
 
       <UPageCard
@@ -56,7 +50,7 @@ export default component
           <template #actions-cell="{ row }">
             <div class="flex items-center gap-2 sm:gap-3">
               <UButton
-                :to="`/queries/${row.original.id}`"
+                :to="{ path: '/sql-workspace', query: { queryId: row.original.id } }"
                 color="neutral"
                 variant="ghost"
                 icon="i-lucide-pencil"
@@ -82,7 +76,7 @@ export default component
         :description="t('queries.index.empty.description')"
       >
         <UButton
-          to="/queries/new"
+          to="/sql-workspace"
           icon="i-lucide-file-plus-2"
           :label="t('queries.index.actions.addFirst')"
         />

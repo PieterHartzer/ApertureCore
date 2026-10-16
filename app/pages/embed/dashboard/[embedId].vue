@@ -16,7 +16,7 @@ export default component
         kind="error"
         :title="t('pages.dashboard.embed.errorTitle')"
       >
-        {{ loadErrorMessage }}
+        {{ localizeAppMessage($t, loadErrorMessage) }}
       </AppAlert>
 
       <div
@@ -67,7 +67,7 @@ export default component
                 kind="error"
                 :title="t('pages.dashboard.widgets.card.errorTitle')"
               >
-                {{ getWidgetErrorMessage(widget) }}
+                {{ localizeAppMessage($t, getWidgetErrorMessage(widget)) }}
               </AppAlert>
 
               <div
@@ -103,7 +103,7 @@ export default component
                         name="i-lucide-triangle-alert"
                         class="mt-0.5 size-4 shrink-0"
                       />
-                      <span>{{ getWidgetInlineErrorMessage(widget) }}</span>
+                      <span>{{ localizeAppMessage($t, getWidgetInlineErrorMessage(widget)) }}</span>
                     </div>
                   </div>
                 </div>

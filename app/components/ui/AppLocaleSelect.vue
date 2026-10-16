@@ -6,6 +6,8 @@ export default component
 
 <template>
   <USelectMenu
+    class="min-h-11"
+    :aria-label="$t('common.labels.locale')"
     :model-value="locale"
     :items="availableLocales"
     value-key="code"

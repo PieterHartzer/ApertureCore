@@ -1,11 +1,11 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-/* AutoDash Design System - Based on UI UX Pro Max */
-/* Pattern: Enterprise Gateway | Style: Data-Dense Dashboard */
-
 /* Typography - Fira Sans & Fira Code */
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
+/* AutoDash Design System - Based on UI UX Pro Max */
+/* Pattern: Enterprise Gateway | Style: Data-Dense Dashboard */
 
 :root {
   /* Primary Colors - Blue Data Theme */

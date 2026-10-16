@@ -32,7 +32,7 @@ export default component
           kind="error"
           :title="t('queries.delete.notifications.errorTitle')"
         >
-          {{ errorMessage }}
+          {{ localizeAppMessage($t, errorMessage) }}
         </AppAlert>
       </div>
     </template>

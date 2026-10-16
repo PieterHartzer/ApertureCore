@@ -26,6 +26,7 @@ export default component
       <UFormField
         name="databaseType"
         :label="t('connections.new.fields.databaseType.label')"
+        :description="t('connections.new.fields.databaseType.description')"
       >
         <USelect
           v-model="connection.databaseType"
@@ -37,6 +38,7 @@ export default component
       <UFormField
         name="host"
         :label="t('connections.new.fields.host.label')"
+        :description="t('connections.new.fields.host.description')"
       >
         <UInput
           v-model="connection.host"
@@ -48,6 +50,7 @@ export default component
       <UFormField
         name="port"
         :label="t('connections.new.fields.port.label')"
+        :description="t('connections.new.fields.port.description')"
       >
         <UInputNumber
           v-model="connection.port"
@@ -60,6 +63,7 @@ export default component
       <UFormField
         name="databaseName"
         :label="t('connections.new.fields.databaseName.label')"
+        :description="t('connections.new.fields.databaseName.description')"
       >
         <UInput
           v-model="connection.databaseName"
@@ -71,6 +75,7 @@ export default component
       <UFormField
         name="username"
         :label="t('connections.new.fields.username.label')"
+        :description="t('connections.new.fields.username.description')"
       >
         <UInput
           v-model="connection.username"
@@ -82,7 +87,7 @@ export default component
       <UFormField
         name="password"
         :label="t('connections.new.fields.password.label')"
-        :description="passwordDescription"
+        :description="passwordDescription || t('connections.new.fields.password.description')"
       >
         <UInput
           v-model="connection.password"
@@ -96,6 +101,7 @@ export default component
       <UFormField
         name="sslMode"
         :label="t('connections.new.fields.sslMode.label')"
+        :description="t('connections.new.fields.sslMode.description')"
       >
         <USelect
           v-model="connection.sslMode"
@@ -113,7 +119,7 @@ export default component
       {{ screenAlert.message }}
     </AppAlert>
 
-    <div class="flex gap-3">
+    <div class="flex flex-wrap gap-3 border-t border-default pt-6">
       <UButton
         type="submit"
         icon="i-lucide-plug-zap"

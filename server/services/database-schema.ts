@@ -27,5 +27,6 @@ export const getDatabaseSchema = async (
   const schema = result.rows.map((row) =>
     `${quote(row.table_schema)}.${quote(row.table_name)}.${quote(row.column_name)} ${row.data_type}${row.is_nullable === 'NO' ? ' NOT NULL' : ''}${row.constraints ? ` [${row.constraints}]` : ''}`
   ).join('\n')
-  return { ok: true as const, schema, columnCount: result.rows.length }
+  // This discovery query belongs to the currently supported PostgreSQL adapter.
+  return { ok: true as const, databaseType: 'postgres' as const, schema, columnCount: result.rows.length }
 }

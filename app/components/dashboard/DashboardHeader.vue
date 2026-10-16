@@ -6,11 +6,11 @@ export default {
   props: {
     headline: {
       type: String,
-      default: 'Dashboard'
+      default: ''
     },
     title: {
       type: String,
-      default: 'Dashboard'
+      default: ''
     },
     description: {
       type: String,
@@ -38,7 +38,7 @@ export default {
     },
     dashboardEditActionLabel: {
       type: String,
-      default: 'Edit'
+      default: ''
     },
     isDashboardEditing: {
       type: Boolean,
@@ -63,12 +63,12 @@ export default {
   },
   emits: ['dashboard-selection-change', 'create-dashboard', 'dashboard-settings', 'toggle-editing'],
   setup(props, { emit }) {
-    const selectedDashboardId = computed({
+    const dashboardSelection = computed({
       get: () => props.selectedDashboardId,
       set: (value) => emit('dashboard-selection-change', value)
     })
 
-    return { selectedDashboardId }
+    return { dashboardSelection }
   }
 }
 </script>
@@ -78,10 +78,10 @@ export default {
     <div class="dashboard-header-content">
       <div class="dashboard-header-main">
         <h1 class="dashboard-headline">
-          {{ headline }}
+          {{ headline || $t('navigation.dashboard') }}
         </h1>
         <h2 class="dashboard-title">
-          {{ title }}
+          {{ title || $t('navigation.dashboard') }}
         </h2>
         <p v-if="description" class="dashboard-description">
           {{ description }}
@@ -94,33 +94,34 @@ export default {
         </div>
 
         <div class="action-group">
+          <UButton to="/settings/ai-models" :label="$t('interface.aiModels')" icon="i-lucide-sparkles" color="neutral" variant="ghost" />
           <UButton
-            to="/Connections"
+            to="/connections"
             color="neutral"
             variant="soft"
             size="sm"
             icon="i-lucide-database"
-            label="Connections"
+            :label="$t('interface.connections')"
             class="action-button"
           />
 
           <UButton
-            to="/Queries"
+            to="/queries"
             color="neutral"
             variant="soft"
             size="sm"
             icon="i-lucide-code"
-            label="SQL Queries"
+            :label="$t('interface.sqlQueries')"
             class="action-button"
           />
         </div>
 
         <div class="action-group">
           <USelect
-            :model-value="selectedDashboardId || undefined"
+            :model-value="dashboardSelection || undefined"
             class="dashboard-selector"
             :items="dashboardSelectOptions"
-            :placeholder="'Select a dashboard'"
+            :placeholder="$t('pages.dashboard.selector.placeholder')"
             :disabled="dashboardListStatus === 'pending' || dashboards.length === 0"
             @update:model-value="onDashboardSelectionChange"
           />
@@ -130,9 +131,9 @@ export default {
             variant="soft"
             size="sm"
             icon="i-lucide-plus"
-            label="New Dashboard"
-            @click="openCreateDashboardDialog"
+            :label="$t('interface.newDashboard')"
             class="action-button"
+            @click="openCreateDashboardDialog"
           />
 
           <UButton
@@ -141,9 +142,9 @@ export default {
             variant="soft"
             size="sm"
             icon="i-lucide-settings-2"
-            label="Settings"
-            @click="openDashboardSettings"
+            :label="$t('interface.settings')"
             class="action-button"
+            @click="openDashboardSettings"
           />
 
           <UButton
@@ -152,9 +153,9 @@ export default {
             :variant="isDashboardEditing ? 'solid' : 'soft'"
             size="sm"
             :icon="isDashboardEditing ? 'i-lucide-check' : 'i-lucide-pen-square'"
-            :label="dashboardEditActionLabel"
-            @click="onToggleDashboardEditing"
+            :label="dashboardEditActionLabel || $t('interface.edit')"
             class="action-button"
+            @click="onToggleDashboardEditing"
           />
         </div>
       </div>

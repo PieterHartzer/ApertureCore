@@ -14,7 +14,7 @@ export default component
     >
       <template #links>
         <div class="flex items-center gap-3 sm:gap-4">
-          <AppLocaleSelect />
+
           <UButton
             to="/connections/new"
             icon="i-lucide-plus"
@@ -30,7 +30,7 @@ export default component
         kind="error"
         :title="t('connections.index.errors.loadTitle')"
       >
-        {{ listErrorMessage }}
+        {{ localizeAppMessage($t, listErrorMessage) }}
       </AppAlert>
 
       <UPageCard

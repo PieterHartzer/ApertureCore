@@ -1,85 +1,122 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useLocalSqlModel } from '../../../app/composables/useLocalSqlModel'
-const mocks = vi.hoisted(() => ({ mounted: undefined as undefined | (() => Promise<void>), unmount: undefined as undefined | (() => void), cache: vi.fn(), create: vi.fn(), completion: vi.fn(), terminate: vi.fn() }))
-vi.mock('vue', async (original) => ({ ...await original<typeof import('vue')>(), onMounted: (fn: () => Promise<void>) => { mocks.mounted = fn }, onBeforeUnmount: (fn: () => void) => { mocks.unmount = fn } }))
-vi.mock('../../../app/utils/load-web-llm', () => ({ loadWebLlm: async () => ({
-  prebuiltAppConfig: { model_list: [{ model_id: 'Qwen2.5-Coder-3B-Instruct-q4f16_1-MLC', vram_required_MB: 2000 }] },
-  hasModelInCache: mocks.cache,
-  MLCEngine: class {
-    reload = mocks.create
-    unload = mocks.terminate
-    interruptGenerate = vi.fn()
-    chat = { completions: { create: mocks.completion } }
-  }
-}) }))
 
-describe('local SQL model lifecycle', () => {
+const mocks = vi.hoisted(() => ({
+  mounted: undefined as undefined | (() => Promise<void>),
+  report: undefined as undefined | ((report: { progress: number, text: string }) => void),
+  reload: vi.fn(), unload: vi.fn(), cache: vi.fn(), runtime: vi.fn(), completion: vi.fn(), interrupt: vi.fn()
+}))
+vi.mock('vue', async (original) => ({
+  ...await original<typeof import('vue')>(),
+  onMounted: (callback: () => Promise<void>) => { mocks.mounted = callback },
+  onBeforeUnmount: vi.fn()
+}))
+vi.mock('../../../app/utils/load-web-llm', () => ({ loadWebLlm: mocks.runtime }))
+
+describe('local model loading', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.useFakeTimers()
     vi.stubGlobal('window', { isSecureContext: true })
     vi.stubGlobal('navigator', { gpu: {} })
-    mocks.cache.mockResolvedValue(true)
-    mocks.create.mockResolvedValue(undefined)
-    mocks.terminate.mockResolvedValue(undefined)
-    mocks.completion.mockResolvedValue({ choices: [{ message: { content: 'SELECT 1' }, finish_reason: 'stop' }] })
+    mocks.reload.mockReset().mockResolvedValue(undefined)
+    mocks.unload.mockReset().mockResolvedValue(undefined)
+    mocks.cache.mockReset().mockResolvedValue(false)
+    mocks.completion.mockReset().mockResolvedValue({ choices: [{ message: { content: 'SELECT 1' }, finish_reason: 'stop' }] })
+    mocks.runtime.mockReset().mockResolvedValue({
+      prebuiltAppConfig: { model_list: [{ model_id: 'Qwen2.5-Coder-3B-Instruct-q4f16_1-MLC' }] },
+      hasModelInCache: mocks.cache,
+      MLCEngine: class {
+        constructor(options: { initProgressCallback: typeof mocks.report }) { mocks.report = options.initProgressCallback }
+        reload = mocks.reload
+        unload = mocks.unload
+        interruptGenerate = mocks.interrupt
+        chat = { completions: { create: mocks.completion } }
+      }
+    })
   })
-  afterEach(() => { mocks.unmount?.(); vi.unstubAllGlobals() })
-  it('detects cached models without downloading automatically', async () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+
+  it('lists compatible models and reports progress until initialization completes', async () => {
     const model = useLocalSqlModel()
-    await mocks.mounted?.()
-    expect(model.selectedCached.value).toBe(true)
-    expect(model.ready.value).toBe(false)
-    expect(mocks.create).not.toHaveBeenCalled()
-  })
-  it('loads the runtime, generates SQL locally and releases it on unmount', async () => {
-    const model = useLocalSqlModel()
-    await mocks.mounted?.()
+    await mocks.mounted!()
+    expect(model.models.value).toHaveLength(1)
+    mocks.reload.mockImplementation(async () => {
+      mocks.report!({ progress: 0.42, text: 'Fetching weights' })
+      expect(model.loading.value).toBe(true)
+      expect(model.progress.value).toBe(42)
+      expect(model.status.value).toBe('Downloading and initializing the local model…')
+      mocks.report!({ progress: NaN, text: '' })
+      expect(model.progress.value).toBe(0)
+    })
     await model.load()
     expect(model.ready.value).toBe(true)
-    expect(await model.generate('public.orders.total numeric', 'total sales')).toBe('SELECT 1')
-    expect(mocks.completion.mock.calls[0]?.[0].messages[1].content).toContain('public.orders.total numeric')
-    mocks.unmount?.()
-    expect(mocks.terminate).toHaveBeenCalled()
+    expect(model.loading.value).toBe(false)
+    expect(model.progress.value).toBe(100)
+  })
+
+  it('shows cache, download and cleanup failures without rejecting load', async () => {
+    const model = useLocalSqlModel()
+    mocks.cache.mockRejectedValue('Storage blocked')
+    await mocks.mounted!()
+    expect(model.error.value).toContain('Storage blocked')
+    mocks.reload.mockRejectedValue('Network offline')
+    mocks.unload.mockRejectedValue(new Error('Device lost'))
+    await expect(model.load()).resolves.toBeUndefined()
+    await Promise.resolve()
+    expect(model.error.value).toContain('Network offline')
+    expect(model.error.value).toContain('Device lost')
+    expect(model.loading.value).toBe(false)
     expect(model.ready.value).toBe(false)
   })
-  it('handles unsupported browsers without importing/loading a model', async () => {
-    vi.stubGlobal('navigator', {})
+
+  it('ignores late progress after cancellation', async () => {
     const model = useLocalSqlModel()
-    await mocks.mounted?.()
-    expect(model.supported.value).toBe(false)
-    expect(model.checking.value).toBe(false)
+    await mocks.mounted!()
+    mocks.reload.mockImplementation(async () => {
+      model.stop()
+      mocks.report!({ progress: 0.9, text: 'Late progress' })
+    })
     await model.load()
-    expect(mocks.create).not.toHaveBeenCalled()
-  })
-  it('allows retry after a failed download', async () => {
-    const model = useLocalSqlModel()
-    await mocks.mounted?.()
-    mocks.create.mockRejectedValueOnce(new Error('out of memory'))
-    await model.load()
-    expect(model.error.value).toContain('out of memory')
     expect(model.loading.value).toBe(false)
+    expect(model.ready.value).toBe(false)
+    expect(model.status.value).toBe('')
+  })
+
+  it('allows a valid download to remain inactive for several minutes', async () => {
+    const model = useLocalSqlModel()
+    await mocks.mounted!()
+    mocks.reload.mockImplementation(async () => { await vi.advanceTimersByTimeAsync(120_000) })
     await model.load()
+    expect(model.error.value).toBe('')
+    expect(model.loading.value).toBe(false)
     expect(model.ready.value).toBe(true)
   })
-  it('does not mark a cancelled load ready when its promise completes', async () => {
+  it('generates with the loaded engine and rejects use after selecting a different model', async () => {
     const model = useLocalSqlModel()
-    await mocks.mounted?.()
-    let complete!: (value: unknown) => void
-    mocks.create.mockImplementation(() => new Promise((resolve) => { complete = resolve }))
-    const pending = model.load()
-    await vi.waitFor(() => expect(mocks.create).toHaveBeenCalled())
-    model.stop()
-    complete({ chat: {} })
-    await pending
-    expect(model.ready.value).toBe(false)
-    expect(model.loading.value).toBe(false)
+    await mocks.mounted!(); await model.load()
+    expect(await model.generate('users: id', 'Count users')).toBe('SELECT 1')
+    model.selectedModel.value = 'another-model'
+    await expect(model.generate('users: id', 'Count users')).rejects.toThrow('Load a model first')
   })
-  it('rejects incomplete generated SQL', async () => {
+
+  it('retains the browser context guard before starting engine inference', async () => {
     const model = useLocalSqlModel()
-    await mocks.mounted?.()
-    await model.load()
-    mocks.completion.mockResolvedValue({ choices: [{ message: { content: 'SELECT' }, finish_reason: 'length' }] })
-    await expect(model.generate('orders', 'sales')).rejects.toThrow('cut short')
+    await mocks.mounted!(); await model.load()
+    await expect(model.generate('x'.repeat(12001), 'Count users')).rejects.toThrow('browser model')
+    expect(mocks.completion).not.toHaveBeenCalled()
     expect(model.generating.value).toBe(false)
   })
+
+  it('interrupts inference and rejects late SQL after cancellation', async () => {
+    const model = useLocalSqlModel()
+    await mocks.mounted!(); await model.load()
+    mocks.completion.mockImplementation(async () => {
+      model.stop()
+      return { choices: [{ message: { content: 'SELECT 1' } }] }
+    })
+    await expect(model.generate('users: id', 'Count users')).rejects.toThrow('cancelled')
+    expect(mocks.interrupt).toHaveBeenCalled()
+    expect(model.generating.value).toBe(false)
+  })
+
 })

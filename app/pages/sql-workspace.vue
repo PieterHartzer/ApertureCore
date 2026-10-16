@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import type { AISqlDialect } from '../../shared/types/ai'
+import WorkspaceStep from '~/components/ui/WorkspaceStep.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
 import { useSavedDatabaseConnections } from '~/composables/database/useSavedDatabaseConnections'
 import { useSavedSqlQueryTest } from '~/composables/database/useSavedSqlQueryTest'
+import { useSavedSqlQuery } from '~/composables/database/useSavedSqlQuery'
+import { useSavedSqlQueryUpdate } from '~/composables/database/useSavedSqlQueryUpdate'
 import { useSavedSqlQuerySave } from '~/composables/database/useSavedSqlQuerySave'
-import { useLocalSqlModel } from '~/composables/useLocalSqlModel'
+import { useAIModels } from '~/composables/useAIModels'
+import { getRequestStatus, SESSION_EXPIRED_MESSAGE } from '~/utils/request-status'
 import type { SavedSqlQueryTestResponse } from '~/types/saved-sql-queries'
 
+definePageMeta({ key: route => String(route.query.queryId ?? 'new') })
+const route = useRoute()
+const queryId = ref(typeof route.query.queryId === 'string' ? route.query.queryId : '')
 const { t } = useI18n()
 const requestFetch = import.meta.server ? useRequestFetch() : $fetch
 const { listConnections } = useSavedDatabaseConnections(requestFetch)
@@ -15,7 +23,10 @@ const connectionId = ref(connectionOptions.value[0]?.value ?? '')
 const question = ref('')
 const sql = ref('')
 const queryName = ref('')
+const databaseStepOpen = ref(true)
+const selectedConnectionName = computed(() => connectionOptions.value.find(option => option.value === connectionId.value)?.label ?? '')
 const schema = ref('')
+const schemaDatabaseType = ref<AISqlDialect>()
 const schemaColumns = ref(0)
 const schemaLoaded = ref(false)
 const schemaLoading = ref(false)
@@ -25,45 +36,84 @@ const saving = ref(false)
 const error = ref('')
 const errorTitle = ref('Could not complete the request')
 const schemaError = ref('')
+const requestSessionExpired = ref(false)
 const saved = ref(false)
 const result = ref<SavedSqlQueryTestResponse | null>(null)
 const busy = computed(() => schemaLoading.value || generatingSql.value || testing.value || saving.value)
 const { testQuery } = useSavedSqlQueryTest()
 const { saveQuery } = useSavedSqlQuerySave()
-const { models, selectedModel, selectedCached, ready, checking, loading, supported, progress, status, error: modelError, load, generate, stop } = useLocalSqlModel()
+const { updateQuery } = useSavedSqlQueryUpdate()
+const { getQuery } = useSavedSqlQuery(requestFetch)
+const { data: existingQuery, refresh: reloadQuery } = await useAsyncData(
+  `sql-workspace:query:${queryId.value || 'new'}`,
+  () => queryId.value ? getQuery(queryId.value) : Promise.resolve(null)
+)
+const queryLoadFailed = computed(() => !!queryId.value && !existingQuery.value?.query)
+const hydrateQuery = () => {
+  const query = existingQuery.value?.query
+  if (!query) return
+  connectionId.value = query.connectionId
+  queryName.value = query.queryName
+  sql.value = query.sql
+}
+hydrateQuery()
+watch(existingQuery, hydrateQuery)
+const ai = useAIModels()
+const { selectedModel, selected, ready, generate, load, stop } = ai
+const { selectedCached, loading, supported, progress, status } = ai.local
+const modelError = computed(() => ai.error.value || ai.local.error.value)
+const modelGroups = computed(() => ['openai', 'lmstudio', 'webllm'].map(type => ({
+  label: type === 'openai' ? 'OpenAI' : type === 'lmstudio' ? 'LM Studio' : 'Browser Models',
+  models: ai.settings.value.models.filter(model => model.providerType === type)
+})).filter(group => group.models.length))
+const lmSessionKey = ref('')
+watch(lmSessionKey, value => { if (selected.value?.providerConnectionId) ai.sessionKeys.set(selected.value.providerConnectionId, value) })
+watch(selectedModel, () => { revision++; lmSessionKey.value = '' })
+
+const testedSignature = ref('')
+const signature = computed(() => JSON.stringify([connectionId.value, sql.value]))
+const canSave = computed(() => !queryLoadFailed.value && testedSignature.value === signature.value && !!queryName.value.trim() && !!sql.value.trim() && !!connectionId.value)
 let revision = 0
-watch(connectionId, () => { revision++; schema.value = ''; schemaColumns.value = 0; schemaLoaded.value = false; schemaError.value = ''; result.value = null; error.value = ''; saved.value = false })
-watch(sql, () => { result.value = null; saved.value = false })
+let schemaRequest = 0
+watch(connectionId, () => { revision++; schemaRequest++; databaseStepOpen.value = true; schemaLoading.value = false; schemaDatabaseType.value = undefined; schema.value = ''; schemaColumns.value = 0; schemaLoaded.value = false; schemaError.value = ''; result.value = null; error.value = ''; saved.value = false }, { flush: 'sync' })
+watch(sql, () => { revision++; result.value = null; saved.value = false }, { flush: 'sync' })
 watch(queryName, () => { saved.value = false })
-onBeforeUnmount(() => { revision++ })
+onBeforeUnmount(() => { revision++; schemaRequest++ })
 
 const loadSchema = async () => {
   if (!connectionId.value) throw new Error('Select a database connection first.')
-  const current = revision
+  const current = ++schemaRequest
+  const selectedConnection = connectionId.value
   schemaLoading.value = true
   schema.value = ''
   schemaColumns.value = 0
   schemaLoaded.value = false
   schemaError.value = ''
   try {
-    const response = await $fetch<{ ok: boolean, schema: string, columnCount: number, message?: string }>(`/api/connections/${encodeURIComponent(connectionId.value)}/schema`, { retry: 0 })
-    if (current !== revision) throw new Error('The selected connection changed. Try again.')
+    const response = await $fetch<{ ok: boolean, schema: string, databaseType: AISqlDialect, columnCount: number, message?: string }>(`/api/connections/${encodeURIComponent(selectedConnection)}/schema`, { retry: 0 })
+    if (current !== schemaRequest) throw new Error('The selected connection changed. Try again.')
     if (!response.ok) throw new Error(response.message || 'Could not read the schema.')
+    requestSessionExpired.value = false
+    if (!response.databaseType) throw new Error('Database dialect is missing. Reload the page and read the schema again.')
+    schemaDatabaseType.value = response.databaseType
     schema.value = response.schema
     schemaColumns.value = response.columnCount
     schemaLoaded.value = true
+    databaseStepOpen.value = false
     return response.schema
   } catch (cause) {
-    if (current === revision) {
+    if (current === schemaRequest) {
+      databaseStepOpen.value = true
       schemaError.value = messageFor(cause)
       errorTitle.value = 'Could not read the database schema'
     }
     throw cause
-  } finally { schemaLoading.value = false }
+  } finally { if (current === schemaRequest) schemaLoading.value = false }
 }
 const messageFor = (cause: unknown): string => {
   const failure = cause as { data?: { message?: string, statusMessage?: string }, statusCode?: number, status?: number, message?: string }
-  const statusCode = failure?.statusCode ?? failure?.status
+  const statusCode = getRequestStatus(cause)
+  if (statusCode === 401) { requestSessionExpired.value = true; return SESSION_EXPIRED_MESSAGE }
   if (statusCode === 503 || failure?.message?.includes('503')) return 'The database server could not be reached. Check that it is running and that the saved hostname and port are reachable from the app server.'
   if (statusCode === 429) return 'Too many requests. Please wait a minute and try again.'
   const message = failure?.data?.message || failure?.data?.statusMessage || failure?.message
@@ -71,9 +121,18 @@ const messageFor = (cause: unknown): string => {
 }
 
 const inspectSchema = async () => {
+  const selectedConnection = connectionId.value
+  if (!selectedConnection || queryLoadFailed.value) return
   error.value = ''
-  try { await loadSchema() } catch (cause) { error.value = messageFor(cause) }
+  try { await loadSchema() } catch (cause) {
+    if (selectedConnection === connectionId.value && schemaError.value) error.value = messageFor(cause)
+  }
 }
+onMounted(() => { void inspectSchema() })
+watch(connectionId, () => { if (import.meta.client) void inspectSchema() })
+watch(connectionOptions, options => {
+  if (!connectionId.value && !queryId.value) connectionId.value = options[0]?.value ?? ''
+})
 const generateSql = async () => {
   if (busy.value || !ready.value) return
   const current = revision
@@ -82,13 +141,18 @@ const generateSql = async () => {
   error.value = ''
   try {
     const freshSchema = await loadSchema()
-    const generated = await generate(freshSchema, question.value)
+    if (current !== revision) return
+    if (!schemaDatabaseType.value) throw new Error('Read the database schema first.')
+    const generated = await generate(freshSchema, question.value, schemaDatabaseType.value)
     if (current === revision) sql.value = generated
   } catch (cause) { if (current === revision) error.value = messageFor(cause) }
   finally { generatingSql.value = false }
 }
+const cancelGeneration = () => { revision++; stop() }
 const runTest = async () => {
-  if (busy.value) return
+  if (busy.value || queryLoadFailed.value) return
+  testedSignature.value = ''
+  const testingSignature = signature.value
   testing.value = true
   errorTitle.value = 'SQL test failed'
   result.value = null
@@ -98,122 +162,150 @@ const runTest = async () => {
     const response = await testQuery({ connectionId: connectionId.value, sql: sql.value })
     if (current !== revision) return
     result.value = response
+    if (response.ok) testedSignature.value = testingSignature
     if (!response.ok) error.value = `${t(response.messageKey || response.message)}${response.details ? ` ${response.details}` : ''}`
-  } finally { testing.value = false }
+  } catch (cause) { if (current === revision) error.value = messageFor(cause) }
+  finally { testing.value = false }
 }
 const save = async () => {
-  if (busy.value) return
+  if (busy.value || !canSave.value || saved.value) return
   saving.value = true
   errorTitle.value = 'Could not save query'
   error.value = ''
   const current = revision
   try {
-    const response = await saveQuery({ connectionId: connectionId.value, queryName: queryName.value, sql: sql.value })
+    const input = { connectionId: connectionId.value, queryName: queryName.value, sql: sql.value }
+    const response = await (queryId.value ? updateQuery(queryId.value, input) : saveQuery(input))
     if (current !== revision) return
-    if (response.ok) saved.value = true
+    if (response.ok) {
+      saved.value = true
+      if (!queryId.value && response.query) {
+        queryId.value = response.query.id
+        await navigateTo({ path: '/sql-workspace', query: { queryId: response.query.id } }, { replace: true })
+      }
+    }
     else error.value = t(response.messageKey || response.message)
-  } finally { saving.value = false }
+  } catch (cause) { if (current === revision) error.value = messageFor(cause) }
+  finally { saving.value = false }
 }
 </script>
 
 <template>
   <UPage class="px-4 sm:px-6 lg:px-8">
-    <UPageHeader 
-      title="SQL workspace" 
-      description="Ask a question, refine the SQL, and test it against your database."
+    <UPageHeader
+      :headline="$t('queries.index.headline')"
+      :title="queryId ? $t('workspace.editTitle') : $t('interface.sqlWorkspace')"
+      :description="$t('interface.askAQuestionRefineTheSQLAndTestItAgainst')"
       class="pb-6"
     >
       <template #links>
         <div class="flex items-center gap-2 sm:gap-3">
-          <UButton to="/" color="neutral" variant="soft" icon="i-lucide-arrow-left" label="Dashboard" />
-          <UButton to="/queries" color="neutral" variant="outline" icon="i-lucide-library" label="Saved queries" />
-          <UButton to="/connections" color="neutral" variant="outline" icon="i-lucide-database" label="Connections" />
+          <UButton to="/queries" color="neutral" variant="soft" icon="i-lucide-arrow-left" :label="$t('navigation.queries')" />
+
+
         </div>
       </template>
     </UPageHeader>
     <UPageBody class="space-y-6 sm:space-y-8">
       <div v-if="error || modelError" role="alert" aria-live="assertive" class="sticky top-2 z-30 mb-6">
-        <AppAlert kind="error" :title="error ? errorTitle : 'Local model unavailable'">
-          <p>{{ error || modelError }}</p>
-          <UButton v-if="schemaError && connectionId" :to="`/connections/${connectionId}`" class="mt-3" color="neutral" variant="outline" label="Check connection settings" />
+        <AppAlert kind="error" :title="localizeAppMessage($t, error ? errorTitle : $t('interface.localModelUnavailable'))">
+          <p>{{ localizeAppMessage($t, error || modelError) }}</p>
+          <UButton v-if="ai.sessionExpired.value || requestSessionExpired" to="/login?callbackRedirectUrl=/sql-workspace" target="_blank" rel="noopener" class="mt-3" :label="$t('interface.signInAgainNewTab')" />
+          <UButton v-if="schemaError && connectionId && !requestSessionExpired" :to="`/connections/${connectionId}`" class="mt-3" color="neutral" variant="outline" :label="$t('interface.checkConnectionSettings')" />
         </AppAlert>
       </div>
-      <AppAlert v-if="!connections?.ok" kind="error" title="Could not load connections">
-        <p>{{ t(connections?.messageKey || 'connections.list.errors.unexpected') }}</p>
-        <UButton class="mt-3" label="Retry" color="neutral" variant="outline" @click="reloadConnections()" />
+      <AppAlert v-if="queryLoadFailed" kind="error" :title="$t('workspace.loadFailed')">
+        <p>{{ localizeAppMessage($t, existingQuery?.messageKey || existingQuery?.message || $t('workspace.loadFailed')) }}</p>
+        <UButton class="mt-3" :label="$t('interface.retry')" @click="reloadQuery()" />
       </AppAlert>
-      <UPageCard v-else-if="!connectionOptions.length" title="Connect a database first" description="Add a PostgreSQL connection to generate and test queries.">
-        <UButton to="/connections/new" label="Add connection" icon="i-lucide-database" />
+      <AppAlert v-else-if="!connections?.ok" kind="error" :title="$t('interface.couldNotLoadConnections')">
+        <p>{{ t(connections?.messageKey || $t('interface.connectionsListErrorsUnexpected')) }}</p>
+        <UButton class="mt-3" :label="$t('interface.retry')" color="neutral" variant="outline" @click="reloadConnections()" />
+      </AppAlert>
+      <UPageCard v-else-if="!connectionOptions.length" :title="$t('interface.connectADatabaseFirst')" :description="$t('interface.addAPostgreSQLConnectionToGenerateAndTestQueries')">
+        <UButton :to="`/connections/new?from=sql-workspace`" :label="$t('interface.addConnection')" icon="i-lucide-database" />
       </UPageCard>
       <div v-else class="grid min-w-0 gap-6 lg:grid-cols-2">
         <div class="min-w-0 space-y-6">
-          <UPageCard title="1. Choose your database" icon="i-lucide-database" class="space-y-4 sm:space-y-6">
-            <UFormField label="Database connection" name="connection">
+          <WorkspaceStep v-model:open="databaseStepOpen" :title="$t('interface.chooseDatabaseStep')" icon="i-lucide-database">
+            <template #summary>
+              <span v-if="schemaLoading" role="status" class="mt-2 block text-sm font-normal text-muted">{{ $t('workspace.readingSchema') }}</span>
+              <span v-else-if="schemaLoaded" role="status" class="mt-2 block text-sm font-normal text-success">{{ selectedConnectionName }} · {{ $t('interface.columnsAvailable', { value1: schemaColumns }) }}</span>
+            </template>
+            <UFormField :label="$t('interface.databaseConnection')" name="connection">
               <USelect v-model="connectionId" :items="connectionOptions" :disabled="busy" class="w-full" />
             </UFormField>
-            <UButton v-if="connectionId" :to="`/connections/${connectionId}`" color="neutral" variant="link" icon="i-lucide-settings-2" label="Edit or test this connection" />
-            <AppAlert v-if="schemaError" kind="error" title="Schema unavailable">{{ schemaError }}</AppAlert>
+            <UButton v-if="connectionId" :to="`/connections/${connectionId}`" color="neutral" variant="link" icon="i-lucide-settings-2" :label="$t('interface.editOrTestThisConnection')" />
+            <AppAlert v-if="schemaError" kind="error" :title="$t('interface.schemaUnavailable')">{{ localizeAppMessage($t, schemaError) }}</AppAlert>
             <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-              <UButton label="Read schema" color="neutral" variant="outline" :loading="schemaLoading" :disabled="busy || !connectionId" @click="inspectSchema" />
-              <span v-if="schemaColumns" class="text-sm text-muted">{{ schemaColumns }} columns available</span>
+              <UButton :label="$t('interface.readSchema')" color="neutral" variant="outline" :loading="schemaLoading" :disabled="busy || !connectionId" @click="inspectSchema" />
+              <span v-if="schemaColumns" class="text-sm text-muted">{{ $t('interface.columnsAvailable', { value1: schemaColumns }) }}</span>
             </div>
             <details v-if="schema" class="text-sm">
-              <summary class="cursor-pointer font-medium">Database schema</summary>
+              <summary class="cursor-pointer font-medium">{{ $t('interface.databaseSchema') }}</summary>
               <pre class="mt-3 max-h-64 overflow-auto rounded-lg bg-elevated p-4 sm:p-6 text-xs">{{ schema }}</pre>
             </details>
-            <p v-else-if="schemaLoaded && schemaColumns === 0" class="text-sm text-muted">No accessible tables found.</p>
-          </UPageCard>
+            <p v-else-if="schemaLoaded && schemaColumns === 0" class="text-sm text-muted">{{ $t('interface.noAccessibleTablesFound') }}</p>
+          </WorkspaceStep>
 
-          <UPageCard title="2. Ask in plain English" icon="i-lucide-sparkles" description="Optional. Generate SQL locally in your browser." class="space-y-4 sm:space-y-6">
-            <p v-if="checking" role="status" class="text-sm text-muted">Checking for downloaded models…</p>
-            <AppAlert v-else-if="!supported" kind="warning" title="Local AI is unavailable">
-              Use a browser with WebGPU enabled on HTTPS or localhost. You can still write and test SQL below.
-            </AppAlert>
-            <template v-else>
-              <p v-if="!ready" class="text-sm text-muted">
-                {{ selectedCached ? 'A cached model is available. Load it to start asking questions.' : 'Download a local model to ask questions. The first download can be large and take several minutes.' }}
-                Downloads are cached for this site and browser; models downloaded on another site may not be available here.
-              </p>
-              <UFormField label="Local model" name="model" description="Smaller models use less memory. GPU memory estimates are not download sizes.">
-                <USelect v-model="selectedModel" :items="models" :disabled="loading || busy" class="w-full" />
-              </UFormField>
-              <div class="flex flex-wrap gap-2 sm:gap-3">
-                <UButton v-if="!ready" :label="selectedCached ? 'Load cached model' : 'Download and load model'" color="neutral" variant="outline" icon="i-lucide-download" :loading="loading" :disabled="loading || busy || !models.length" @click="load" />
-                <UButton v-if="loading" label="Cancel download" color="neutral" variant="ghost" @click="stop" />
-                <UBadge v-if="ready" label="Model ready · runs locally" color="success" variant="subtle" />
-              </div>
-              <progress v-if="loading" :value="progress" max="100" class="w-full" aria-label="Model loading progress" />
-              <p v-if="status" role="status" class="break-words text-sm text-muted">{{ status }}</p>
-              <UFormField v-if="ready" label="What would you like to know?" name="question" description="The selected database schema is fetched before every generation.">
-                <UTextarea v-model="question" placeholder="Show me monthly sales" :rows="3" :maxlength="2000" :disabled="busy" class="w-full" />
-              </UFormField>
-              <UButton v-if="ready" label="Generate SQL" icon="i-lucide-sparkles" :loading="generatingSql" :disabled="busy || !question.trim() || !connectionId" @click="generateSql" />
-            </template>
-            <AppAlert v-if="modelError" kind="error" title="Model could not be loaded">{{ modelError }}</AppAlert>
-          </UPageCard>
-
-          <UPageCard title="3. Edit and test SQL" icon="i-lucide-code" description="Generated SQL appears here. Edit it freely, or write your own query." class="space-y-4 sm:space-y-6">
-            <UFormField label="SQL query" name="sql" description="Tests run as read-only queries with a row limit and timeout.">
-              <UTextarea v-model="sql" :rows="12" :maxlength="20000" :disabled="busy" spellcheck="false" placeholder="SELECT ..." class="w-full" :ui="{ base: 'font-mono text-sm' }" />
+          <WorkspaceStep :title="$t('interface.askQuestionStep')" icon="i-lucide-sparkles" :description="$t('interface.optionalGenerateSQLUsingYourConfiguredAIModel')">
+            <UButton to="/settings/ai-models" :label="$t('interface.settingsAIModels')" color="neutral" variant="link" />
+            <UFormField :label="$t('interface.aiModel')" name="model">
+              <select v-model="selectedModel" :disabled="busy || loading" class="w-full rounded-lg border border-default bg-default p-3">
+                <option value="" disabled>{{ $t('interface.selectAConfiguredModel') }}</option>
+                <optgroup v-for="group in modelGroups" :key="group.label" :label="localizeAppMessage($t, group.label)"><option v-for="model in group.models" :key="model.id" :value="model.id">{{ model.displayName }}{{ model.isDefault ? $t('interface.default') : '' }}</option></optgroup>
+              </select>
             </UFormField>
-            <AppAlert v-if="error" kind="error" title="Could not complete the request">{{ error }}</AppAlert>
-            <UButton label="Test SQL" icon="i-lucide-play" :loading="testing" :disabled="busy || !connectionId || !sql.trim()" @click="runTest" />
-            <div class="border-t border-default pt-6 sm:pt-8">
-              <UFormField label="Query name" name="queryName" description="Save this query to make it available when adding a dashboard widget.">
-                <UInput v-model="queryName" placeholder="Monthly sales" :disabled="busy" class="w-full" />
+            <UFormField v-if="selected?.providerType === 'lmstudio'" :label="$t('interface.lmStudioAPIKeyOptionalThisPageSessionOnly')"><UInput v-model="lmSessionKey" type="password" autocomplete="off" /></UFormField>
+            <AppAlert v-if="selected && selected.providerType !== 'webllm'" kind="warning" :title="localizeAppMessage($t, $t('interface.providerDataNotice'))">{{ $t('interface.yourQuestionAndSelectedDatabaseSchemaWillBeSentTo2', { value1: ai.connectionFor(selected)?.name, value2: ai.connectionFor(selected)?.baseUrl }) }}</AppAlert>
+            <AppAlert v-if="selected?.providerType === 'webllm' && !supported" kind="warning" :title="$t('interface.browserModelUnavailable')">{{ $t('interface.useHTTPSOrLocalhostWithAWebGPUCompatibleBrowserOr') }}</AppAlert>
+            <template v-if="selected">
+              <div class="flex flex-wrap gap-2 sm:gap-3">
+                <UButton v-if="selected.providerType === 'webllm' && !ready" :label="selectedCached ? $t('interface.loadCachedModel') : $t('interface.downloadAndLoadModel')" color="neutral" variant="outline" icon="i-lucide-download" :loading="loading" :disabled="loading || busy" @click="load" />
+                <UButton v-if="loading" :label="$t('interface.cancelDownload')" color="neutral" variant="ghost" @click="stop" />
+                <UBadge v-if="ready" :label="selected.providerType === 'webllm' ? $t('interface.modelReadyRunsLocally') : $t('interface.providerConfiguredVerifiedWhenGenerating')" color="success" variant="subtle" />
+              </div>
+              <div v-if="loading" class="space-y-2" :aria-busy="loading">
+                <div class="flex justify-between gap-3 text-sm">
+                  <span>{{ $t('interface.downloadingAndInitializingModel') }}</span>
+                  <span class="tabular-nums">{{ progress }}%</span>
+                </div>
+                <UProgress :model-value="progress" :max="100" :aria-label="$t('interface.localModelDownloadAndInitializationProgress')" />
+                <p class="text-sm text-muted">{{ $t('interface.theFirstDownloadCanTakeSeveralMinutesInitializationContinuesAfter') }}</p>
+              </div>
+              <p v-if="status" role="status" class="break-words text-sm text-muted">{{ localizeAppMessage($t, status) }}</p>
+              <UFormField v-if="ready" :label="$t('interface.whatWouldYouLikeToKnow')" name="question" :description="$t('interface.theSelectedDatabaseSchemaIsFetchedBeforeEveryGeneration')">
+                <UTextarea v-model="question" :placeholder="$t('interface.showMeMonthlySales')" :rows="3" :maxlength="2000" :disabled="busy" class="w-full" />
               </UFormField>
-              <UButton class="mt-4 sm:mt-6" label="Save query" color="neutral" variant="outline" icon="i-lucide-save" :loading="saving" :disabled="busy || saved || !queryName.trim() || !sql.trim() || !connectionId" @click="save" />
-              <p v-if="saved" role="status" class="mt-4 sm:mt-6 text-sm text-success">Query saved. It is now available in the dashboard widget builder.</p>
+              <UButton v-if="ready" :label="$t('interface.generateSQL')" icon="i-lucide-sparkles" :loading="generatingSql" :disabled="busy || !question.trim() || !connectionId" @click="generateSql" />
+              <UButton v-if="generatingSql" :label="$t('interface.cancelGeneration')" color="neutral" variant="ghost" @click="cancelGeneration" />
+            </template>
+            <AppAlert v-if="modelError" kind="error" :title="$t('interface.modelCouldNotBeLoaded')">{{ localizeAppMessage($t, modelError) }}</AppAlert>
+          </WorkspaceStep>
+
+          <WorkspaceStep :title="$t('interface.editAndTestSqlStep')" icon="i-lucide-code" :description="$t('interface.generatedSQLAppearsHereEditItFreelyOrWriteYour')">
+            <UFormField :label="$t('interface.sqlQuery')" name="sql" :description="$t('interface.testsRunAsReadOnlyQueriesWithARowLimit')">
+              <UTextarea v-model="sql" :rows="12" :maxlength="20000" :disabled="busy" spellcheck="false" :placeholder="$t('interface.select')" class="w-full" :ui="{ base: 'font-mono text-sm' }" />
+            </UFormField>
+            <AppAlert v-if="error" kind="error" :title="$t('interface.couldNotCompleteTheRequest')">{{ localizeAppMessage($t, error) }}</AppAlert>
+            <UButton :label="$t('interface.testSQL')" icon="i-lucide-play" :loading="testing" :disabled="busy || !connectionId || !sql.trim()" @click="runTest" />
+            <div class="border-t border-default pt-6 sm:pt-8">
+              <UFormField :label="$t('interface.queryName')" name="queryName" :description="$t('interface.saveThisQueryToMakeItAvailableWhenAddingA')">
+                <UInput v-model="queryName" :placeholder="$t('interface.monthlySales')" :disabled="busy" class="w-full" />
+              </UFormField>
+              <UButton class="mt-4 sm:mt-6" :label="$t('interface.saveQuery')" color="neutral" variant="outline" icon="i-lucide-save" :loading="saving" :disabled="busy || saved || !canSave" @click="save" />
+              <p v-if="!canSave && !saved" class="mt-3 text-sm text-muted">{{ $t('workspace.testBeforeSaving') }}</p>
+              <p v-if="saved" role="status" class="mt-4 sm:mt-6 text-sm text-success">{{ $t('interface.querySavedItIsNowAvailableInTheDashboardWidget') }}</p>
             </div>
-          </UPageCard>
+          </WorkspaceStep>
         </div>
-        <UPageCard class="min-w-0 self-start lg:sticky lg:top-28 space-y-4 sm:space-y-6" title="Query results" icon="i-lucide-table-2" description="Results from your latest SQL test appear here.">
-          <div v-if="testing" role="status" class="py-16 text-center text-muted">Running your query…</div>
+        <UPageCard class="min-w-0 self-start lg:sticky lg:top-28 space-y-4 sm:space-y-6" :title="$t('interface.queryResults')" icon="i-lucide-table-2" :description="$t('interface.resultsFromYourLatestSQLTestAppearHere')">
+          <div v-if="testing" role="status" class="py-16 text-center text-muted">{{ $t('interface.runningYourQuery') }}</div>
           <template v-else-if="result?.ok">
-            <p role="status" class="text-sm text-muted">{{ result.rows?.length ?? 0 }} rows returned · Preview limited to {{ result.rowLimit }} rows</p>
+            <p role="status" class="text-sm text-muted">{{ $t('interface.rowsReturnedPreviewLimitedToRows', { value1: result.rows?.length ?? 0, value2: result.rowLimit }) }}</p>
             <div v-if="result.rows?.length" class="max-h-[65vh] overflow-auto rounded-lg border border-default">
               <table class="w-full text-left text-sm">
-                <caption class="sr-only">SQL test results</caption>
+                <caption class="sr-only">{{ $t('interface.sqlTestResults') }}</caption>
                 <thead class="sticky top-0 bg-elevated">
                   <tr><th v-for="column in result.columns" :key="column" scope="col" class="whitespace-nowrap px-4 sm:px-6 py-3 font-semibold">{{ column }}</th></tr>
                 </thead>
@@ -224,12 +316,12 @@ const save = async () => {
                 </tbody>
               </table>
             </div>
-            <p v-else class="py-12 text-center text-muted">The query succeeded but returned no rows.</p>
+            <p v-else class="py-12 text-center text-muted">{{ $t('interface.theQuerySucceededButReturnedNoRows') }}</p>
           </template>
-          <p v-else-if="result && !result.ok" role="status" class="py-12 text-center text-muted">The test failed. Review the error beside the SQL editor and try again.</p>
+          <p v-else-if="result && !result.ok" role="status" class="py-12 text-center text-muted">{{ $t('interface.theTestFailedReviewTheErrorBesideTheSQLEditor') }}</p>
           <div v-else class="space-y-4 sm:space-y-6 py-16 text-center text-muted">
             <UIcon name="i-lucide-table-2" class="size-10" />
-            <p>Write or generate SQL, then select Test SQL.</p>
+            <p>{{ $t('interface.writeOrGenerateSQLThenSelectTestSQL') }}</p>
           </div>
         </UPageCard>
       </div>

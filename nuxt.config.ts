@@ -78,6 +78,9 @@ const oidcOptionalClaims = Array.from(new Set([
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   nitro: {
+    devStorage: {
+      oidc: { driver: 'fs', base: './.data/oidc-sessions' }
+    },
     // Serve the self-contained runtime without Vite transforming its embedded WASM.
     publicAssets: [{
       dir: dirname(createRequire(import.meta.url).resolve('@mlc-ai/web-llm')),
@@ -118,6 +121,14 @@ export default defineNuxtConfig({
   },
 
   modules: ['@nuxt/ui', '@nuxtjs/i18n', 'nuxt-oidc-auth', '@nuxt/eslint'],
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@intlify/shared'
+      ]
+    }
+  },
   i18n: {
     defaultLocale: 'en',
     strategy: 'no_prefix',

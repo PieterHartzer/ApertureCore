@@ -10,7 +10,7 @@ describe('database schema discovery', () => {
     run.mockResolvedValue({ ok: true, rows: [{ table_schema: 'public', table_name: 'order"items', column_name: 'id', data_type: 'int4', is_nullable: 'NO', constraints: 'PRIMARY KEY (id)' }] })
     const result = await getDatabaseSchema(context, 'connection-a')
     expect(run).toHaveBeenCalledWith(context, { connectionId: 'connection-a', sql: SCHEMA_SQL }, { maxRows: 1501 })
-    expect(result).toEqual({ ok: true, columnCount: 1, schema: '"public"."order""items"."id" int4 NOT NULL [PRIMARY KEY (id)]' })
+    expect(result).toEqual({ ok: true, databaseType: 'postgres', columnCount: 1, schema: '"public"."order""items"."id" int4 NOT NULL [PRIMARY KEY (id)]' })
   })
   it('does not expose a partial schema when the limit is exceeded', async () => {
     run.mockResolvedValue({ ok: true, rows: Array(1501).fill({}) })
@@ -22,6 +22,6 @@ describe('database schema discovery', () => {
   })
   it('returns an empty schema when no tables are accessible', async () => {
     run.mockResolvedValue({ ok: true, rows: [] })
-    expect(await getDatabaseSchema(context, 'connection-a')).toEqual({ ok: true, schema: '', columnCount: 0 })
+    expect(await getDatabaseSchema(context, 'connection-a')).toEqual({ ok: true, databaseType: 'postgres', schema: '', columnCount: 0 })
   })
 })

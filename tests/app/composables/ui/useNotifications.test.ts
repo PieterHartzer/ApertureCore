@@ -4,6 +4,7 @@ const addMock = vi.fn()
 
 const loadComposable = async () => {
   vi.resetModules()
+  vi.stubGlobal('useI18n', () => ({ t: (key: string) => ({ 'interface.success': 'Success', 'interface.error': 'Error' }[key] ?? key) }))
   vi.stubGlobal('useToast', vi.fn(() => ({
     add: addMock
   })))
@@ -70,4 +71,14 @@ describe('useNotifications', () => {
       duration: 2500
     })
   })
+  it('localizes default titles and application feedback before showing a toast', async () => {
+    const useNotifications = await loadComposable()
+    vi.stubGlobal('useI18n', () => ({ t: (key: string) => `translated:${key}` }))
+    useNotifications().error('Generation cancelled.')
+    expect(addMock).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'translated:interface.error',
+      description: 'translated:interface.generationCancelled'
+    }))
+  })
+
 })

@@ -31,7 +31,7 @@ export default component
       v-if="hasClose"
       type="button"
       class="alert-close"
-      :aria-label="t('components.ui.appAlert.close')"
+      :aria-label="$t('interface.close')"
       @click="$emit('close')"
     >
       <UIcon
@@ -163,11 +163,11 @@ export default component
   .alert-container {
     padding: var(--space-sm);
   }
-  
+
   .alert-title {
     font-size: 13px;
   }
-  
+
   .alert-text {
     font-size: 13px;
   }

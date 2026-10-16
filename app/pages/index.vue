@@ -14,23 +14,10 @@ export default component
     >
       <template #links>
         <div class="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
-          <AppLocaleSelect />
 
-          <UButton
-            to="/Connections"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-database"
-            label="Connections"
-          />
 
-          <UButton
-            to="/Queries"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-code"
-            label="SQL Queries"
-          />
+
+
 
           <USelect
             :model-value="selectedDashboardId || undefined"
@@ -66,6 +53,16 @@ export default component
             :label="dashboardEditActionLabel"
             @click="onToggleDashboardEditing"
           />
+
+          <UButton
+            v-if="hasSelectedDashboard"
+            color="error"
+            variant="ghost"
+            icon="i-lucide-trash-2"
+            :label="t('pages.dashboard.selector.settings.actions.delete')"
+            :disabled="isSavingDashboardSettings || isDeletingDashboard"
+            @click="openDeleteDashboardDialog"
+          />
         </div>
       </template>
     </UPageHeader>
@@ -76,7 +73,7 @@ export default component
         kind="error"
         :title="t('pages.dashboard.errors.loadDashboardsTitle')"
       >
-        {{ dashboardListErrorMessage }}
+        {{ localizeAppMessage($t, dashboardListErrorMessage) }}
       </AppAlert>
 
       <AppAlert
@@ -84,7 +81,7 @@ export default component
         kind="error"
         :title="t('pages.dashboard.errors.loadQueriesTitle')"
       >
-        {{ queryListErrorMessage }}
+        {{ localizeAppMessage($t, queryListErrorMessage) }}
       </AppAlert>
 
       <UModal
@@ -100,7 +97,7 @@ export default component
               kind="error"
               :title="t('pages.dashboard.selector.create.errorTitle')"
             >
-              {{ createDashboardErrorMessage }}
+              {{ localizeAppMessage($t, createDashboardErrorMessage) }}
             </AppAlert>
 
             <UFormField
@@ -148,7 +145,7 @@ export default component
               kind="error"
               :title="t('pages.dashboard.selector.settings.errorTitle')"
             >
-              {{ dashboardSettingsErrorMessage }}
+              {{ localizeAppMessage($t, dashboardSettingsErrorMessage) }}
             </AppAlert>
 
             <UFormField
@@ -355,7 +352,7 @@ export default component
                     kind="error"
                     :title="t('pages.dashboard.builder.preview.errorTitle')"
                   >
-                    {{ previewErrorMessage }}
+                    {{ localizeAppMessage($t, previewErrorMessage) }}
                   </AppAlert>
 
                   <AppAlert
@@ -539,7 +536,7 @@ export default component
           kind="error"
           :title="t('pages.dashboard.errors.loadDashboardTitle')"
         >
-          {{ dashboardErrorMessage }}
+          {{ localizeAppMessage($t, dashboardErrorMessage) }}
         </AppAlert>
 
         <UPageCard
@@ -651,7 +648,7 @@ export default component
                   kind="error"
                   :title="t('pages.dashboard.widgets.card.errorTitle')"
                 >
-                  {{ getWidgetErrorMessage(widget) }}
+                  {{ localizeAppMessage($t, getWidgetErrorMessage(widget)) }}
                 </AppAlert>
 
                 <div
@@ -687,7 +684,7 @@ export default component
                           name="i-lucide-triangle-alert"
                           class="mt-0.5 size-4 shrink-0"
                         />
-                        <span>{{ getWidgetInlineErrorMessage(widget) }}</span>
+                        <span>{{ localizeAppMessage($t, getWidgetInlineErrorMessage(widget)) }}</span>
                       </div>
                     </div>
                   </div>

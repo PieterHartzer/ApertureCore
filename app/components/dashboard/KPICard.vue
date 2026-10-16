@@ -36,7 +36,7 @@ export default {
     }
   },
   emits: ['refresh'],
-  setup(props, { emit }) {
+  setup(props) {
     const isPositiveTrend = computed(() => {
       return props.trend !== null && props.trend >= 0
     })
@@ -60,7 +60,7 @@ export default {
     }"
   >
     <div class="kpi-card-header">
-      <div class="kpi-card-icon" v-if="icon && !loading && !error">
+      <div v-if="icon && !loading && !error" class="kpi-card-icon">
         <UIcon :name="icon" />
       </div>
       <div class="kpi-card-title">{{ title }}</div>
@@ -68,7 +68,7 @@ export default {
         v-if="!loading && !error"
         type="button"
         class="kpi-card-refresh"
-        :aria-label="'Refresh ' + title"
+        :aria-label="$t('interface.refreshNamedWidget', { title })"
         @click="$emit('refresh')"
       >
         <UIcon name="i-lucide-rotate-cw" />
@@ -77,10 +77,10 @@ export default {
 
     <div class="kpi-card-value">
       <template v-if="loading">
-        <div class="kpi-value-skeleton"></div>
+        <div class="kpi-value-skeleton"/>
       </template>
       <template v-else-if="error">
-        <span class="kpi-value-error">{{ errorText || 'Error loading data' }}</span>
+        <span class="kpi-value-error">{{ errorText || $t('interface.errorLoadingData') }}</span>
       </template>
       <template v-else>
         <span class="kpi-value">{{ value }}</span>

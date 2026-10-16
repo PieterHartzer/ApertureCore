@@ -38,7 +38,7 @@ export default component
           kind="error"
           :title="t('connections.delete.notifications.errorTitle')"
         >
-          {{ errorMessage }}
+          {{ localizeAppMessage($t, errorMessage) }}
         </AppAlert>
       </div>
     </template>

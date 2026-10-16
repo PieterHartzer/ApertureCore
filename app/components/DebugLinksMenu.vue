@@ -17,7 +17,7 @@ export default component
           class="w-56 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur"
         >
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Debug Links
+            {{ $t('interface.debugLinks') }}
           </p>
           <div class="mt-3 flex flex-col gap-2">
             <a
@@ -28,7 +28,7 @@ export default component
               rel="noreferrer"
               class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950"
             >
-              {{ link.label }}
+              {{ localizeAppMessage($t, link.label) }}
             </a>
           </div>
         </div>
@@ -40,7 +40,7 @@ export default component
           aria-controls="debug-links-menu"
           @click="isOpen = !isOpen"
         >
-          {{ isOpen ? 'Close Debug' : 'Debug' }}
+          {{ isOpen ? $t('interface.closeDebug') : $t('interface.debug') }}
         </button>
       </div>
     </Teleport>

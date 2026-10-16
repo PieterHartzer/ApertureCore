@@ -10,11 +10,7 @@ export default component
       :headline="t('connections.new.headline')"
       :title="t('connections.new.title')"
       :description="t('connections.new.description')"
-    >
-      <template #links>
-        <AppLocaleSelect />
-      </template>
-    </UPageHeader>
+     />
 
     <UPageBody>
       <UPageCard

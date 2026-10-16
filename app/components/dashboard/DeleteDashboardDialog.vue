@@ -32,7 +32,7 @@ export default component
           kind="error"
           :title="t('pages.dashboard.selector.delete.errorTitle')"
         >
-          {{ errorMessage }}
+          {{ localizeAppMessage($t, errorMessage) }}
         </AppAlert>
       </div>
     </template>

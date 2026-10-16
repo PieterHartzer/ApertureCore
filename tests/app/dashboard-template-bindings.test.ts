@@ -19,7 +19,7 @@ describe('dashboard template bindings', () => {
     // Compile the real template so references in slots and event handlers count too.
     const returnedBindings = viewModel.match(/\n {4}return \{([^{}]+)\}\s*\}\s*\}\)\s*$/)
     expect(returnedBindings).not.toBeNull()
-    const exposed = new Set(returnedBindings![1]!.split(',').map((key) => key.trim()))
+    const exposed = new Set([...returnedBindings![1]!.split(',').map((key) => key.trim()), '$t', 'localizeAppMessage'])
     const referenced = new Set(
       [...template.code.matchAll(/_ctx\.([A-Za-z_$][\w$]*)/g)].map((match) => match[1]!)
     )

@@ -1,3 +1,4 @@
+import { localizeAppMessage } from '../../utils/localized-message'
 import type { FeedbackKind } from '../../theme/feedback'
 
 import { FEEDBACK_THEME } from '../../theme/feedback'
@@ -17,6 +18,7 @@ interface PushNotificationOptions {
 
 export const useNotifications = () => {
   const toast = useToast()
+  const { t } = useI18n()
 
   const push = (
     notification: AppNotification,
@@ -25,8 +27,8 @@ export const useNotifications = () => {
     const theme = FEEDBACK_THEME[notification.kind]
 
     toast.add({
-      title: notification.title,
-      description: notification.message,
+      title: notification.title ? localizeAppMessage(t, notification.title) : undefined,
+      description: localizeAppMessage(t, notification.message),
       color: theme.color,
       icon: theme.icon,
       duration: options.autoDismissMs ?? DEFAULT_AUTO_DISMISS_MS

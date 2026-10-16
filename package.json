@@ -19,11 +19,13 @@
     "typecheck": "pnpm exec nuxi typecheck"
   },
   "dependencies": {
+    "@intlify/shared": "11.4.14",
+    "@intlify/vue-i18n-extensions": "9.0.0",
     "@mlc-ai/web-llm": "^0.2.86",
     "@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/icon": "2.2.1",
     "@nuxt/ui": "^4.5.1",
-    "@nuxtjs/i18n": "^10.2.3",
+    "@nuxtjs/i18n": "10.6.0",
     "@pinia/nuxt": "0.11.3",
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/nuxt": "14.2.1",
@@ -39,9 +41,11 @@
     "vue": "^3.5.30",
     "vue-echarts": "^8.0.1"
   },
-  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
+  "packageManager": "pnpm@12.11.2",
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
+    "@oxc-minify/binding-linux-arm64-gnu": "^0.154.0",
+    "@rolldown/binding-linux-arm64-gnu": "^1.2.14",
     "@types/pg": "^8.20.0",
     "@vitest/coverage-v8": "^4.1.0",
     "kysely-codegen": "^0.20.0",

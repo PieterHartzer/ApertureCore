@@ -14,6 +14,12 @@ export class AppDatabaseConfigurationError extends Error {
 }
 
 export interface AppDatabase {
+  app_ai_settings: {
+    organization_id: string
+    user_id: string
+    settings: import('../../shared/types/ai').AISettings
+    encrypted_credentials: string
+  }
   app_organizations: {
     organization_id: string
     organization_name: string
