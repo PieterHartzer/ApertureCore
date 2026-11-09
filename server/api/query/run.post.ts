@@ -6,6 +6,7 @@ import type {
 } from '../../types/saved-sql-queries'
 
 import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
+import { serverExtensions } from '../../utils/extensions'
 import { PRIVILEGED_ROLE_DETAILS } from '../../services/database/shared'
 import { executeQuery } from '../../utils/database/executeQuery'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
@@ -133,17 +134,24 @@ const buildOrganizationCacheScope = (organizationId: string) => {
 const buildCacheKey = (
   organizationScope: string,
   input: RunSavedSqlQueryInput,
+  cacheVersion?: string,
   queryParameters?: Record<string, unknown>
 ) => {
+  // Versioned keys need their own prefix. File storage treats colons as folders,
+  // so a key must never extend one that is already a file.
+  const base = cacheVersion
+    ? `query-run:${organizationScope}:${input.queryId}:${input.connectionId}:${cacheVersion}`
+    : `query:${organizationScope}:${input.queryId}:${input.connectionId}`
+
   if (!queryParameters) {
-    return `query:${organizationScope}:${input.queryId}:${input.connectionId}`
+    return base
   }
 
   const parametersHash = createHash('sha256')
     .update(JSON.stringify(queryParameters))
     .digest('hex')
 
-  return `query:${organizationScope}:${input.queryId}:${input.connectionId}:${parametersHash}`
+  return `${base}-${parametersHash}`
 }
 
 export default defineEventHandler(async (event) => {
@@ -175,23 +183,33 @@ export default defineEventHandler(async (event) => {
     const authContext = getAuthenticatedOrganizationContext(event)
     const runtimeConfig = useRuntimeConfig()
     const cache = useStorage('cache')
+    const policy = await serverExtensions.queryRunPolicy?.(event, {
+      organizationId: authContext.organizationId,
+      queryId: validationResult.data.queryId,
+      force: validationResult.data.force === true
+    })
     const cacheKey = buildCacheKey(
       buildOrganizationCacheScope(authContext.organizationId),
-      validationResult.data
+      validationResult.data,
+      policy?.cacheVersion
     )
     const ifNoneMatch = pickRequestHeader(event, 'if-none-match')
-    const ttlSeconds = resolvePositiveInteger(
-      runtimeConfig.queryCacheTtlSeconds,
-      DEFAULT_QUERY_CACHE_TTL_SECONDS
+    const ttlSeconds = Math.max(
+      resolvePositiveInteger(
+        runtimeConfig.queryCacheTtlSeconds,
+        DEFAULT_QUERY_CACHE_TTL_SECONDS
+      ),
+      policy?.minimumTtlSeconds ?? 0
     )
+    const isForced = validationResult.data.force === true && policy?.allowForcedRun !== false
     // A forced refresh drops the entry first, so a query that now fails cannot
     // be covered by its old rows on the next scheduled load.
-    const storedResponse = validationResult.data.force
+    const storedResponse = isForced
       ? null
       : await cache.getItem<unknown>(cacheKey)
     const cachedResponse = readFreshQueryResult(storedResponse)
 
-    if (validationResult.data.force || (storedResponse !== null && !cachedResponse)) {
+    if (isForced || (storedResponse !== null && !cachedResponse)) {
       await cache.removeItem(cacheKey)
     }
 

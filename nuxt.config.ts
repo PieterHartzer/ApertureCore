@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { dirname } from 'node:path'
 import { resolvePositiveInteger } from './server/utils/positive-integer'
@@ -89,7 +90,8 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
+  // An absolute path, so this still works when another app extends this one.
+  css: [fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url))],
   colorMode: { preference: 'dark', fallback: 'dark' },
   devServer: {
     host: process.env.NUXT_HOST || undefined,

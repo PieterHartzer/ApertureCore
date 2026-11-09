@@ -1,3 +1,5 @@
+import { appExtensions } from '~/extensions'
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import { computed, defineComponent, ref } from 'vue'
 
@@ -22,12 +24,14 @@ interface DeleteConnectionDialogConfirmPayload {
 
 export default defineComponent({
   components: {
+    ExtensionSlot,
     AppEmptyState,
     AppAlert,
     AppLocaleSelect,
     DeleteConnectionDialog
   },
   async setup() {
+    const isCreationBlocked = appExtensions.useConnectionCreationBlocked?.() ?? computed(() => false)
     const { t } = useI18n()
     const { success } = useNotifications()
     const { deleteConnection } = useDatabaseConnectionDelete()
@@ -141,6 +145,7 @@ export default defineComponent({
     return {
       columns,
       connections,
+      isCreationBlocked,
       deleteDialogErrorMessage,
       formatDatabaseType,
       isDeleteDialogOpen,

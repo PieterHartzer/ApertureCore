@@ -25,6 +25,7 @@ import {
   getAppDatabase
 } from '../utils/app-database'
 import { upsertOrganization, mapOrganizationIdToStorage } from './organization'
+import { isGuardRejection, runGuardedCreate } from '../utils/extensions'
 
 interface DatabaseConnectionRow {
   connection_id: string
@@ -155,20 +156,26 @@ export const saveDatabaseConnection = async (
 
     const db = getAppDatabase()
     const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
-    const savedConnection = await db
-      .insertInto('app_database_connections')
-      .values({
-        connection_id: randomUUID(),
-        organization_id: organizationId,
-        connection_name: input.connectionName,
-        connection_target_fingerprint: buildConnectionTargetFingerprint(input),
-        database_type: input.databaseType,
-        encrypted_secret: encryptedSecret,
-        created_by_user_id: authContext.userId,
-        updated_by_user_id: authContext.userId
-      })
-      .returningAll()
-      .executeTakeFirst()
+    const savedConnection = await runGuardedCreate('connections', organizationId, db, async (database) => {
+      return await database
+        .insertInto('app_database_connections')
+        .values({
+          connection_id: randomUUID(),
+          organization_id: organizationId,
+          connection_name: input.connectionName,
+          connection_target_fingerprint: buildConnectionTargetFingerprint(input),
+          database_type: input.databaseType,
+          encrypted_secret: encryptedSecret,
+          created_by_user_id: authContext.userId,
+          updated_by_user_id: authContext.userId
+        })
+        .returningAll()
+        .executeTakeFirst()
+    })
+
+    if (isGuardRejection(savedConnection)) {
+      return savedConnection
+    }
 
     if (!savedConnection) {
       return {

@@ -7,7 +7,7 @@ import type { PluginInputDefinition, UIPluginDefinition } from '~/types/uiPlugin
 import { CHART_CATALOG, type CatalogChart } from '~/utils/charts/chart-catalog'
 import { CHART_SETTINGS, type ChartSetting } from '~/utils/charts/chart-settings'
 
-const catalogInput = (input: CatalogChart['inputs'][number]): PluginInputDefinition => ({
+export const catalogInput = (input: CatalogChart['inputs'][number]): PluginInputDefinition => ({
   key: input.key,
   label: input.key,
   labelKey: `pages.dashboard.plugins.catalog.fields.${input.key}`,
@@ -17,7 +17,7 @@ const catalogInput = (input: CatalogChart['inputs'][number]): PluginInputDefinit
   compatibleFieldTypes: input.types
 })
 
-const catalogPlugin = (chart: CatalogChart): UIPluginDefinition => ({
+export const catalogPlugin = (chart: CatalogChart): UIPluginDefinition => ({
   id: chart.id,
   name: chart.name,
   nameKey: `pages.dashboard.plugins.${chart.id}.name`,
@@ -31,7 +31,7 @@ const catalogPlugin = (chart: CatalogChart): UIPluginDefinition => ({
 
 const settingKey = (key: string) => `pages.dashboard.plugins.catalog.settings.${key}`
 
-const settingInput = (setting: ChartSetting): PluginInputDefinition => ({
+export const settingInput = (setting: ChartSetting): PluginInputDefinition => ({
   key: setting.key,
   label: setting.label,
   labelKey: `${settingKey(setting.key)}.label`,

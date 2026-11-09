@@ -34,6 +34,8 @@ export interface EmbeddedDashboardDetails {
   appearance: DashboardAppearance
   style: DashboardStyle
   updatedAt: string
+  /** Anything a layer adds through embeddedDashboardDetails. */
+  extensions?: Record<string, unknown>
   widgets: EmbeddedDashboardWidget[]
 }
 

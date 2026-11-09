@@ -6,6 +6,7 @@ import type {
 
 import { createDashboard } from '../../services/dashboards'
 import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
+import { buildGuardRejectionResponse, isGuardRejection } from '../../utils/extensions'
 import { validateCreateDashboardInput } from '../../validators/dashboards'
 
 const VALIDATION_MESSAGE_KEYS: Record<
@@ -18,7 +19,7 @@ const VALIDATION_MESSAGE_KEYS: Record<
 }
 
 const ERROR_MESSAGE_KEYS: Record<
-  Exclude<CreateDashboardApiResponse['code'], 'success' | 'invalid_input'>,
+  Exclude<CreateDashboardApiResponse['code'], 'success' | 'invalid_input' | 'limit_reached'>,
   string
 > = {
   forbidden: 'dashboards.create.errors.forbidden',
@@ -43,7 +44,7 @@ const buildValidationErrorResponse = (
 }
 
 const buildErrorResponse = (
-  code: Exclude<CreateDashboardApiResponse['code'], 'success' | 'invalid_input'>
+  code: Exclude<CreateDashboardApiResponse['code'], 'success' | 'invalid_input' | 'limit_reached'>
 ): CreateDashboardApiResponse => {
   const messageKey = ERROR_MESSAGE_KEYS[code]
 
@@ -83,6 +84,10 @@ export default defineEventHandler(async (event) => {
   try {
     const authContext = getAuthenticatedOrganizationContext(event)
     const result = await createDashboard(authContext, validationResult.data)
+
+    if (isGuardRejection(result)) {
+      return buildGuardRejectionResponse(event, result)
+    }
 
     if (result.ok) {
       setResponseStatus(event, 201)

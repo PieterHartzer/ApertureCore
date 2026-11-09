@@ -1,3 +1,4 @@
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
@@ -17,6 +18,7 @@ const DASHBOARD_REFRESH_TICK_MS = 5000
 
 export default defineComponent({
   components: {
+    ExtensionSlot,
     WidgetSkeleton,
     AppAlert,
     PluginRenderer,

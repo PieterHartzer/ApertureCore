@@ -2,6 +2,8 @@ import type { UserSession } from '#oidc-auth'
 import { setResponseStatus } from 'h3'
 import { requireUserSession } from 'nuxt-oidc-auth/runtime/server/utils/session.js'
 
+import { extraPublicApiPaths, serverExtensions } from '../utils/extensions'
+
 const PUBLIC_API_PATHS = new Set([
   '/api/health'
 ])
@@ -16,7 +18,7 @@ const isProtectedApiRequest = (path: string) => {
     return false
   }
 
-  if (PUBLIC_API_PATHS.has(path)) {
+  if (PUBLIC_API_PATHS.has(path) || extraPublicApiPaths.has(path)) {
     return false
   }
 
@@ -49,4 +51,6 @@ export default defineEventHandler(async (event) => {
 
     throw error
   }
+
+  return await serverExtensions.authenticatedRequest?.(event)
 })

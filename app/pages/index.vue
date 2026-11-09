@@ -82,6 +82,8 @@ export default component
               {{ localizeAppMessage($t, createDashboardErrorMessage) }}
             </AppAlert>
 
+            <ExtensionSlot name="dashboard.create" />
+
             <UFormField
               name="dashboardName"
               :label="t('pages.dashboard.selector.create.fields.dashboardName.label')"
@@ -172,7 +174,8 @@ export default component
               :label="t('pages.dashboard.selector.settings.fields.embedEnabled.label')"
               :description="t('pages.dashboard.selector.settings.fields.embedEnabled.description')"
             >
-              <USwitch v-model="dashboardSettingsInput.embedEnabled" />
+              <USwitch v-model="dashboardSettingsInput.embedEnabled" :disabled="isEmbedBlocked" />
+              <ExtensionSlot name="dashboard.embedSetting" :slot-props="{ blocked: isEmbedBlocked }" />
             </UFormField>
 
             <UFormField
@@ -289,7 +292,11 @@ export default component
                     <USelect v-model="draft.queryId" class="w-full" :items="queryOptions" :placeholder="t('pages.dashboard.builder.fields.query.placeholder')" />
                   </UFormField>
                   <UFormField class="col-span-6 sm:col-span-3" name="pluginId" :label="t('pages.dashboard.builder.fields.plugin.label')">
-                    <USelect v-model="draft.pluginId" class="w-full" :items="pluginOptions" :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')" />
+                    <USelect v-model="draft.pluginId" class="w-full" :items="pluginOptions" :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')">
+                      <template #item-trailing="{ item }">
+                        <span v-if="item.trailingLabel" class="text-xs text-dimmed">{{ item.trailingLabel }}</span>
+                      </template>
+                    </USelect>
                   </UFormField>
                   <UFormField class="col-span-6 sm:col-span-3" name="title" :label="t('pages.dashboard.builder.fields.title.label')">
                     <UInput v-model="draft.title" class="w-full" :placeholder="t('pages.dashboard.builder.fields.title.placeholder')" />
@@ -592,6 +599,7 @@ export default component
 
         <template #footer>
           <div class="flex w-full flex-wrap items-center justify-end gap-3">
+            <p v-if="widgetBlockReason" role="status" class="mr-auto text-xs leading-5 text-muted">{{ widgetBlockReason }}</p>
             <UButton
               color="neutral"
               variant="soft"

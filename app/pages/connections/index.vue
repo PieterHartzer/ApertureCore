@@ -18,6 +18,7 @@ export default component
           <UButton
             to="/connections/new"
             icon="i-lucide-plus"
+            :disabled="isCreationBlocked"
             :label="t('connections.index.actions.new')"
           />
         </div>
@@ -25,6 +26,8 @@ export default component
     </UPageHeader>
 
     <UPageBody>
+      <ExtensionSlot name="connections.index" :slot-props="{ count: connections.length }" />
+
       <AppAlert
         v-if="listErrorMessage"
         kind="error"

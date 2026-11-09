@@ -30,6 +30,7 @@ import {
   mapOrganizationIdToStorage,
   upsertOrganization
 } from './organization'
+import { isGuardRejection, runGuardedCreate, serverExtensions } from '../utils/extensions'
 
 interface DashboardRow {
   dashboard_id: string
@@ -464,16 +465,22 @@ export const createDashboard = async (
 
     const db = getAppDatabase()
     const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
-    const createdDashboard = await db
-      .insertInto('app_dashboards')
-      .values({
-        organization_id: organizationId,
-        dashboard_name: input.dashboardName,
-        created_by_user_id: authContext.userId,
-        updated_by_user_id: authContext.userId
-      })
-      .returning(['dashboard_id'])
-      .executeTakeFirst() as DashboardReferenceRow | undefined
+    const createdDashboard = await runGuardedCreate('dashboards', organizationId, db, async (database) => {
+      return await database
+        .insertInto('app_dashboards')
+        .values({
+          organization_id: organizationId,
+          dashboard_name: input.dashboardName,
+          created_by_user_id: authContext.userId,
+          updated_by_user_id: authContext.userId
+        })
+        .returning(['dashboard_id'])
+        .executeTakeFirst() as DashboardReferenceRow | undefined
+    })
+
+    if (isGuardRejection(createdDashboard)) {
+      return createdDashboard
+    }
 
     if (!createdDashboard) {
       return {
@@ -559,6 +566,32 @@ export const saveDashboard = async (
         return false
       }
 
+      const guardDashboardSave = serverExtensions.guardDashboardSave as unknown as
+        | ((
+            database: typeof trx,
+            context: {
+              organizationId: string
+              input: SaveDashboardInput
+              existingDashboard: DashboardRow
+              existingWidgets: DashboardWidgetRow[]
+            }
+          ) => Promise<Awaited<ReturnType<NonNullable<typeof serverExtensions.guardDashboardSave>>>>)
+        | undefined
+      const decision = guardDashboardSave
+        ? await guardDashboardSave(trx, {
+            organizationId,
+            input,
+            existingDashboard,
+            existingWidgets: await loadDashboardWidgets(trx, input.dashboardId)
+          })
+        : null
+
+      if (isGuardRejection(decision)) {
+        return decision
+      }
+
+      const widgetsToSave = (decision?.widgets ?? input.widgets) as DashboardWidgetInput[]
+
       await trx
         .updateTable('app_dashboards')
         .set({
@@ -573,7 +606,7 @@ export const saveDashboard = async (
         .where('deleted_at', 'is', null)
         .executeTakeFirst()
 
-      await replaceDashboardWidgets(trx, input.dashboardId, input.widgets)
+      await replaceDashboardWidgets(trx, input.dashboardId, widgetsToSave)
 
       return await loadDashboardDetails(
         trx,
@@ -581,6 +614,10 @@ export const saveDashboard = async (
         input.dashboardId
       )
     })
+
+    if (isGuardRejection(dashboard)) {
+      return dashboard
+    }
 
     if (dashboard === null || dashboard === false) {
       return {
@@ -703,6 +740,7 @@ export const getEmbeddedDashboard = async (
     const dashboard = await db
       .selectFrom('app_dashboards')
       .select([
+        'organization_id',
         'dashboard_id',
         'dashboard_name',
         'embed_id',
@@ -715,7 +753,7 @@ export const getEmbeddedDashboard = async (
       .where('embed_id', '=', embedId)
       .where('embed_enabled', '=', true)
       .where('deleted_at', 'is', null)
-      .executeTakeFirst() as DashboardRow | undefined
+      .executeTakeFirst() as (DashboardRow & { organization_id: string }) | undefined
 
     if (!dashboard) {
       return {
@@ -726,6 +764,7 @@ export const getEmbeddedDashboard = async (
     }
 
     const widgets = await loadDashboardWidgets(db, dashboard.dashboard_id)
+    const extensions = await serverExtensions.embeddedDashboardDetails?.(dashboard.organization_id)
 
     return {
       ok: true,
@@ -736,6 +775,7 @@ export const getEmbeddedDashboard = async (
         appearance: normalizeDashboardAppearance(dashboard.appearance),
         style: normalizeDashboardStyle(dashboard.style).style,
         updatedAt: new Date(dashboard.updated_at).toISOString(),
+        ...(extensions ? { extensions } : {}),
         widgets: widgets.map((widget) => ({
           id: widget.widget_id,
           title: widget.widget_title,

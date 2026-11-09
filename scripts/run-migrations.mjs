@@ -12,6 +12,11 @@ const migrationsDirectory = resolve(
   currentDirectory,
   '../server/database/migrations'
 )
+// A layer built on this app adds its migrations through this list.
+const migrationDirectories = [
+  migrationsDirectory,
+  ...(process.env.EXTRA_MIGRATION_DIRECTORIES ?? '').split(',').map(entry => entry.trim()).filter(Boolean).map(entry => resolve(entry))
+]
 const environment = process.env.NODE_ENV || 'development'
 const environmentEnvFile = resolve(currentDirectory, `../.env.${environment}`)
 
@@ -48,11 +53,13 @@ const db = new Kysely({
 
 const migrator = new Migrator({
   db,
-  provider: new FileMigrationProvider({
-    fs,
-    path: { join, resolve },
-    migrationFolder: migrationsDirectory
-  })
+  provider: {
+    getMigrations: async () => {
+      const providers = migrationDirectories.map(migrationFolder => new FileMigrationProvider({ fs, path: { join, resolve }, migrationFolder }))
+
+      return Object.assign({}, ...await Promise.all(providers.map(provider => provider.getMigrations())))
+    }
+  }
 })
 
 try {

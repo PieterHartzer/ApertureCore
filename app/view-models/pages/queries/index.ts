@@ -1,3 +1,4 @@
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import { computed, defineComponent, ref } from 'vue'
 
@@ -19,6 +20,7 @@ interface SavedSqlQueryListItem {
 
 export default defineComponent({
   components: {
+    ExtensionSlot,
     AppEmptyState,
     AppAlert,
     AppLocaleSelect,

@@ -34,6 +34,7 @@ import {
   mapOrganizationIdToStorage,
   upsertOrganization
 } from './organization'
+import { isGuardRejection, runGuardedCreate } from '../utils/extensions'
 
 interface SavedSqlQuerySummaryRow {
   query_id: string
@@ -323,25 +324,31 @@ export const saveSavedSqlQuery = async (
     const encryptedSql = encryptSavedSqlQuerySecret({
       sql: input.sql
     })
-    const savedQuery = await db
-      .insertInto('app_saved_sql_queries')
-      .values({
-        query_id: randomUUID(),
-        organization_id: organizationId,
-        connection_id: connection.connection_id,
-        query_name: input.queryName,
-        encrypted_sql: encryptedSql,
-        created_by_user_id: authContext.userId,
-        updated_by_user_id: authContext.userId
-      })
-      .returning([
-        'query_id',
-        'query_name',
-        'connection_id',
-        'created_at',
-        'updated_at'
-      ])
-      .executeTakeFirst() as SavedSqlQueryWriteRow | undefined
+    const savedQuery = await runGuardedCreate('queries', organizationId, db, async (database) => {
+      return await database
+        .insertInto('app_saved_sql_queries')
+        .values({
+          query_id: randomUUID(),
+          organization_id: organizationId,
+          connection_id: connection.connection_id,
+          query_name: input.queryName,
+          encrypted_sql: encryptedSql,
+          created_by_user_id: authContext.userId,
+          updated_by_user_id: authContext.userId
+        })
+        .returning([
+          'query_id',
+          'query_name',
+          'connection_id',
+          'created_at',
+          'updated_at'
+        ])
+        .executeTakeFirst() as SavedSqlQueryWriteRow | undefined
+    })
+
+    if (isGuardRejection(savedQuery)) {
+      return savedQuery
+    }
 
     if (!savedQuery) {
       return {

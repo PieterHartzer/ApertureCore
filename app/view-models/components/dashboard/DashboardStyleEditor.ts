@@ -1,8 +1,13 @@
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
+import { appExtensions } from '~/extensions'
 import { computed, defineComponent, type PropType } from 'vue'
 
 import { DASHBOARD_STYLE_FIELDS, DASHBOARD_STYLE_GROUPS, type DashboardStyle, type DashboardStyleField } from '#shared/utils/dashboard-style-fields'
 
 export default defineComponent({
+  components: {
+    ExtensionSlot
+  },
   props: {
     open: {
       type: Boolean,
@@ -47,7 +52,10 @@ export default defineComponent({
       setValue(key, Number.isFinite(number) ? number : null)
     }
     const reset = () => emit('update:modelValue', {})
+    const canSave = computed(() => appExtensions.canSaveDashboardStyle?.(props.modelValue) ?? true)
+
     return {
+      canSave,
       fieldLabel,
       fieldOptions,
       groups,

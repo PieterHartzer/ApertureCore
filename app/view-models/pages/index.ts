@@ -4,6 +4,9 @@ import { MAX_THRESHOLD_STEPS, parseAdvancedOptions, parseLabelOverrides, parseTh
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
+import { appExtensions, type WidgetPickerItem } from '~/extensions'
+
 import DeleteDashboardDialog from '~/components/dashboard/DeleteDashboardDialog.vue'
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
@@ -71,6 +74,7 @@ interface PluginInputSelectOption {
 
 export default defineComponent({
   components: {
+    ExtensionSlot,
     WidgetSkeleton,
     DashboardStyleEditor,
     AppAlert,
@@ -97,6 +101,7 @@ export default defineComponent({
       saveDashboard: saveDashboardRequest
     } = useDashboards(requestFetch)
     const { getPlugin, getPlugins } = useUIPlugins()
+    const builderExtension = appExtensions.useDashboardBuilder?.()
     const queryResults = useDashboardQueryResults()
 
     const draft = ref<DashboardWidgetDraft>(createEmptyDashboardWidgetDraft())
@@ -163,6 +168,7 @@ export default defineComponent({
 
     // Lifecycle hooks must be registered before the first await in this setup.
     onMounted(() => {
+      void builderExtension?.refresh()
       refreshTimer = setInterval(() => {
         void refreshWidgets()
       }, DASHBOARD_REFRESH_TICK_MS)
@@ -227,14 +233,19 @@ export default defineComponent({
       }))
     })
 
-    const pluginOptions = computed(() => {
-      return pluginDefinitions.value
+    const pluginOptions = computed<WidgetPickerItem[]>(() => {
+      const options = pluginDefinitions.value
         .map((plugin) => ({ label: getPluginDefinitionName(plugin), value: plugin.id }))
         .sort((left, right) => left.label.localeCompare(right.label, locale.value === 'pseudo' ? 'en' : locale.value))
+
+      return builderExtension?.arrangeWidgetOptions(options) ?? options
     })
+
+    const fastestRefreshSeconds = computed(() => builderExtension?.fastestRefreshSeconds.value ?? WIDGET_REFRESH_INTERVALS[0]!)
 
     const refreshIntervalOptions = computed(() => {
       return WIDGET_REFRESH_INTERVALS
+        .filter((intervalSeconds) => intervalSeconds >= fastestRefreshSeconds.value)
         .map((intervalSeconds) => ({
           label: t(`pages.dashboard.builder.refresh.every${intervalSeconds}`),
           value: intervalSeconds
@@ -322,8 +333,21 @@ export default defineComponent({
       return getPluginDefinitionDescription(selectedPlugin.value)
     })
 
+    const widgetBlockReason = computed(() => {
+      return builderExtension?.blockReason({
+        pluginId: selectedPlugin.value?.id ?? '',
+        editingPluginId: editingWidget.value?.pluginId ?? '',
+        isEditing: isEditingWidget.value
+      }) ?? ''
+    })
+
+    const isEmbedBlocked = computed(() => {
+      return builderExtension?.isEmbedBlocked(selectedDashboard.value?.embedEnabled ?? false) ?? false
+    })
+
     const submitWidgetDisabled = computed(() => {
       return (
+        Boolean(widgetBlockReason.value) ||
         !hasSelectedDashboard.value ||
         !selectedQuery.value ||
         !selectedPlugin.value ||
@@ -336,9 +360,9 @@ export default defineComponent({
     })
 
     // Widgets saved with an interval that is no longer offered move to the next one up.
-    watch(() => draft.value.refreshIntervalSeconds, (current) => {
-      if (!WIDGET_REFRESH_INTERVALS.includes(current)) {
-        draft.value.refreshIntervalSeconds = WIDGET_REFRESH_INTERVALS.find(interval => interval > current) ?? 3600
+    watch([() => draft.value.refreshIntervalSeconds, fastestRefreshSeconds], ([current, fastest]) => {
+      if (!WIDGET_REFRESH_INTERVALS.includes(current) || current < fastest) {
+        draft.value.refreshIntervalSeconds = WIDGET_REFRESH_INTERVALS.find(interval => interval >= Math.max(current, fastest)) ?? 3600
       }
     })
 
@@ -1006,6 +1030,7 @@ export default defineComponent({
 
           dashboardSaveState.value = 'saved'
           dashboardSaveErrorMessage.value = ''
+          await builderExtension?.refresh()
           return true
         }
 
@@ -1634,6 +1659,8 @@ export default defineComponent({
       openWidgetBuilder,
       pluginDefinitions,
       pluginOptions,
+      isEmbedBlocked,
+      widgetBlockReason,
       previewErrorMessage,
       previewFieldOptions,
       previewState,

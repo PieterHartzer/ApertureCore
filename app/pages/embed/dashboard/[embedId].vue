@@ -124,6 +124,8 @@ export default component
       >
         {{ t('pages.dashboard.widgets.empty.description') }}
       </div>
+
+      <ExtensionSlot name="embed.footer" :slot-props="{ dashboard }" />
     </div>
   </div>
 </template>

@@ -3,6 +3,7 @@ import type { EmbeddedDashboardWidgetRunApiResponse } from '../../../../../../ty
 import { executeResolvedSavedQuery } from '../../../../../../utils/database/executeQuery'
 import { resolveEmbeddedDashboardWidgetExecutionContext } from '../../../../../../utils/database/executeEmbeddedDashboardWidgetQuery'
 import { AppDatabaseConfigurationError } from '../../../../../../utils/app-database'
+import { serverExtensions } from '../../../../../../utils/extensions'
 import { resolvePositiveInteger } from '../../../../../../utils/positive-integer'
 import {
   buildEmbeddedDashboardWidgetCacheKey,
@@ -117,7 +118,7 @@ export default defineEventHandler(async (event) => {
     const runtimeConfig = useRuntimeConfig()
     const cache = useStorage('cache')
     const ifNoneMatch = pickRequestHeader(event, 'if-none-match')
-    const ttlSeconds = resolvePositiveInteger(
+    const configuredTtlSeconds = resolvePositiveInteger(
       runtimeConfig.queryCacheTtlSeconds,
       DEFAULT_QUERY_CACHE_TTL_SECONDS
     )
@@ -132,10 +133,17 @@ export default defineEventHandler(async (event) => {
       return buildErrorResponse('not_found')
     }
 
+    const policy = await serverExtensions.embedRunPolicy?.(
+      embedIdValidation.data.embedId,
+      widgetIdValidation.data.widgetId
+    )
+    const ttlSeconds = Math.max(configuredTtlSeconds, policy?.minimumTtlSeconds ?? 0)
     const cacheKey = buildEmbeddedDashboardWidgetCacheKey(
       embedIdValidation.data.embedId,
       widgetIdValidation.data.widgetId,
-      resolvedExecutionContext.cacheVersion
+      policy?.cacheVersion
+        ? `${resolvedExecutionContext.cacheVersion}-${policy.cacheVersion}`
+        : resolvedExecutionContext.cacheVersion
     )
     const storedResponse = await cache.getItem<unknown>(cacheKey)
     const cachedResponse = readFreshQueryResult(storedResponse)

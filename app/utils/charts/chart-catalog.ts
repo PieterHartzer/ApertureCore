@@ -142,6 +142,13 @@ export const CHART_CATALOG: CatalogChart[] = [
   { id: 'pie', group: 'parts', name: 'Pie chart', description: 'Parts of a whole.', build: pieChart({ radius: '68%' }), inputs: partInputs, sample: parts() }
 ]
 
+/** Makes more charts available to CatalogChartPlugin. */
+export const registerCatalogCharts = (charts: CatalogChart[]) => {
+  for (const chart of charts) {
+    if (!CHART_CATALOG.some(item => item.id === chart.id)) CHART_CATALOG.push(chart)
+  }
+}
+
 export const buildChartOption = (chart: CatalogChart, context: ChartContext): EChartsOption | null => {
   const option = chart.build(context)
 

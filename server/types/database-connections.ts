@@ -1,3 +1,4 @@
+import type { GuardRejection } from '../utils/extensions'
 import type {
   TestDatabaseConnectionInput,
   DatabaseType,
@@ -93,6 +94,7 @@ export type SaveDatabaseConnectionResult =
       code: Exclude<SaveDatabaseConnectionResultCode, 'success'>
       message: string
     }
+  | GuardRejection
 
 export interface SaveDatabaseConnectionApiResponse {
   ok: boolean
@@ -101,6 +103,7 @@ export interface SaveDatabaseConnectionApiResponse {
     | 'forbidden'
     | 'invalid_input'
     | Exclude<SaveDatabaseConnectionResultCode, 'success'>
+    | 'limit_reached'
   message: string
   messageKey?: string
   field?: SaveDatabaseConnectionField

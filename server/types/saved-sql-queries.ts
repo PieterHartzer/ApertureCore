@@ -1,3 +1,4 @@
+import type { GuardRejection } from '../utils/extensions'
 import type { AuthenticatedOrganizationContext } from './database-connections'
 
 export type { AuthenticatedOrganizationContext }
@@ -310,6 +311,7 @@ export type SaveSavedSqlQueryResult =
       query: SavedSqlQuerySummary
     }
   | SavedSqlQueryResultError<Exclude<SaveSavedSqlQueryResultCode, 'success'>>
+  | GuardRejection
 
 export type TestSavedSqlQueryResultCode =
   | 'success'
@@ -376,6 +378,7 @@ export interface SaveSavedSqlQueryApiResponse {
     | 'forbidden'
     | 'invalid_input'
     | Exclude<SaveSavedSqlQueryResultCode, 'success'>
+    | 'limit_reached'
   message: string
   messageKey?: string
   field?: keyof SaveSavedSqlQueryInput | 'body'

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+import { appExtensions, type NavigationGroup } from '~/extensions'
 
 const route = useRoute()
 const { t } = useI18n()
 const { user, logout } = useOidcAuth()
 
+const extraGroups = appExtensions.useNavigationGroups?.()
 const userDetails = computed(() => {
   const info = user.value?.userInfo as Record<string, unknown> | undefined
   const claims = user.value?.claims as Record<string, unknown> | undefined
@@ -19,7 +21,7 @@ const userDetails = computed(() => {
   }
 })
 
-const groups = computed<Array<{ key: string, label?: string, items: Array<{ to: string, label: string, icon: string }> }>>(() => [
+const groups = computed<NavigationGroup[]>(() => [
   {
     key: 'main',
     items: [
@@ -37,7 +39,8 @@ const groups = computed<Array<{ key: string, label?: string, items: Array<{ to: 
     key: 'settings',
     label: t('navigation.settings'),
     items: [{ to: '/settings/ai-models', label: t('navigation.aiModels'), icon: 'i-lucide-sparkles' }]
-  }
+  },
+  ...(extraGroups?.value ?? [])
 ])
 const allItems = computed(() => groups.value.flatMap((group) => group.items))
 const active = (path: string) => isNavigationSectionActive(route.path, path)

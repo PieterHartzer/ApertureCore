@@ -6,6 +6,7 @@ import type {
 
 import { saveSavedSqlQuery } from '../../services/saved-sql-queries'
 import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
+import { buildGuardRejectionResponse, isGuardRejection } from '../../utils/extensions'
 import { validateSaveSavedSqlQueryInput } from '../../validators/saved-sql-queries'
 
 const VALIDATION_MESSAGE_KEYS: Record<
@@ -25,7 +26,7 @@ const VALIDATION_MESSAGE_KEYS: Record<
 }
 
 const ERROR_MESSAGE_KEYS: Record<
-  Exclude<SaveSavedSqlQueryApiResponse['code'], 'success' | 'invalid_input'>,
+  Exclude<SaveSavedSqlQueryApiResponse['code'], 'success' | 'invalid_input' | 'limit_reached'>,
   string
 > = {
   forbidden: 'queries.save.errors.forbidden',
@@ -51,7 +52,7 @@ const buildValidationErrorResponse = (
 }
 
 const buildErrorResponse = (
-  code: Exclude<SaveSavedSqlQueryApiResponse['code'], 'success' | 'invalid_input'>
+  code: Exclude<SaveSavedSqlQueryApiResponse['code'], 'success' | 'invalid_input' | 'limit_reached'>
 ): SaveSavedSqlQueryApiResponse => {
   const messageKey = ERROR_MESSAGE_KEYS[code]
 
@@ -100,6 +101,10 @@ export default defineEventHandler(async (event) => {
   try {
     const authContext = getAuthenticatedOrganizationContext(event)
     const result = await saveSavedSqlQuery(authContext, validationResult.data)
+
+    if (isGuardRejection(result)) {
+      return buildGuardRejectionResponse(event, result)
+    }
 
     if (!isSaveServiceError(result)) {
       setResponseStatus(event, 201)

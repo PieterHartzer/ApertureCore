@@ -78,6 +78,7 @@ export default component
           </div>
         </section>
 
+        <ExtensionSlot name="dashboard.style" :slot-props="{ value, setValue }" />
       </div>
     </template>
 
@@ -86,7 +87,7 @@ export default component
         <UButton color="neutral" variant="ghost" :label="t('pages.dashboard.style.reset')" @click="reset" />
         <div class="flex gap-2">
           <UButton color="neutral" variant="ghost" :label="t('pages.dashboard.selector.settings.actions.cancel')" @click="$emit('update:open', false)" />
-          <UButton icon="i-lucide-save" :label="t('pages.dashboard.style.save')" :loading="saving" @click="$emit('save')" />
+          <UButton icon="i-lucide-save" :label="t('pages.dashboard.style.save')" :loading="saving" :disabled="!canSave" @click="$emit('save')" />
         </div>
       </div>
     </template>

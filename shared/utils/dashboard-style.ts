@@ -15,6 +15,18 @@ const SHADOWS: Record<string, string> = {
 }
 
 
+export interface DashboardStyleExtension {
+  /** Copies any extra properties onto style and reports whether they are invalid. */
+  normalize: (source: Record<string, unknown>, style: DashboardStyle) => boolean
+  css: (style: DashboardStyle) => string
+}
+
+const styleExtensions: DashboardStyleExtension[] = []
+
+export const registerDashboardStyleExtension = (extension: DashboardStyleExtension) => {
+  if (!styleExtensions.includes(extension)) styleExtensions.push(extension)
+}
+
 /** Keeps only known properties with valid values. */
 export const normalizeDashboardStyle = (value: unknown): { style: DashboardStyle, invalid: boolean } => {
   const source = (value && typeof value === 'object' && !Array.isArray(value) ? value : {}) as Record<string, unknown>
@@ -29,7 +41,9 @@ export const normalizeDashboardStyle = (value: unknown): { style: DashboardStyle
     else if (field.control === 'switch' && entry === true) style[field.key] = true
   }
 
-  return { style, invalid: false }
+  const invalid = styleExtensions.map(extension => extension.normalize(source, style)).some(Boolean)
+
+  return { style, invalid }
 }
 
 const cssRule = (selector: string, declarations: (string | null)[]) => {
@@ -60,7 +74,8 @@ export const buildDashboardCss = (input: unknown) => {
     style.hideTitles ? cssRule(`${DASHBOARD_CANVAS}:not([data-editing]) [data-widget-title]`, ['visibility: hidden;']) : '',
     cssRule(`${DASHBOARD_CANVAS} [data-widget-title]`, [declaration('color', style.titleColor), declaration('font-size', style.titleSize, 'px'), declaration('font-weight', style.titleWeight), declaration('text-align', style.titleAlign), style.titleAlign ? 'flex: 1 1 0%;' : null]),
     cssRule(`${DASHBOARD_CANVAS} [data-widget-value]`, [declaration('color', style.valueColor), declaration('font-size', style.valueSize, 'px')]),
-    cssRule(`${DASHBOARD_CANVAS} [data-widget-label]`, [declaration('color', style.labelColor)])
+    cssRule(`${DASHBOARD_CANVAS} [data-widget-label]`, [declaration('color', style.labelColor)]),
+    ...styleExtensions.map(extension => extension.css(style))
   ].filter(Boolean).join('\n')
 }
 

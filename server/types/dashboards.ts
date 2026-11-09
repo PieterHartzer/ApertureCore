@@ -1,3 +1,4 @@
+import type { GuardRejection } from '../utils/extensions'
 import type { DashboardStyle } from '../../shared/utils/dashboard-style-fields'
 import type { DashboardAppearance } from '../../shared/utils/dashboard-appearance'
 import type { AuthenticatedOrganizationContext } from './database-connections'
@@ -75,6 +76,8 @@ export interface EmbeddedDashboardDetails {
   appearance: DashboardAppearance
   style: DashboardStyle
   updatedAt: string
+  /** Anything a layer adds through embeddedDashboardDetails. */
+  extensions?: Record<string, unknown>
   widgets: EmbeddedDashboardWidget[]
 }
 
@@ -279,6 +282,7 @@ export type CreateDashboardResult =
       dashboard: DashboardDetails
     }
   | DashboardResultError<Exclude<CreateDashboardResultCode, 'success'>>
+  | GuardRejection
 
 export type SaveDashboardResultCode =
   | 'success'
@@ -294,6 +298,7 @@ export type SaveDashboardResult =
       dashboard: DashboardDetails
     }
   | DashboardResultError<Exclude<SaveDashboardResultCode, 'success'>>
+  | GuardRejection
 
 export type DeleteDashboardResultCode =
   | 'success'
@@ -385,6 +390,7 @@ export interface CreateDashboardApiResponse {
     | 'invalid_input'
     | 'forbidden'
     | Exclude<CreateDashboardResultCode, 'success'>
+    | 'limit_reached'
   message: string
   messageKey?: string
   field?: keyof CreateDashboardInput | 'body'
@@ -399,6 +405,7 @@ export interface SaveDashboardApiResponse {
     | 'invalid_input'
     | 'forbidden'
     | Exclude<SaveDashboardResultCode, 'success'>
+    | 'limit_reached'
   message: string
   messageKey?: string
   field?: SaveDashboardValidationError['field']

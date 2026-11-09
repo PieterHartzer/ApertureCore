@@ -25,9 +25,9 @@ type Config = Record<string, unknown>
 
 const CURRENCIES = ['AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'INR', 'JPY', 'KES', 'MXN', 'NGN', 'NOK', 'NZD', 'SEK', 'SGD', 'USD', 'ZAR']
 
-const setting = (key: string, label: string, section: SettingSection, control: SettingControl, extra: Partial<ChartSetting> = {}): ChartSetting => ({ key, label, section, control, ...extra })
+export const setting = (key: string, label: string, section: SettingSection, control: SettingControl, extra: Partial<ChartSetting> = {}): ChartSetting => ({ key, label, section, control, ...extra })
 
-const FORMAT = [
+export const FORMAT = [
   setting('valueFormat', 'Number format', 'format', 'select', {
     options: [
       { value: 'auto', label: 'Automatic' },
@@ -46,20 +46,20 @@ const FORMAT = [
   setting('prefix', 'Text before', 'format', 'text', { span: 'third' }),
   setting('suffix', 'Text after', 'format', 'text', { span: 'third' })
 ]
-const THRESHOLDS = [
+export const THRESHOLDS = [
   setting('normalColor', 'Starting colour', 'thresholds', 'color', { span: 'full' }),
   setting('thresholds', 'Change colour at', 'thresholds', 'thresholds', { span: 'full' })
 ]
-const COLOR = setting('color', 'Colour', 'appearance', 'color')
-const AXIS = [
+export const COLOR = setting('color', 'Colour', 'appearance', 'color')
+export const AXIS = [
   setting('axisMin', 'Axis minimum', 'range', 'number'),
   setting('axisMax', 'Axis maximum', 'range', 'number')
 ]
-const REFERENCE = [
+export const REFERENCE = [
   setting('referenceValue', 'Target line value', 'range', 'number'),
   setting('referenceLabel', 'Target line label', 'range', 'text')
 ]
-const SHOW_VALUES = setting('showValues', 'Show values on the chart', 'appearance', 'switch')
+export const SHOW_VALUES = setting('showValues', 'Show values on the chart', 'appearance', 'switch')
 const SLICE_LABELS = setting('labelMode', 'Slice labels', 'appearance', 'select', {
   options: [
     { value: 'auto', label: 'Automatic' },
@@ -70,8 +70,8 @@ const SLICE_LABELS = setting('labelMode', 'Slice labels', 'appearance', 'select'
   ]
 })
 
-const SINGLE = [...FORMAT, COLOR, ...AXIS, ...REFERENCE, SHOW_VALUES]
-const PARTS = [...FORMAT, SLICE_LABELS]
+export const SINGLE = [...FORMAT, COLOR, ...AXIS, ...REFERENCE, SHOW_VALUES]
+export const PARTS = [...FORMAT, SLICE_LABELS]
 
 export const CHART_SETTINGS: Record<string, ChartSetting[]> = {
   'table': FORMAT,
@@ -81,16 +81,16 @@ export const CHART_SETTINGS: Record<string, ChartSetting[]> = {
   'pie': PARTS
 }
 
-const ADVANCED = setting('advancedOptions', 'ECharts options (JSON)', 'advanced', 'json', { span: 'full' })
+export const ADVANCED = setting('advancedOptions', 'ECharts options (JSON)', 'advanced', 'json', { span: 'full' })
 // These widgets are drawn as HTML or a table, so ECharts options do not apply.
 const NOT_ECHARTS = new Set(['table', 'stat-card'])
 
-const VALUE_SIZE = setting('valueFontSize', 'Number size', 'text', 'number', { min: 12, max: 120 })
-const LABEL_SIZE = setting('labelFontSize', 'Label size', 'text', 'number', { min: 10, max: 48 })
-const TEXT_ALIGN = setting('textAlign', 'Horizontal alignment', 'text', 'select', {
+export const VALUE_SIZE = setting('valueFontSize', 'Number size', 'text', 'number', { min: 12, max: 120 })
+export const LABEL_SIZE = setting('labelFontSize', 'Label size', 'text', 'number', { min: 10, max: 48 })
+export const TEXT_ALIGN = setting('textAlign', 'Horizontal alignment', 'text', 'select', {
   options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }, { value: 'right', label: 'Right' }]
 })
-const VERTICAL_ALIGN = setting('verticalAlign', 'Vertical alignment', 'text', 'select', {
+export const VERTICAL_ALIGN = setting('verticalAlign', 'Vertical alignment', 'text', 'select', {
   options: [{ value: 'top', label: 'Top' }, { value: 'middle', label: 'Middle' }, { value: 'bottom', label: 'Bottom' }]
 })
 const TEXT_SETTINGS: Record<string, ChartSetting[]> = {
@@ -100,7 +100,7 @@ const TEXT_SETTINGS: Record<string, ChartSetting[]> = {
 
 for (const [id, settings] of Object.entries(TEXT_SETTINGS)) CHART_SETTINGS[id] = [...settings, ...CHART_SETTINGS[id]!]
 
-const LABELS = setting('labelOverrides', 'Rename labels', 'labels', 'labels', { span: 'full' })
+export const LABELS = setting('labelOverrides', 'Rename labels', 'labels', 'labels', { span: 'full' })
 
 for (const [id, settings] of Object.entries(CHART_SETTINGS)) {
   CHART_SETTINGS[id] = [...settings, LABELS, ...(NOT_ECHARTS.has(id) ? [] : [ADVANCED])]

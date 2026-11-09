@@ -26,6 +26,8 @@ export default component
     </UPageHeader>
 
     <UPageBody>
+      <ExtensionSlot name="queries.index" :slot-props="{ count: queries.length }" />
+
       <AppAlert
         v-if="listErrorMessage"
         kind="error"
