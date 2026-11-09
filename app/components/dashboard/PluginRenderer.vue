@@ -30,7 +30,8 @@ export default component
     <component
       :is="plugin.component"
       v-else
-      :data="rows"
+      v-bind="plugin.componentProps"
+      :data="displayRows"
       :columns="columns"
       :config="widget.pluginConfig"
       class="plugin-renderer"
@@ -43,7 +44,7 @@ export default component
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 200px;
+  min-height: 0;
 }
 
 .plugin-renderer {
@@ -77,24 +78,5 @@ export default component
 .plugin-renderer:deep(.success) {
   width: 100%;
   height: 100%;
-}
-
-/* Responsive Chart Containers */
-@media (max-width: 640px) {
-  .chart-container {
-    min-height: 150px;
-  }
-}
-
-@media (min-width: 768px) {
-  .chart-container {
-    min-height: 200px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .chart-container {
-    min-height: 250px;
-  }
 }
 </style>

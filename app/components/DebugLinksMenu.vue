@@ -10,13 +10,13 @@ export default component
       v-if="showMenu && links.length"
       to="body"
     >
-      <div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+      <div class="fixed bottom-4 left-4 z-30 flex flex-col items-start gap-3 lg:left-60">
         <div
           v-if="isOpen"
           id="debug-links-menu"
-          class="w-56 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur"
+          class="w-56 rounded-[10px] border border-default bg-elevated p-3"
         >
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p class="text-xs font-medium text-muted">
             {{ $t('interface.debugLinks') }}
           </p>
           <div class="mt-3 flex flex-col gap-2">
@@ -26,7 +26,7 @@ export default component
               :href="link.href"
               target="_blank"
               rel="noreferrer"
-              class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950"
+              class="rounded-xl border border-default px-3 py-2 text-sm font-medium text-toned transition hover:border-accented hover:bg-elevated hover:text-highlighted"
             >
               {{ localizeAppMessage($t, link.label) }}
             </a>
@@ -35,7 +35,7 @@ export default component
 
         <button
           type="button"
-          class="rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+          class="rounded-full bg-inverted px-4 py-3 text-sm font-semibold text-inverted transition hover:opacity-90"
           :aria-expanded="isOpen"
           aria-controls="debug-links-menu"
           @click="isOpen = !isOpen"

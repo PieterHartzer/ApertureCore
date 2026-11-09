@@ -1,0 +1,54 @@
+export default defineAppConfig({
+  ui: {
+    colors: { primary: 'blue', neutral: 'neutral' },
+    card: {
+      slots: {
+        root: 'rounded-[10px] bg-[var(--surface)] backdrop-blur-md ring ring-default shadow-none',
+        header: 'p-4 sm:px-4',
+        body: 'p-4 sm:p-4',
+        footer: 'p-4 sm:px-4'
+      }
+    },
+    button: {
+      compoundVariants: [{
+        color: 'primary',
+        variant: 'solid',
+        class: 'bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 active:from-blue-700 active:to-indigo-700 disabled:from-blue-600 disabled:to-indigo-600 aria-disabled:from-blue-600 aria-disabled:to-indigo-600 dark:hover:from-blue-700 dark:hover:to-indigo-700'
+      }]
+    },
+    pageHeader: {
+      slots: {
+        root: 'border-none py-0 pb-5',
+        container: 'flex flex-col gap-0',
+        wrapper: 'flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between',
+        headline: 'hidden',
+        title: 'text-xl font-semibold tracking-tight sm:text-xl',
+        description: 'mt-0.5 text-sm text-muted'
+      }
+    },
+    pageCard: {
+      slots: {
+        container: 'p-4 sm:p-4 lg:p-4',
+        title: 'text-sm font-medium',
+        description: 'text-sm'
+      }
+    },
+    pageBody: {
+      base: 'mt-0 space-y-4 pb-12'
+    },
+    table: {
+      slots: {
+        th: 'px-4 py-2.5 text-xs font-medium text-muted',
+        td: 'px-4 py-3 text-sm text-default'
+      }
+    },
+    alert: {
+      defaultVariants: { variant: 'subtle' },
+      slots: {
+        root: 'relative overflow-hidden w-full rounded-lg p-4 flex gap-2.5',
+        title: 'text-sm font-semibold',
+        description: 'text-sm leading-6 opacity-90'
+      }
+    }
+  }
+})

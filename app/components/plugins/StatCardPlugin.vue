@@ -7,30 +7,34 @@ export default component
 <template>
   <div
     v-if="!valueField"
-    class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+    class="plugin-no-data"
   >
-    {{ t('pages.dashboard.plugins.stat-card.emptyMapping') }}
+    <span class="plugin-no-data-label">{{ t('pages.dashboard.plugins.stat-card.emptyMapping') }}</span>
   </div>
 
   <div
     v-else-if="!firstRow"
-    class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+    class="plugin-no-data"
   >
-    {{ t('pages.dashboard.plugins.stat-card.emptyRows') }}
+    <span class="plugin-no-data-label">{{ t('pages.dashboard.plugins.stat-card.emptyRows') }}</span>
   </div>
 
   <div
     v-else
-    class="flex h-full min-h-0 flex-col rounded-2xl border border-default bg-gradient-to-br from-elevated to-muted/20 p-6"
+    class="flex h-full min-h-0 flex-col justify-center"
+    :style="textStyles.container"
   >
-    <p class="text-sm font-medium uppercase tracking-[0.18em] text-muted">
-      {{ supportingLabel || valueField }}
-    </p>
-    <p class="mt-4 text-4xl font-semibold text-highlighted">
+    <p data-widget-value class="flex items-center gap-2 text-[28px] font-semibold leading-tight tracking-tight text-highlighted" :style="textStyles.value">
+      <span v-if="band" class="size-2.5 shrink-0 rounded-full" :style="{ backgroundColor: band.color }" aria-hidden="true" />
       {{ formattedValue }}
     </p>
-    <p class="mt-auto pt-3 text-sm text-muted">
-      {{ t('pages.dashboard.plugins.stat-card.firstRowHint') }}
+    <p
+      v-if="supportingLabel"
+      data-widget-label
+      :style="textStyles.label"
+      class="mt-1 text-[13px] text-muted"
+    >
+      {{ supportingLabel }}
     </p>
   </div>
 </template>

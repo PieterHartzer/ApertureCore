@@ -11,6 +11,32 @@ let credentials: Record<string, string>
 beforeEach(() => { settings = { connections: [], models: [] }; credentials = {}; mocks.config.mockReturnValue({ appDatabaseEncryptionKey: 'test-server-secret' }) })
 const addConnection = () => applyAISettingsAction(settings, credentials, { action: 'connection', providerType: 'openai', name: 'My OpenAI', apiKey: 'test-key' })!
 describe('AI settings mutations', () => {
+  it('accepts only real Azure endpoints', () => {
+    const save = (baseUrl: string) => applyAISettingsAction(settings, credentials, { action: 'connection', providerType: 'azure', name: 'Azure', apiKey: 'key', baseUrl })
+
+    save('https://acme.openai.azure.com/')
+    expect(settings.connections).toMatchObject([{ baseUrl: 'https://acme.openai.azure.com/openai/v1' }])
+    expect(() => save('https://evil.example')).toThrow('Enter your Azure endpoint')
+  })
+
+  it('drops models a connection no longer offers when replacing its list', () => {
+    const id = addConnection()
+
+    applyAISettingsAction(settings, credentials, { action: 'models', id, providerType: 'openai', modelIds: ['old', 'kept'] })
+    applyAISettingsAction(settings, credentials, { action: 'models', id, providerType: 'openai', modelIds: ['kept', 'new'], replace: true })
+
+    expect(settings.models.map(model => model.modelId)).toEqual(['kept', 'new'])
+    expect(settings.models.filter(model => model.isDefault)).toHaveLength(1)
+  })
+
+  it('takes a cloud provider address from the catalogue, never from the request', () => {
+    const target = { connections: [], models: [] }
+
+    applyAISettingsAction(target, {}, { action: 'connection', providerType: 'deepseek', name: 'DeepSeek', apiKey: 'key', baseUrl: 'http://169.254.169.254/latest' })
+
+    expect(target.connections).toMatchObject([{ baseUrl: 'https://api.deepseek.com/v1' }])
+  })
+
   it('adds connections, keeps credentials out of public settings and retains stored keys during edits', () => {
     const id = addConnection()
     expect(credentials[id]).toBe('test-key')

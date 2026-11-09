@@ -154,7 +154,8 @@ export const useDashboardQueryResults = (
     const request = runQuery(
       {
         connectionId: target.connectionId,
-        queryId: target.queryId
+        queryId: target.queryId,
+        ...(loadOptions.force ? { force: true } : {})
       },
       {
         etag: state.etag || undefined

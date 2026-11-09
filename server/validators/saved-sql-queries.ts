@@ -316,7 +316,8 @@ export const validateRunSavedSqlQueryInput = (
 
   const normalizedInput: RunSavedSqlQueryInput = {
     connectionId: value.connectionId.trim(),
-    queryId: value.queryId.trim()
+    queryId: value.queryId.trim(),
+    ...(value.force === true ? { force: true } : {})
   }
 
   return {

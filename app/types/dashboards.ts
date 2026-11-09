@@ -1,3 +1,5 @@
+import type { DashboardStyle } from '../../shared/utils/dashboard-style-fields'
+import type { DashboardAppearance } from '../../shared/utils/dashboard-appearance'
 import type { DashboardWidget } from './dashboard-widgets'
 import type { SavedSqlQueryResultRow } from './saved-sql-queries'
 
@@ -6,6 +8,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  appearance: DashboardAppearance
+  style: DashboardStyle
   widgetCount: number
   createdAt: string
   updatedAt: string
@@ -27,6 +31,8 @@ export interface EmbeddedDashboardWidget {
 export interface EmbeddedDashboardDetails {
   embedId: string
   dashboardName: string
+  appearance: DashboardAppearance
+  style: DashboardStyle
   updatedAt: string
   widgets: EmbeddedDashboardWidget[]
 }
@@ -40,6 +46,8 @@ export type DashboardSaveWidgetInput = Omit<DashboardWidget, 'dashboardId'>
 export interface DashboardSaveInput {
   dashboardName: string
   embedEnabled: boolean
+  appearance?: DashboardAppearance
+  style?: DashboardStyle
   widgets: DashboardSaveWidgetInput[]
 }
 
@@ -193,10 +201,12 @@ export const createEmptyDashboardCreateInput = (): DashboardCreateInput => ({
 })
 
 export const toDashboardSaveInput = (
-  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'widgets'>
+  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'>
 ): DashboardSaveInput => ({
   dashboardName: dashboard.dashboardName,
   embedEnabled: dashboard.embedEnabled,
+  appearance: dashboard.appearance,
+  style: dashboard.style,
   widgets: dashboard.widgets.map((widget) => ({
     id: widget.id,
     title: widget.title,

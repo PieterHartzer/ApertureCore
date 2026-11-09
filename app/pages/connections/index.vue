@@ -5,7 +5,7 @@ export default component
 </script>
 
 <template>
-  <UPage class="px-4 sm:px-6 lg:px-8">
+  <UPage>
     <UPageHeader
       :headline="t('connections.index.headline')"
       :title="t('connections.index.title')"
@@ -24,7 +24,7 @@ export default component
       </template>
     </UPageHeader>
 
-    <UPageBody class="space-y-6 sm:space-y-8">
+    <UPageBody>
       <AppAlert
         v-if="listErrorMessage"
         kind="error"
@@ -33,12 +33,9 @@ export default component
         {{ localizeAppMessage($t, listErrorMessage) }}
       </AppAlert>
 
-      <UPageCard
+      <div
         v-else-if="isLoading || connections.length > 0"
-        icon="i-lucide-table-properties"
-        :title="t('connections.index.table.title')"
-        :description="t('connections.index.table.description')"
-        class="space-y-4 sm:space-y-6"
+        class="overflow-hidden rounded-lg border border-default bg-elevated"
       >
         <UTable
           :data="connections"
@@ -46,44 +43,35 @@ export default component
           :loading="isLoading"
           :empty="t('connections.index.table.empty')"
         >
-          <template #databaseType-cell="{ row }">
-            {{ formatDatabaseType(row.original.databaseType) }}
+          <template #connectionName-cell="{ row }">
+            <NuxtLink :to="`/connections/${row.original.id}`" class="font-medium text-highlighted hover:underline">
+              {{ row.original.connectionName }}
+            </NuxtLink>
           </template>
 
+          <template #databaseType-cell="{ row }">
+            <UBadge color="neutral" variant="subtle" size="sm" :label="formatDatabaseType(row.original.databaseType)" />
+          </template>
+
+          <template #actions-header><span class="sr-only">{{ t('connections.index.table.columns.actions') }}</span></template>
+
           <template #actions-cell="{ row }">
-            <div class="flex items-center gap-2 sm:gap-3">
-              <UButton
-                :to="`/connections/${row.original.id}`"
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-pencil"
-                :label="t('connections.index.table.actions.edit')"
-              />
-              <UButton
-                type="button"
-                color="error"
-                variant="ghost"
-                icon="i-lucide-trash-2"
-                :label="t('connections.index.table.actions.delete')"
-                @click="openDeleteDialog(row.original)"
-              />
+            <div class="flex justify-end gap-1">
+              <UButton :to="`/connections/${row.original.id}`" color="neutral" variant="ghost" size="sm" square icon="i-lucide-pencil" :aria-label="`${t('connections.index.table.actions.edit')} ${row.original.connectionName}`" :title="t('connections.index.table.actions.edit')" />
+              <UButton type="button" color="neutral" variant="ghost" size="sm" square icon="i-lucide-trash-2" :aria-label="`${t('connections.index.table.actions.delete')} ${row.original.connectionName}`" :title="t('connections.index.table.actions.delete')" @click="openDeleteDialog(row.original)" />
             </div>
           </template>
         </UTable>
-      </UPageCard>
+      </div>
 
-      <UPageCard
+      <AppEmptyState
         v-else
         icon="i-lucide-database"
         :title="t('connections.index.empty.title')"
         :description="t('connections.index.empty.description')"
       >
-        <UButton
-          to="/connections/new"
-          icon="i-lucide-database-zap"
-          :label="t('connections.index.actions.addFirst')"
-        />
-      </UPageCard>
+        <UButton to="/connections/new" icon="i-lucide-plus" :label="t('connections.index.actions.addFirst')" />
+      </AppEmptyState>
 
       <DeleteConnectionDialog
         :open="isDeleteDialogOpen"

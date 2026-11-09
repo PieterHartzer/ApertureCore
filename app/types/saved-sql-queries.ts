@@ -37,6 +37,7 @@ export interface SavedSqlQueryConnectionOption {
 export interface SavedSqlQueryRunInput {
   connectionId: string
   queryId: string
+  force?: boolean
 }
 
 export type SavedSqlQueryRunIssue =

@@ -8,7 +8,7 @@ import type {
 export const UI_PLUGIN_INPUT_TYPES = ['string', 'number', 'date'] as const
 export type UIPluginInputType = (typeof UI_PLUGIN_INPUT_TYPES)[number]
 
-export const UI_PLUGIN_INPUT_SOURCES = ['field', 'option'] as const
+export const UI_PLUGIN_INPUT_SOURCES = ['field', 'option', 'value'] as const
 export type UIPluginInputSource = (typeof UI_PLUGIN_INPUT_SOURCES)[number]
 
 export const UI_PLUGIN_INPUT_SELECTION_MODES = ['single', 'multiple'] as const
@@ -45,6 +45,13 @@ export interface PluginInputDefinition {
   descriptionKey?: string
   compatibleFieldTypes?: UIPluginFieldType[]
   options?: PluginInputOption[]
+  // The remaining properties describe settings typed by the user (source: 'value').
+  control?: 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
+  span?: 'full' | 'half' | 'third'
+  section?: 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'labels' | 'advanced'
+  visibleWhen?: { key: string, values: string[] }
+  min?: number
+  max?: number
 }
 
 export interface UIPluginDefinition {
@@ -54,6 +61,9 @@ export interface UIPluginDefinition {
   description?: string
   descriptionKey?: string
   component: Component
+  // Passed to the component alongside its data, for one component serving many plugins.
+  componentProps?: Record<string, unknown>
+  group?: string
   inputSchema: PluginInputDefinition[]
 }
 

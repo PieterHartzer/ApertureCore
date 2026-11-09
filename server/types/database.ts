@@ -1,4 +1,4 @@
-export const SERVER_DATABASE_TYPES = ['postgres'] as const
+export const SERVER_DATABASE_TYPES = ['postgres', 'mysql', 'mssql'] as const
 export type DatabaseType = (typeof SERVER_DATABASE_TYPES)[number]
 
 export const SERVER_DATABASE_SSL_MODES = ['disable', 'require'] as const
@@ -16,6 +16,7 @@ export type TestDatabaseConnectionResultCode =
   | 'connection_failed'
   | 'timeout'
   | 'ssl_required'
+  | 'privileged_role'
   | 'unexpected_error'
 
 export interface TestDatabaseConnectionInput {
@@ -27,6 +28,8 @@ export interface TestDatabaseConnectionInput {
   username: string
   password: string
   sslMode: DatabaseSslMode
+  /** The vetted address to connect to, in place of looking the host up again. */
+  connectAddress?: string
 }
 
 export type TestDatabaseConnectionField =
@@ -85,6 +88,8 @@ export interface ExecuteDatabaseReadOnlyQueryInput {
   username: string
   password: string
   sslMode: DatabaseSslMode
+  /** The vetted address to connect to, in place of looking the host up again. */
+  connectAddress?: string
   sql: string
   maxRows?: number
   timeoutMs?: number

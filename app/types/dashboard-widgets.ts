@@ -23,8 +23,8 @@ export const DEFAULT_DASHBOARD_ID = 'default-dashboard'
 export const DEFAULT_WIDGET_REFRESH_INTERVAL_SECONDS = 60
 export const DEFAULT_DASHBOARD_WIDGET_WIDTH = 6
 export const DEFAULT_DASHBOARD_WIDGET_HEIGHT = 4
-export const DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH = 3
-export const DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT = 3
+export const DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH = 2
+export const DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT = 2
 
 export interface DashboardWidgetLayout {
   x?: number
@@ -98,12 +98,13 @@ const cloneDashboardWidgetLayout = (
 export const normalizeDashboardWidgetLayout = (
   layout?: Partial<DashboardWidgetLayout> | null
 ): DashboardWidgetLayout => {
-  const minW = normalizePositiveInteger(
-    layout?.minW,
+  // Saved widgets may carry a larger old minimum, which must not block resizing.
+  const minW = Math.min(
+    normalizePositiveInteger(layout?.minW, DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH) ?? DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH,
     DEFAULT_DASHBOARD_WIDGET_MIN_WIDTH
   )
-  const minH = normalizePositiveInteger(
-    layout?.minH,
+  const minH = Math.min(
+    normalizePositiveInteger(layout?.minH, DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT) ?? DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT,
     DEFAULT_DASHBOARD_WIDGET_MIN_HEIGHT
   )
   const w = Math.max(
@@ -196,6 +197,16 @@ const cloneDashboardWidgetPluginConfig = (
         : value
     ])
   )
+}
+
+/**
+ * Earlier default titles ended in the chart type. Only an exact match for the
+ * widget's own type is removed, so titles people wrote themselves stay intact.
+ */
+export const removeWidgetTypeFromTitle = (title: string, typeNames: string[]) => {
+  const suffix = typeNames.map(name => ` · ${name}`).find(candidate => title.endsWith(candidate) && title.length > candidate.length)
+
+  return suffix ? title.slice(0, -suffix.length) : title
 }
 
 export const createDashboardWidgetDraftFromWidget = (

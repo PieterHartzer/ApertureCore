@@ -165,10 +165,9 @@ export default {
 
 <style scoped>
 .dashboard-header {
-  background: var(--color-card);
+  background: transparent;
   border-bottom: 1px solid var(--color-border);
-  padding: var(--space-lg) var(--space-xl);
-  box-shadow: var(--shadow-sm);
+  padding: var(--space-md) var(--space-xl);
 }
 
 .dashboard-header-content {
@@ -186,16 +185,16 @@ export default {
 }
 
 .dashboard-headline {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-primary);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ui-text-highlighted);
   margin: 0;
   line-height: 1.2;
 }
 
 .dashboard-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-foreground);
   margin: 0;
   line-height: 1.3;
@@ -220,19 +219,6 @@ export default {
   display: flex;
   gap: var(--space-sm);
   align-items: center;
-}
-
-.action-button {
-  transition: all var(--transition-fast);
-}
-
-.action-button:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-button:active {
-  transform: translateY(0);
 }
 
 .dashboard-selector {
@@ -289,26 +275,6 @@ export default {
   .action-button {
     width: 100%;
     justify-content: center;
-  }
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .dashboard-header {
-    background: var(--color-card);
-    border-bottom-color: var(--color-border);
-  }
-
-  .dashboard-headline {
-    color: #60A5FA;
-  }
-
-  .dashboard-title {
-    color: #F1F5F9;
-  }
-
-  .dashboard-description {
-    color: #94A3B8;
   }
 }
 </style>

@@ -2,6 +2,8 @@ import { computed, defineComponent, type PropType } from 'vue'
 
 import type { SavedSqlQueryResultValue } from '~/types/saved-sql-queries'
 
+import { bandFor, createValueFormatter, getTextStyles, hasValueFormat, resolveBands } from '~/utils/charts/chart-settings'
+
 export default defineComponent({
   props: {
     data: {
@@ -44,9 +46,20 @@ export default defineComponent({
       return firstRow.value[valueField.value] ?? null
     })
 
+    // Formats apply to numbers the database returned as text as well.
+    const numericValue = computed(() => {
+      if (typeof rawValue.value === 'number') return rawValue.value
+      if (typeof rawValue.value === 'string' && hasValueFormat(props.config) && rawValue.value.trim() !== '' && Number.isFinite(Number(rawValue.value))) return Number(rawValue.value)
+      return null
+    })
+
+    const textStyles = computed(() => getTextStyles(props.config))
+
+    const band = computed(() => numericValue.value === null ? null : bandFor(resolveBands(props.config), numericValue.value))
+
     const formattedValue = computed(() => {
-      if (typeof rawValue.value === 'number') {
-        return new Intl.NumberFormat(locale.value).format(rawValue.value)
+      if (numericValue.value !== null) {
+        return createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value).full(numericValue.value)
       }
 
       if (typeof rawValue.value === 'boolean') {
@@ -74,6 +87,8 @@ export default defineComponent({
 
     return {
       firstRow,
+      band,
+      textStyles,
       formattedValue,
       supportingLabel,
       t,

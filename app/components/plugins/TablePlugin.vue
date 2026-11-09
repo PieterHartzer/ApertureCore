@@ -7,14 +7,15 @@ export default component
 <template>
   <div
     v-if="tableColumns.length === 0"
-    class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+    class="plugin-no-data"
   >
-    {{ t('pages.dashboard.plugins.table.emptyColumns') }}
+    <span class="plugin-no-data-label">{{ t('pages.dashboard.plugins.table.emptyColumns') }}</span>
   </div>
 
   <div
     v-else
-    class="h-full min-h-0 overflow-auto"
+    class="widget-table h-full min-h-0 overflow-auto"
+    :style="tableTextStyle"
   >
     <UTable
       :data="data"
@@ -23,3 +24,15 @@ export default component
     />
   </div>
 </template>
+
+<style scoped>
+.widget-table :deep(th),
+.widget-table :deep(td) {
+  font-size: var(--widget-table-size, inherit);
+}
+
+.widget-table[style*='--widget-table-align'] :deep(th),
+.widget-table[style*='--widget-table-align'] :deep(td) {
+  text-align: var(--widget-table-align);
+}
+</style>

@@ -10,6 +10,10 @@ export interface CachedQueryResult {
   etag: string
 }
 
+export interface StoredQueryResult extends CachedQueryResult {
+  expiresAt: number
+}
+
 export const buildQueryResultEtag = (
   response: Omit<CachedQueryResult, 'etag'>
 ) => {
@@ -43,6 +47,34 @@ export const isCachedQueryResult = (
     Array.isArray(response.rows) &&
     typeof response.etag === 'string'
   )
+}
+
+export const buildStoredQueryResult = (
+  response: CachedQueryResult,
+  ttlSeconds: number,
+  now = Date.now()
+): StoredQueryResult => ({
+  ...response,
+  expiresAt: now + ttlSeconds * 1000
+})
+
+/**
+ * Returns a stored result only while it is fresh. The expiry is checked here
+ * because the fs and memory storage drivers ignore the ttl option, which would
+ * otherwise keep serving old rows without ever reaching the database or its
+ * privilege check. Entries written without an expiry count as expired.
+ */
+export const readFreshQueryResult = (
+  value: unknown,
+  now = Date.now()
+): CachedQueryResult | null => {
+  if (!isCachedQueryResult(value)) {
+    return null
+  }
+
+  const { expiresAt, ...response } = value as StoredQueryResult
+
+  return typeof expiresAt === 'number' && expiresAt > now ? response : null
 }
 
 export const pickRequestHeader = (

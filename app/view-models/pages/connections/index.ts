@@ -1,3 +1,4 @@
+import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import { computed, defineComponent, ref } from 'vue'
 
 import DeleteConnectionDialog from '~/components/database/DeleteConnectionDialog.vue'
@@ -21,6 +22,7 @@ interface DeleteConnectionDialogConfirmPayload {
 
 export default defineComponent({
   components: {
+    AppEmptyState,
     AppAlert,
     AppLocaleSelect,
     DeleteConnectionDialog

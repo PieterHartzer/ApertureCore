@@ -105,8 +105,8 @@ describe('GET /api/dashboards/:dashboardId', () => {
           layout: {
             w: 6,
             h: 4,
-            minW: 3,
-            minH: 3
+            minW: 2,
+            minH: 2
           },
           refreshIntervalSeconds: 15
         }]
@@ -145,8 +145,8 @@ describe('GET /api/dashboards/:dashboardId', () => {
           layout: {
             w: 6,
             h: 4,
-            minW: 3,
-            minH: 3
+            minW: 2,
+            minH: 2
           },
           refreshIntervalSeconds: 15
         }]

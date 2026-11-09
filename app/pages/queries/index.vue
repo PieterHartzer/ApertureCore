@@ -5,7 +5,7 @@ export default component
 </script>
 
 <template>
-  <UPage class="px-4 sm:px-6 lg:px-8">
+  <UPage>
     <UPageHeader
       :headline="t('queries.index.headline')"
       :title="t('queries.index.title')"
@@ -25,7 +25,7 @@ export default component
       </template>
     </UPageHeader>
 
-    <UPageBody class="space-y-6 sm:space-y-8">
+    <UPageBody>
       <AppAlert
         v-if="listErrorMessage"
         kind="error"
@@ -34,12 +34,9 @@ export default component
         {{ localizeAppMessage($t, listErrorMessage) }}
       </AppAlert>
 
-      <UPageCard
+      <div
         v-else-if="isLoading || queries.length > 0"
-        icon="i-lucide-file-code-2"
-        :title="t('queries.index.table.title')"
-        :description="t('queries.index.table.description')"
-        class="space-y-4 sm:space-y-6"
+        class="overflow-hidden rounded-lg border border-default bg-elevated"
       >
         <UTable
           :data="queries"
@@ -47,40 +44,31 @@ export default component
           :loading="isLoading"
           :empty="t('queries.index.table.empty')"
         >
+          <template #queryName-cell="{ row }">
+            <NuxtLink :to="{ path: '/sql-workspace', query: { queryId: row.original.id } }" class="font-medium text-highlighted hover:underline">
+              {{ row.original.queryName }}
+            </NuxtLink>
+          </template>
+
+          <template #actions-header><span class="sr-only">{{ t('queries.index.table.columns.actions') }}</span></template>
+
           <template #actions-cell="{ row }">
-            <div class="flex items-center gap-2 sm:gap-3">
-              <UButton
-                :to="{ path: '/sql-workspace', query: { queryId: row.original.id } }"
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-pencil"
-                :label="t('queries.index.table.actions.edit')"
-              />
-              <UButton
-                type="button"
-                color="error"
-                variant="ghost"
-                icon="i-lucide-trash-2"
-                :label="t('queries.index.table.actions.delete')"
-                @click="openDeleteDialog(row.original)"
-              />
+            <div class="flex justify-end gap-1">
+              <UButton :to="{ path: '/sql-workspace', query: { queryId: row.original.id } }" color="neutral" variant="ghost" size="sm" square icon="i-lucide-pencil" :aria-label="`${t('queries.index.table.actions.edit')} ${row.original.queryName}`" :title="t('queries.index.table.actions.edit')" />
+              <UButton type="button" color="neutral" variant="ghost" size="sm" square icon="i-lucide-trash-2" :aria-label="`${t('queries.index.table.actions.delete')} ${row.original.queryName}`" :title="t('queries.index.table.actions.delete')" @click="openDeleteDialog(row.original)" />
             </div>
           </template>
         </UTable>
-      </UPageCard>
+      </div>
 
-      <UPageCard
+      <AppEmptyState
         v-else
-        icon="i-lucide-file-search"
+        icon="i-lucide-file-code-2"
         :title="t('queries.index.empty.title')"
         :description="t('queries.index.empty.description')"
       >
-        <UButton
-          to="/sql-workspace"
-          icon="i-lucide-file-plus-2"
-          :label="t('queries.index.actions.addFirst')"
-        />
-      </UPageCard>
+        <UButton to="/sql-workspace" icon="i-lucide-plus" :label="t('queries.index.actions.addFirst')" />
+      </AppEmptyState>
 
       <DeleteSavedSqlQueryDialog
         :open="isDeleteDialogOpen"

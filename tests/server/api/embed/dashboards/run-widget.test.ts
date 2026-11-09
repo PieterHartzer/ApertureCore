@@ -129,7 +129,8 @@ describe('POST /api/embed/dashboards/:embedId/widgets/:widgetId/run', () => {
     cacheStorage.getItem.mockResolvedValue({
       columns: ['id'],
       rows: [{ id: 1 }],
-      etag: '"cached-etag"'
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
     })
 
     const handler = await loadHandler()
@@ -162,7 +163,8 @@ describe('POST /api/embed/dashboards/:embedId/widgets/:widgetId/run', () => {
     cacheStorage.getItem.mockResolvedValue({
       columns: ['id'],
       rows: [{ id: 1 }],
-      etag: '"cached-etag"'
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
     })
 
     const handler = await loadHandler()

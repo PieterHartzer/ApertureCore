@@ -23,16 +23,11 @@ export default component
 
       <UPageCard
         v-else-if="isLoading || !initialConnection"
-        icon="i-lucide-loader-circle"
-        :title="t('connections.edit.card.title')"
         :description="t('connections.edit.loading')"
       />
 
       <UPageCard
         v-else
-        icon="i-lucide-pencil-line"
-        :title="t('connections.edit.card.title')"
-        :description="t('connections.edit.card.description')"
       >
         <ConectionTestForm
           :key="connectionId"

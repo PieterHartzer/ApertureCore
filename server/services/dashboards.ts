@@ -1,3 +1,7 @@
+import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
+import {
+  normalizeDashboardAppearance
+} from '../../shared/utils/dashboard-appearance'
 import type { Transaction } from 'kysely'
 
 import type {
@@ -32,6 +36,8 @@ interface DashboardRow {
   dashboard_name: string
   embed_id: string
   embed_enabled: boolean
+  appearance: string
+  style: unknown
   created_at: Date
   updated_at: Date
 }
@@ -144,13 +150,14 @@ const normalizeLayout = (value: unknown) => {
     return {
       w: 6,
       h: 4,
-      minW: 3,
-      minH: 3
+      minW: 2,
+      minH: 2
     }
   }
 
-  const minW = normalizePositiveInteger(value.minW, 3)
-  const minH = normalizePositiveInteger(value.minH, 3)
+  // Layouts saved with the old larger minimum must stay resizable.
+  const minW = Math.min(normalizePositiveInteger(value.minW, 2), 2)
+  const minH = Math.min(normalizePositiveInteger(value.minH, 2), 2)
   const w = Math.max(normalizePositiveInteger(value.w, 6), minW)
   const h = Math.max(normalizePositiveInteger(value.h, 4), minH)
   const maxW = normalizePositiveInteger(value.maxW, 0)
@@ -176,6 +183,8 @@ const mapDashboardSummary = (
   dashboardName: row.dashboard_name,
   embedId: row.embed_id,
   embedEnabled: row.embed_enabled,
+  appearance: normalizeDashboardAppearance(row.appearance),
+  style: normalizeDashboardStyle(row.style).style,
   widgetCount,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString()
@@ -239,6 +248,8 @@ const loadDashboardRow = async (
       'dashboard_name',
       'embed_id',
       'embed_enabled',
+      'appearance',
+      'style',
       'created_at',
       'updated_at'
     ])
@@ -333,6 +344,8 @@ export const listDashboards = async (
         'dashboard_name',
         'embed_id',
         'embed_enabled',
+        'appearance',
+        'style',
         'created_at',
         'updated_at'
       ])
@@ -551,6 +564,8 @@ export const saveDashboard = async (
         .set({
           dashboard_name: input.dashboardName,
           embed_enabled: input.embedEnabled,
+          ...(input.appearance ? { appearance: input.appearance } : {}),
+          ...(input.style ? { style: input.style } : {}),
           updated_by_user_id: authContext.userId
         })
         .where('organization_id', '=', organizationId)
@@ -692,6 +707,8 @@ export const getEmbeddedDashboard = async (
         'dashboard_name',
         'embed_id',
         'embed_enabled',
+        'appearance',
+        'style',
         'created_at',
         'updated_at'
       ])
@@ -716,6 +733,8 @@ export const getEmbeddedDashboard = async (
       dashboard: {
         embedId: dashboard.embed_id,
         dashboardName: dashboard.dashboard_name,
+        appearance: normalizeDashboardAppearance(dashboard.appearance),
+        style: normalizeDashboardStyle(dashboard.style).style,
         updatedAt: new Date(dashboard.updated_at).toISOString(),
         widgets: widgets.map((widget) => ({
           id: widget.widget_id,

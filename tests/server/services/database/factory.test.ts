@@ -15,8 +15,8 @@ describe('createDatabaseConnectionTester', () => {
 
   it('throws for unsupported database types', () => {
     expect(() =>
-      createDatabaseConnectionTester('mysql' as never)
-    ).toThrowError('unsupported_database_type:mysql')
+      createDatabaseConnectionTester('oracle' as never)
+    ).toThrowError('unsupported_database_type:oracle')
   })
 })
 
@@ -29,7 +29,7 @@ describe('createDatabaseQueryExecutor', () => {
 
   it('throws for unsupported database types', () => {
     expect(() =>
-      createDatabaseQueryExecutor('mysql' as never)
-    ).toThrowError('unsupported_database_type:mysql')
+      createDatabaseQueryExecutor('oracle' as never)
+    ).toThrowError('unsupported_database_type:oracle')
   })
 })

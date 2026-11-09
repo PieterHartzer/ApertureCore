@@ -5,6 +5,7 @@ import { useUIPlugins } from '~/composables/useUIPlugins'
 import type { DashboardWidget } from '~/types/dashboard-widgets'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 import { getUIPluginInputSelectionMode } from '~/types/uiPlugin'
+import { applyLabelOverridesToRows } from '~/utils/charts/chart-settings'
 
 export default defineComponent({
   components: {
@@ -34,6 +35,8 @@ export default defineComponent({
       return getPlugin(props.widget.pluginId)
     })
 
+    const displayRows = computed(() => applyLabelOverridesToRows(props.rows, props.widget.pluginConfig))
+
     const missingRequiredInputs = computed(() => {
       if (!plugin.value) {
         return []
@@ -58,6 +61,7 @@ export default defineComponent({
 
     return {
       attrs,
+      displayRows,
       missingRequiredInputs,
       plugin,
       t

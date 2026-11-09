@@ -20,6 +20,7 @@ export interface TestSavedSqlQueryInput {
 export interface RunSavedSqlQueryInput {
   connectionId: string
   queryId: string
+  force?: boolean
 }
 
 export interface SavedSqlQuerySummary {

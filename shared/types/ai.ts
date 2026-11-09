@@ -1,7 +1,9 @@
 // SQL dialects are independent of inference providers; connection adapters remain separately supported.
 export type AISqlDialect = 'postgres' | 'mssql' | 'mysql' | 'sqlite'
 
-export type AIProviderType = 'openai' | 'lmstudio' | 'webllm'
+import type { CloudAIProviderType } from '../utils/ai-provider-catalog'
+
+export type AIProviderType = CloudAIProviderType | 'lmstudio' | 'webllm'
 export interface AIProviderConnection {
   id: string
   name: string
@@ -29,6 +31,7 @@ export interface AIGenerationRequest {
   schema: string
   databaseType: AISqlDialect
   question: string
+  language?: string
   signal?: AbortSignal
   options?: { temperature?: number, maxTokens?: number }
 }

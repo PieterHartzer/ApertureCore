@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   MAX_READ_ONLY_SQL_LENGTH,
+  findForbiddenTsqlKeyword,
   normalizeReadOnlySql
 } from '../../../server/utils/read-only-sql'
 
@@ -43,5 +44,28 @@ describe('normalizeReadOnlySql', () => {
       issue: 'sql_not_read_only',
       details: 'Only read-only SELECT queries are allowed.'
     })
+  })
+})
+
+describe('findForbiddenTsqlKeyword', () => {
+  it.each([
+    ['select 1 delete from customers', 'DELETE'],
+    ['select 1\nexec xp_cmdshell \'dir\'', 'EXEC'],
+    ['select * into #copy from customers', 'INTO'],
+    ['with c as (select 1 as a) update t set a = 1', 'UPDATE'],
+    ['select 1 /* open', 'UNTERMINATED'],
+    ["select 'open", 'UNTERMINATED']
+  ])('flags %s', (sql, keyword) => {
+    expect(findForbiddenTsqlKeyword(sql)).toBe(keyword)
+  })
+
+  it.each([
+    "select 'delete from x' as note",
+    "select 'it''s; drop table x' as note",
+    'select [update], "delete" from t -- drop table x',
+    'select 1 /* exec /* nested */ exec */ as a',
+    'select @@version as v, case when 1 = 1 then 2 end as c'
+  ])('allows %s', (sql) => {
+    expect(findForbiddenTsqlKeyword(sql)).toBeNull()
   })
 })

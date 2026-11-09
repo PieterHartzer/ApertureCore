@@ -4,7 +4,7 @@ import type { AISettings } from '../../../shared/types/ai'
 import { useAIModels } from '../../../app/composables/useAIModels'
 const mocks = vi.hoisted(() => ({ mounted: [] as (() => unknown)[], generate: vi.fn(), stop: vi.fn(), load: vi.fn(), request: vi.fn() }))
 vi.mock('vue', async original => ({ ...await original<typeof import('vue')>(), onMounted: (callback: () => unknown) => mocks.mounted.push(callback), onBeforeUnmount: vi.fn() }))
-vi.mock('../../../app/composables/useLocalSqlModel', () => ({ useLocalSqlModel: () => ({ selectedModel: ref(''), ready: ref(true), generate: mocks.generate, load: mocks.load, stop: mocks.stop }) }))
+vi.mock('../../../app/composables/useLocalSqlModel', () => ({ useLocalSqlModel: () => ({ models: ref([]), selectedModel: ref(''), ready: ref(true), generate: mocks.generate, load: mocks.load, stop: mocks.stop }) }))
 vi.mock('../../../shared/utils/ai-provider', async original => ({ ...await original<typeof import('../../../shared/utils/ai-provider')>(), providerRequest: mocks.request }))
 const initial = (): AISettings => ({
   connections: [{ id: 'cloud', name: 'Cloud', providerType: 'openai', baseUrl: 'https://api.openai.com/v1', hasApiKey: true, createdAt: '', updatedAt: '' }, { id: 'local', name: 'Local', providerType: 'lmstudio', baseUrl: 'http://localhost:1234/v1', hasApiKey: false, createdAt: '', updatedAt: '' }],
@@ -37,7 +37,7 @@ describe('unified SQL generation', () => {
     await ai.load()
     expect(await ai.generate('users: id', 'Count users', 'postgres')).toBe('SELECT 3')
     expect(mocks.load).toHaveBeenCalled()
-    expect(mocks.generate).toHaveBeenCalledWith('users: id', 'Count users', 'postgres')
+    expect(mocks.generate).toHaveBeenCalledWith('users: id', 'Count users', 'postgres', undefined)
   })
   it('discards late results after cancelling or switching a model', async () => {
     const ai = useAIModels(); await ai.refresh(); ai.selectedModel.value = 'lm'

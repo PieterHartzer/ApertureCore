@@ -1,3 +1,4 @@
+import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import { computed, defineComponent, ref } from 'vue'
 
 import DeleteSavedSqlQueryDialog from '~/components/database/DeleteSavedSqlQueryDialog.vue'
@@ -18,6 +19,7 @@ interface SavedSqlQueryListItem {
 
 export default defineComponent({
   components: {
+    AppEmptyState,
     AppAlert,
     AppLocaleSelect,
     DeleteSavedSqlQueryDialog

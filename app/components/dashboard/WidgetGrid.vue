@@ -8,11 +8,13 @@ export default component
   <div
     ref="gridRoot"
     class="grid-stack dashboard-widget-grid"
+    :data-grid-ready="isGridReady ? 'true' : 'false'"
   >
     <div
       v-for="widget in widgets"
       :key="widget.id"
       class="grid-stack-item"
+      :style="getPendingItemStyle(widget)"
       :data-dashboard-widget-id="widget.id"
       :gs-id="widget.id"
       :gs-x="widget.layout.x"
@@ -37,16 +39,39 @@ export default component
 <style scoped>
 .dashboard-widget-grid {
   min-height: 28rem;
-  gap: var(--space-md);
+  margin: 0 -6px;
+}
+
+.dashboard-widget-grid[data-grid-ready='false'] {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: 72px;
+}
+
+.dashboard-widget-grid[data-grid-ready='false'] > :deep(.grid-stack-item) {
+  position: relative;
+  grid-column: var(--pending-column);
+  grid-row: var(--pending-row);
+}
+
+.dashboard-widget-grid[data-grid-ready='false'] > :deep(.grid-stack-item) > .grid-stack-item-content {
+  position: absolute;
+  inset: 6px;
+  width: auto;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .dashboard-widget-grid[data-grid-ready='false'] > :deep(.grid-stack-item) {
+    grid-column: 1 / -1;
+    grid-row: var(--pending-height);
+  }
 }
 
 .dashboard-widget-grid :deep(.grid-stack-item-content) {
   display: flex;
-  height: 100%;
-  width: 100%;
   min-width: 0;
   min-height: 0;
-  inset: 0;
   overflow: hidden;
   background: transparent;
   border-radius: 0;
@@ -61,8 +86,8 @@ export default component
 
 /* Enhanced Widget Grid Layout */
 .dashboard-widget-grid :deep(.grid-stack) {
-  padding: var(--space-md);
-  background: var(--color-background);
+  padding: 0;
+  background: transparent;
 }
 
 .dashboard-widget-grid :deep(.grid-stack-item) {
@@ -75,8 +100,8 @@ export default component
 
 .dashboard-widget-grid :deep(.grid-stack-placeholder) {
   background: var(--color-muted);
-  border: 2px dashed var(--color-border);
-  border-radius: 8px;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
 }
 
 /* Drag State */
@@ -100,25 +125,5 @@ export default component
 .dashboard-widget-grid.edit-mode :deep(.grid-stack-item:hover) {
   border-color: var(--color-primary);
   box-shadow: var(--shadow-md);
-}
-
-/* Responsive Grid */
-@media (max-width: 640px) {
-  .dashboard-widget-grid {
-    padding: var(--space-sm);
-    gap: var(--space-sm);
-  }
-}
-
-@media (min-width: 768px) {
-  .dashboard-widget-grid {
-    padding: var(--space-md);
-  }
-}
-
-@media (min-width: 1024px) {
-  .dashboard-widget-grid {
-    padding: var(--space-lg);
-  }
 }
 </style>

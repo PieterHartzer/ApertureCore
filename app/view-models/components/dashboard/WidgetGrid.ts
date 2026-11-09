@@ -16,8 +16,8 @@ import { normalizeDashboardWidgetLayout } from '~/types/dashboard-widgets'
 import 'gridstack/dist/gridstack.min.css'
 
 const GRIDSTACK_COLUMN_COUNT = 12
-const GRIDSTACK_CELL_HEIGHT_PX = 96
-const GRIDSTACK_MARGIN_PX = 16
+const GRIDSTACK_CELL_HEIGHT_PX = 72
+const GRIDSTACK_MARGIN_PX = 6
 
 export default defineComponent({
   props: {
@@ -33,6 +33,7 @@ export default defineComponent({
   emits: ['layoutChange'],
   setup(props, { emit }) {
     const gridRoot = ref<HTMLElement | null>(null)
+    const isGridReady = ref(false)
 
     let grid: GridStack | null = null
     let isApplyingGridState = false
@@ -51,6 +52,19 @@ export default defineComponent({
         currentLayout.minH === nextLayout.minH &&
         currentLayout.maxH === nextLayout.maxH
       )
+    }
+
+    // CSS grid places the cards from their saved layout until GridStack has
+    // loaded. These stay as custom properties and the ready flag as a data
+    // attribute because GridStack owns the element's inline styles and classes.
+    const getPendingItemStyle = (widget: DashboardWidget) => {
+      const { x, y, w, h } = widget.layout
+
+      return {
+        '--pending-column': x === undefined ? `span ${w}` : `${x + 1} / span ${w}`,
+        '--pending-row': y === undefined ? `span ${h}` : `${y + 1} / span ${h}`,
+        '--pending-height': `span ${h}`
+      }
     }
 
     const buildGridStackWidget = (
@@ -85,7 +99,13 @@ export default defineComponent({
     }
 
     const emitLayoutUpdates = (nodes: GridStackNode[]) => {
-      if (isApplyingGridState) {
+      // GridStack also reports the reflow it does for narrow screens, so only
+      // an edit at full width may become the saved layout.
+      if (
+        isApplyingGridState ||
+        !props.editable ||
+        grid?.getColumn() !== GRIDSTACK_COLUMN_COUNT
+      ) {
         return
       }
 
@@ -247,8 +267,8 @@ export default defineComponent({
         alwaysShowResizeHandle: 'mobile',
         columnOpts: {
           breakpoints: [
-            { w: 700, c: 1, layout: 'list' },
-            { w: 1100, c: 6, layout: 'moveScale' },
+            { w: 640, c: 1, layout: 'list' },
+            { w: 900, c: 6, layout: 'moveScale' },
             { c: GRIDSTACK_COLUMN_COUNT }
           ],
           layout: 'moveScale'
@@ -261,6 +281,7 @@ export default defineComponent({
 
       syncGridEditingState()
       await syncGridWithWidgets()
+      isGridReady.value = true
     })
 
     onBeforeUnmount(() => {
@@ -274,7 +295,9 @@ export default defineComponent({
     })
 
     return {
-      gridRoot
+      getPendingItemStyle,
+      gridRoot,
+      isGridReady
     }
   }
 })

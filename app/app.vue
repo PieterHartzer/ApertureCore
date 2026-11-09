@@ -32,8 +32,13 @@ useHead(() => ({
     :toaster="{ position: 'top-right', duration: 5000 }"
   >
     <NuxtRouteAnnouncer />
-    <AppNavigation v-if="showNavigation" />
-    <div :class="showNavigation ? 'py-6 sm:py-8' : undefined"><NuxtPage /></div>
+    <div v-if="showNavigation" class="flex min-h-dvh flex-col lg:flex-row">
+      <AppNavigation />
+      <main class="min-w-0 flex-1">
+        <div class="w-full px-4 py-6 sm:px-6 lg:px-8"><NuxtPage /></div>
+      </main>
+    </div>
+    <NuxtPage v-else />
     <DebugLinksMenu />
   </UApp>
 </template>

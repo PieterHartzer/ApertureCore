@@ -1,29 +1,32 @@
 import type { DatabaseType } from '../../types/database'
 
+import { SqlServerConnectionTester } from './mssql'
+import { MySqlConnectionTester } from './mysql'
 import { PostgreSqlConnectionTester } from './postgresql'
 import type {
   DatabaseConnectionTester,
   DatabaseQueryExecutor
 } from './types'
 
-export const createDatabaseConnectionTester = (
+const createAdapter = (
   databaseType: DatabaseType
-): DatabaseConnectionTester => {
-  switch (databaseType) { // NOSONAR: keep switch for future database adapters
+): DatabaseConnectionTester & DatabaseQueryExecutor => {
+  switch (databaseType) {
     case 'postgres':
       return new PostgreSqlConnectionTester()
+    case 'mysql':
+      return new MySqlConnectionTester()
+    case 'mssql':
+      return new SqlServerConnectionTester()
     default:
       throw new Error(`unsupported_database_type:${databaseType}`)
   }
 }
 
+export const createDatabaseConnectionTester = (
+  databaseType: DatabaseType
+): DatabaseConnectionTester => createAdapter(databaseType)
+
 export const createDatabaseQueryExecutor = (
   databaseType: DatabaseType
-): DatabaseQueryExecutor => {
-  switch (databaseType) { // NOSONAR: keep switch for future database adapters
-    case 'postgres':
-      return new PostgreSqlConnectionTester()
-    default:
-      throw new Error(`unsupported_database_type:${databaseType}`)
-  }
-}
+): DatabaseQueryExecutor => createAdapter(databaseType)

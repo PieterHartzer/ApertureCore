@@ -33,6 +33,24 @@ vi.mock('pg', () => {
   }
 })
 
+vi.mock('pg-cursor', () => {
+  class MockCursor {
+    constructor(public text: string) {}
+
+    read(_rows: number, callback: (error: unknown, rows?: unknown[], result?: unknown) => void) {
+      const pending = poolClient.query.mock.results.at(-1)?.value as Promise<{ rows: unknown[] }>
+
+      pending.then((result) => callback(null, result.rows, result), (error) => callback(error))
+    }
+
+    close(callback: () => void) {
+      callback()
+    }
+  }
+
+  return { default: MockCursor }
+})
+
 const connectionInput = {
   connectionName: 'Primary DB',
   databaseType: 'postgres' as const,
@@ -62,7 +80,7 @@ describe('PostgreSqlConnectionTester', () => {
   })
 
   it('runs a select 1 probe and returns success', async () => {
-    poolInstance.query.mockResolvedValue({ rows: [{ '?column?': 1 }] })
+    poolInstance.query.mockResolvedValue({ rows: [{ privileged: false }] })
 
     const { PostgreSqlConnectionTester } = await import(
       '../../../../server/services/database/postgresql'
@@ -192,7 +210,7 @@ describe('PostgreSqlConnectionTester', () => {
     })
 
     expect(poolConstructorMock).toHaveBeenCalledWith(expect.objectContaining({
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: true }
     }))
   })
 
@@ -215,6 +233,31 @@ describe('PostgreSqlConnectionTester', () => {
     }))
   })
 
+  it('refuses a privileged role when testing a connection', async () => {
+    poolInstance.query.mockResolvedValue({ rows: [{ privileged: true }] })
+
+    const { PostgreSqlConnectionTester } = await import(
+      '../../../../server/services/database/postgresql'
+    )
+
+    await expect(new PostgreSqlConnectionTester().testConnection(connectionInput))
+      .resolves.toMatchObject({ ok: false, code: 'privileged_role' })
+  })
+
+  it('refuses to run a query as a privileged role', async () => {
+    poolClient.query.mockImplementation(async (text: unknown) =>
+      typeof text === 'string' && text.includes('rolsuper') ? { rows: [{ privileged: true }] } : undefined
+    )
+
+    const { PostgreSqlConnectionTester } = await import(
+      '../../../../server/services/database/postgresql'
+    )
+
+    await expect(new PostgreSqlConnectionTester().executeReadOnlyQuery(queryInput))
+      .resolves.toMatchObject({ ok: false, code: 'query_rejected' })
+    expect(poolClient.query).toHaveBeenLastCalledWith('rollback')
+  })
+
   it('runs a read-only wrapped query and sanitizes the returned rows', async () => {
     poolClient.query
       .mockResolvedValueOnce(undefined)
@@ -222,6 +265,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockResolvedValueOnce({
         fields: [
           { name: 'id' },
@@ -261,10 +305,7 @@ describe('PostgreSqlConnectionTester', () => {
       rowLimit: 25
     })
     expect(poolClient.query).toHaveBeenNthCalledWith(1, 'begin')
-    expect(poolClient.query).toHaveBeenNthCalledWith(
-      6,
-      'select * from (select id, name, metadata, created_at, payload from customers) as aperture_query_result limit 25'
-    )
+    expect(poolClient.query).toHaveBeenNthCalledWith(7, expect.objectContaining({ text: 'select id, name, metadata, created_at, payload from customers' }))
     expect(poolClient.query).toHaveBeenLastCalledWith('rollback')
     expect(poolClient.release).toHaveBeenCalled()
     expect(poolInstance.end).toHaveBeenCalled()
@@ -277,6 +318,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockResolvedValueOnce({
         fields: [{ name: 'id' }],
         rows: [{ id: 1 }]
@@ -309,10 +351,7 @@ describe('PostgreSqlConnectionTester', () => {
       3,
       "set local idle_in_transaction_session_timeout = '12000ms'"
     )
-    expect(poolClient.query).toHaveBeenNthCalledWith(
-      6,
-      'select * from (select id, name, metadata, created_at, payload from customers) as aperture_query_result limit 5'
-    )
+    expect(poolClient.query).toHaveBeenNthCalledWith(7, expect.objectContaining({ text: 'select id, name, metadata, created_at, payload from customers' }))
   })
 
   it('allows wrapped common table expression queries', async () => {
@@ -322,6 +361,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockResolvedValueOnce({
         fields: [{ name: 'id' }],
         rows: [{ id: 1 }]
@@ -339,10 +379,7 @@ describe('PostgreSqlConnectionTester', () => {
       sql: 'with active_customers as (select id from customers where active = true) select id from active_customers'
     })
 
-    expect(poolClient.query).toHaveBeenNthCalledWith(
-      6,
-      'select * from (with active_customers as (select id from customers where active = true) select id from active_customers) as aperture_query_result limit 25'
-    )
+    expect(poolClient.query).toHaveBeenNthCalledWith(7, expect.objectContaining({ text: 'with active_customers as (select id from customers where active = true) select id from active_customers' }))
   })
 
   it('rejects multiple statements before opening a database session', async () => {
@@ -390,6 +427,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockRejectedValueOnce(Object.assign(
         new Error('cannot execute DELETE in a read-only transaction'),
         { code: '25006' }
@@ -423,6 +461,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockRejectedValueOnce(Object.assign(
         new Error('syntax error at or near "from"'),
         { code: '42601' }
@@ -546,6 +585,7 @@ describe('PostgreSqlConnectionTester', () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ rows: [{ privileged: false }] })
       .mockResolvedValueOnce({
         fields: [{ name: 'description' }],
         rows: [{ description: longValue }]

@@ -47,7 +47,7 @@ export default component
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
-  padding: var(--space-md);
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
@@ -55,15 +55,16 @@ export default component
 
 .alert-content {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+  gap: 10px;
   flex: 1;
+  min-width: 0;
 }
 
 .alert-icon {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
 }
 
 .alert-text {
@@ -73,7 +74,7 @@ export default component
 
 .alert-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -94,7 +95,7 @@ export default component
 }
 
 .alert-close:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--color-muted);
 }
 
 .alert-close-icon {
@@ -104,58 +105,58 @@ export default component
 
 /* Success Alert */
 .alert-success {
-  background-color: rgba(16, 185, 129, 0.05);
+  background-color: rgba(16, 185, 129, 0.08);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
 .alert-success .alert-icon-success {
-  color: #10B981;
+  color: var(--ui-success);
 }
 
 .alert-success .alert-title {
-  color: #065F46;
+  color: var(--ui-success);
 }
 
 /* Error Alert */
 .alert-error {
-  background-color: rgba(220, 38, 38, 0.05);
+  background-color: rgba(220, 38, 38, 0.08);
   border-color: rgba(220, 38, 38, 0.3);
 }
 
 .alert-error .alert-icon-error {
-  color: #DC2626;
+  color: var(--ui-error);
 }
 
 .alert-error .alert-title {
-  color: #991B1B;
+  color: var(--ui-error);
 }
 
 /* Warning Alert */
 .alert-warning {
-  background-color: rgba(245, 158, 11, 0.05);
+  background-color: rgba(245, 158, 11, 0.08);
   border-color: rgba(245, 158, 11, 0.3);
 }
 
 .alert-warning .alert-icon-warning {
-  color: #F59E0B;
+  color: var(--ui-warning);
 }
 
 .alert-warning .alert-title {
-  color: #92400E;
+  color: var(--ui-warning);
 }
 
 /* Info Alert */
 .alert-info {
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: rgba(59, 130, 246, 0.08);
   border-color: rgba(59, 130, 246, 0.3);
 }
 
 .alert-info .alert-icon-info {
-  color: #3B82F6;
+  color: var(--ui-info);
 }
 
 .alert-info .alert-title {
-  color: #1E40AF;
+  color: var(--ui-info);
 }
 
 /* Responsive */

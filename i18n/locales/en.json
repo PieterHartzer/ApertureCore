@@ -1,5 +1,89 @@
 {
+  "ai": {
+    "title": "AI providers",
+    "subtitle": "Choose which AI writes your SQL. In this browser works straight away, with no account.",
+    "browser": {
+      "name": "In this browser",
+      "description": "Free and private. Runs on your computer, and nothing leaves this device."
+    },
+    "local": {
+      "name": "Custom server",
+      "description": "Any OpenAI-compatible server, on your own network or exposed online."
+    },
+    "cloud": {
+      "description": "Your question and database structure are sent to {provider}."
+    },
+    "status": {
+      "connected": "Connected",
+      "notSetUp": "Not set up",
+      "attention": "No models found",
+      "ready": "Ready to use"
+    },
+    "actions": {
+      "connect": "Connect",
+      "manage": "Manage",
+      "disconnect": "Disconnect",
+      "refresh": "Refresh models",
+      "save": "Save and connect"
+    },
+    "fields": {
+      "apiKey": "API key",
+      "apiKeyHint": "Paste the key from your account.",
+      "getKey": "Get a key",
+      "keepKey": "Leave blank to keep your saved key.",
+      "azureEndpoint": "Endpoint",
+      "azureEndpointHint": "Shown on your Azure OpenAI resource, under Keys and Endpoint.",
+      "azureEndpointPlaceholder": "https://your-resource.openai.azure.com",
+      "azureDeployments": "Deployment names",
+      "azureDeploymentsHint": "Listed under Deployments in Azure AI Foundry. Separate several with commas.",
+      "azureDeploymentsPlaceholder": "gpt-4o, gpt-4o-mini",
+      "urlPlaceholder": "https://ai.example.com/v1",
+      "url": "Server address",
+      "urlHint": "Requests go straight from your browser to this server, so it must allow this app (CORS).",
+      "serverKey": "API key (optional, kept for this visit only)"
+    },
+    "modelsFound": "{count} models ready to use.",
+    "connectedNotice": "{provider} connected. Choose it in the SQL editor.",
+    "disconnectConfirm": "Disconnect {provider}? Its saved key and models are removed.",
+    "browserModels": "Models",
+    "cached": "Downloaded",
+    "notCached": "Downloads on first use"
+  },
   "workspace": {
+    "querySelect": "Query",
+    "newQuery": "New query",
+    "discard": {
+      "title": "Discard unsaved changes?",
+      "description": "Your SQL has changes that have not been saved.",
+      "confirm": "Discard changes",
+      "keep": "Keep editing"
+    },
+    "panels": {
+      "prompt": "Ask in your own words",
+      "sql": "SQL",
+      "results": "Results"
+    },
+    "ask": {
+      "question": "What would you like to know?",
+      "refreshModels": "Refresh models",
+      "modelListFailed": "Could not read models from this server. Check that it is running and allows this app.",
+      "provider": "AI provider",
+      "model": "Model",
+      "manage": "Set up AI providers",
+      "noModels": "No models yet",
+      "serverKey": "Server API key (optional)",
+      "downloadAndGenerate": "Download model and generate",
+      "downloadNote": "First download can take a few minutes."
+    },
+    "collapsePanel": "Collapse {panel}",
+    "expandPanel": "Expand {panel}",
+    "resizePanels": "Resize panels",
+    "resultsBelow": "Show results below the SQL",
+    "resultsBeside": "Show results beside the SQL",
+    "rereadSchema": "Re-read schema",
+    "saved": "Saved",
+    "testFailed": "The test failed. See the error above.",
+    "connectDatabaseDescription": "Add a database connection to write and test queries.",
     "readingSchema": "Reading database schema…",
     "editTitle": "Edit query in SQL workspace",
     "loadFailed": "Could not load query",
@@ -15,11 +99,13 @@
   },
   "database": {
     "types": {
-      "postgres": "PostgreSQL"
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL / MariaDB",
+      "mssql": "Microsoft SQL Server"
     },
     "sslModes": {
       "disable": "Disable SSL",
-      "require": "Require SSL"
+      "require": "Require SSL (verify certificate)"
     }
   },
   "errors": {
@@ -49,12 +135,35 @@
         "saving": "Saving dashboard changes...",
         "saved": "Dashboard saved."
       },
+      "gettingStarted": {
+        "title": "Get started",
+        "description": "Three steps to your first live dashboard.",
+        "done": "Done",
+        "steps": {
+          "connect": {
+            "title": "Connect a database",
+            "description": "Use a read-only login. Nothing is ever written.",
+            "action": "Add connection"
+          },
+          "query": {
+            "title": "Write a query",
+            "description": "Write SQL, or describe what you need and let AI draft it.",
+            "action": "Open SQL editor"
+          },
+          "dashboard": {
+            "title": "Build a dashboard",
+            "description": "Turn your queries into charts, stats and tables.",
+            "action": "Create dashboard"
+          }
+        }
+      },
       "empty": {
         "title": "No dashboards yet",
         "description": "Create a dashboard to start arranging widgets and sharing embedded views.",
         "action": "Create dashboard"
       },
       "selector": {
+        "switchLabel": "Dashboard",
         "placeholder": "Select a dashboard",
         "option": "{dashboardName} ({widgetCount} widgets)",
         "actions": {
@@ -86,6 +195,18 @@
               "label": "Dashboard name",
               "description": "Update the dashboard label shown in the selector.",
               "placeholder": "Executive overview"
+            },
+            "appearance": {
+              "label": "Background",
+              "description": "Give this dashboard its own look.",
+              "options": {
+                "default": "Default",
+                "aurora": "Aurora",
+                "ocean": "Ocean",
+                "sunset": "Sunset",
+                "forest": "Forest",
+                "plain": "Plain"
+              }
             },
             "embedEnabled": {
               "label": "Enable embedding",
@@ -137,6 +258,10 @@
         "empty": "This embedded dashboard is not available."
       },
       "builder": {
+        "groups": {
+          "widget": "Widget",
+          "data": "Data"
+        },
         "title": "Add widget",
         "description": "Pick a saved query, choose a plugin, and map query fields into widget inputs.",
         "editTitle": "Edit widget",
@@ -164,7 +289,10 @@
           }
         },
         "refresh": {
-          "option": "Every {seconds} seconds"
+          "every60": "Every minute",
+          "every300": "Every 5 minutes",
+          "every900": "Every 15 minutes",
+          "every3600": "Every hour"
         },
         "mapping": {
           "title": "Plugin configuration",
@@ -184,7 +312,7 @@
             "unknown": "unknown"
           }
         },
-        "defaultTitle": "{queryName} · {pluginName}",
+        "defaultTitle": "{queryName}",
         "preview": {
           "loadingTitle": "Loading query preview",
           "loadingDescription": "Running the selected query so the field mappings and widget preview stay in sync.",
@@ -216,7 +344,7 @@
         },
         "empty": {
           "title": "No widgets yet",
-          "description": "Add a widget to connect a saved query to a dashboard plugin."
+          "description": "Turn a saved query into a chart, stat or table."
         },
         "card": {
           "fallbackTitle": "Untitled widget",
@@ -229,7 +357,292 @@
           "errorTitle": "Widget query failed"
         }
       },
+      "style": {
+        "open": "Dashboard style",
+        "title": "Dashboard style",
+        "description": "Changes preview live. Save to keep them.",
+        "save": "Save style",
+        "reset": "Reset all",
+        "groups": {
+          "page": "Page",
+          "widgets": "Widgets",
+          "titles": "Widget titles",
+          "values": "Numbers and labels",
+          "charts": "Charts"
+        },
+        "fields": {
+          "pageBackground": {
+            "label": "Background colour"
+          },
+          "textColor": {
+            "label": "Text colour"
+          },
+          "fontFamily": {
+            "label": "Font",
+            "options": {
+              "sans": "Sans serif",
+              "serif": "Serif",
+              "mono": "Monospace"
+            }
+          },
+          "widgetGap": {
+            "label": "Space between widgets"
+          },
+          "cardBackground": {
+            "label": "Background colour"
+          },
+          "borderColor": {
+            "label": "Border colour"
+          },
+          "borderWidth": {
+            "label": "Border width"
+          },
+          "borderRadius": {
+            "label": "Corner radius"
+          },
+          "cardPadding": {
+            "label": "Inner padding"
+          },
+          "shadow": {
+            "label": "Shadow",
+            "options": {
+              "none": "None",
+              "small": "Small",
+              "medium": "Medium",
+              "large": "Large"
+            }
+          },
+          "hideTitles": {
+            "label": "Hide titles"
+          },
+          "titleColor": {
+            "label": "Colour"
+          },
+          "titleSize": {
+            "label": "Size"
+          },
+          "titleWeight": {
+            "label": "Weight",
+            "options": {
+              "400": "Regular",
+              "500": "Medium",
+              "600": "Semibold",
+              "700": "Bold"
+            }
+          },
+          "titleAlign": {
+            "label": "Alignment",
+            "options": {
+              "left": "Left",
+              "center": "Centre",
+              "right": "Right"
+            }
+          },
+          "valueColor": {
+            "label": "Number colour"
+          },
+          "valueSize": {
+            "label": "Number size"
+          },
+          "labelColor": {
+            "label": "Label colour"
+          },
+          "chartPrimary": {
+            "label": "Main series colour"
+          },
+          "chartText": {
+            "label": "Axis text colour"
+          },
+          "chartGrid": {
+            "label": "Grid line colour"
+          }
+        }
+      },
       "plugins": {
+        "pie": {
+          "name": "Pie chart",
+          "description": "Parts of a whole."
+        },
+        "catalog": {
+          "settings": {
+            "valueFontSize": {
+              "label": "Number size"
+            },
+            "labelFontSize": {
+              "label": "Label size"
+            },
+            "tableFontSize": {
+              "label": "Text size"
+            },
+            "textAlign": {
+              "label": "Horizontal alignment",
+              "options": {
+                "left": "Left",
+                "center": "Centre",
+                "right": "Right"
+              }
+            },
+            "verticalAlign": {
+              "label": "Vertical alignment",
+              "options": {
+                "top": "Top",
+                "middle": "Middle",
+                "bottom": "Bottom"
+              }
+            },
+            "labelOverrides": {
+              "label": "Rename labels"
+            },
+            "advancedOptions": {
+              "label": "ECharts options (JSON)"
+            },
+            "valueFormat": {
+              "label": "Number format",
+              "options": {
+                "auto": "Automatic",
+                "number": "Number (1,234.50)",
+                "compact": "Compact (1.2K)",
+                "currency": "Currency",
+                "percent": "Percentage (42 shows as 42%)",
+                "fraction": "Percentage from fraction (0.42 shows as 42%)"
+              }
+            },
+            "currency": {
+              "label": "Currency"
+            },
+            "decimals": {
+              "label": "Decimal places"
+            },
+            "prefix": {
+              "label": "Text before"
+            },
+            "suffix": {
+              "label": "Text after"
+            },
+            "color": {
+              "label": "Colour"
+            },
+            "axisMin": {
+              "label": "Axis minimum"
+            },
+            "axisMax": {
+              "label": "Axis maximum"
+            },
+            "referenceValue": {
+              "label": "Target line value"
+            },
+            "referenceLabel": {
+              "label": "Target line label"
+            },
+            "showValues": {
+              "label": "Show values on the chart"
+            },
+            "normalColor": {
+              "label": "Starting colour"
+            },
+            "thresholds": {
+              "label": "Change colour at"
+            },
+            "goodDirection": {
+              "label": "A rise is",
+              "options": {
+                "neutral": "Neutral",
+                "up": "Good",
+                "down": "Bad"
+              }
+            },
+            "maxValue": {
+              "label": "Maximum"
+            },
+            "minValue": {
+              "label": "Minimum"
+            },
+            "lowColor": {
+              "label": "Low colour"
+            },
+            "highColor": {
+              "label": "High colour"
+            },
+            "limit": {
+              "label": "Number of items to show"
+            },
+            "positiveColor": {
+              "label": "Positive colour"
+            },
+            "negativeColor": {
+              "label": "Negative colour"
+            },
+            "totalColor": {
+              "label": "Total colour"
+            },
+            "labelMode": {
+              "label": "Slice labels",
+              "options": {
+                "auto": "Automatic",
+                "none": "None",
+                "name": "Name",
+                "percent": "Name and percentage",
+                "value": "Name and value"
+              }
+            },
+            "bins": {
+              "label": "Number of ranges"
+            }
+          },
+          "sections": {
+            "text": "Text",
+            "labels": "Label overrides",
+            "advanced": "Advanced",
+            "format": "Number format",
+            "thresholds": "Colour thresholds",
+            "range": "Range and targets",
+            "appearance": "Appearance"
+          },
+          "stepValue": "From value",
+          "stepColor": "Colour",
+          "addStep": "Add a colour step",
+          "removeStep": "Remove step",
+          "advancedHelp": "Added on top of this chart's settings. Any ECharts option works, except ones that add HTML or load outside content.",
+          "advancedInvalid": "This isn't valid JSON, so it is being ignored.",
+          "advancedDocs": "See all ECharts options",
+          "labelFrom": "Original text",
+          "labelTo": "Show as",
+          "addLabel": "Add a label",
+          "addLabelsFromData": "Add labels from data",
+          "removeLabel": "Remove label",
+          "defaultColor": "Default",
+          "clearColor": "Use default colour",
+          "emptyRows": "No data to chart for these fields.",
+          "other": "Other",
+          "total": "Total",
+          "increase": "Increase",
+          "decrease": "Decrease",
+          "low": "Low",
+          "high": "High",
+          "versus": "vs {value}",
+          "fields": {
+            "xField": "Category or date",
+            "yField": "Value",
+            "yFields": "Values",
+            "valueField": "Value",
+            "labelField": "Name",
+            "groupField": "Group",
+            "formatColumns": "Columns to format (blank for all numeric columns)",
+            "maxField": "Maximum from a column",
+            "targetField": "Target",
+            "comparisonField": "Previous value",
+            "lineField": "Line value",
+            "lowField": "Low",
+            "highField": "High",
+            "startField": "From value",
+            "endField": "To value",
+            "sizeField": "Size",
+            "rowField": "Row",
+            "sourceField": "From",
+            "openField": "Open",
+            "closeField": "Close"
+          }
+        },
         "shared": {
           "loading": "Loading chart..."
         },
@@ -410,12 +823,33 @@
       "edit": "Edit Connection"
     },
     "form": {
+      "testFirst": "Test the connection to enable saving.",
+      "sections": {
+        "general": {
+          "title": "Details",
+          "description": "Name this connection and choose its database type."
+        },
+        "server": {
+          "title": "Server",
+          "description": "Where the database runs. It must be reachable from the app server."
+        },
+        "login": {
+          "title": "Database login",
+          "description": "Use a dedicated read-only login. Passwords are encrypted, and a saved one is kept if you leave it blank."
+        }
+      },
+      "readOnly": {
+        "title": "How to create a read-only login",
+        "description": "AutoDash refuses logins that can do more than read. Run this as an administrator and change the password.",
+        "copy": "Copy SQL",
+        "copied": "Copied"
+      },
       "cancel": "Cancel"
     },
     "index": {
       "headline": "Connections",
-      "title": "Saved database connections",
-      "description": "View and manage the database connections available to your organisation.",
+      "title": "Connections",
+      "description": "Read-only database connections your organisation can query.",
       "errors": {
         "loadTitle": "Could not load connections"
       },
@@ -438,8 +872,8 @@
         }
       },
       "empty": {
-        "title": "No saved connections yet",
-        "description": "Create a connection to start building dashboards from your database."
+        "title": "No connections yet",
+        "description": "Connect a database with a read-only login to start building dashboards."
       }
     },
     "new": {
@@ -511,7 +945,7 @@
       },
       "fields": {
         "password": {
-          "placeholder": "Leave blank to keep the stored password",
+          "placeholder": "Leave blank to keep it",
           "description": "Leave blank to keep the stored password. It will be reused when testing or saving changes."
         }
       },
@@ -562,7 +996,8 @@
         "databaseNotFound": "The specified database could not be found.",
         "connectionFailed": "ApertureCore could not reach the database server.",
         "timeout": "The database connection timed out.",
-        "sslRequired": "The database server requires SSL or compatible TLS settings.",
+        "sslRequired": "SSL could not be established. The server may require SSL, or its certificate is not trusted or does not match the host name.",
+        "privilegedRole": "This login has more privileges than AutoDash allows. Use a dedicated login that can only read data.",
         "notImplemented": "This database test is not implemented yet.",
         "unexpected": "Unexpected error while testing the database connection."
       }
@@ -667,8 +1102,8 @@
     },
     "index": {
       "headline": "Queries",
-      "title": "Saved SQL queries",
-      "description": "View the saved SQL queries available to your organisation.",
+      "title": "Queries",
+      "description": "Reusable SQL that powers your dashboard widgets.",
       "actions": {
         "new": "New query",
         "addFirst": "Add your first query"
@@ -676,26 +1111,26 @@
       "errors": {
         "loadTitle": "Could not load SQL queries"
       },
-    "table": {
-      "title": "Queries",
-      "description": "Saved SQL queries for your organisation.",
-      "empty": "No SQL queries found.",
-      "columns": {
-        "queryName": "Query name",
-        "connectionName": "Connection",
-        "actions": "Actions"
+      "table": {
+        "title": "Queries",
+        "description": "Saved SQL queries for your organisation.",
+        "empty": "No SQL queries found.",
+        "columns": {
+          "queryName": "Query name",
+          "connectionName": "Connection",
+          "actions": "Actions"
+        },
+        "actions": {
+          "edit": "Edit",
+          "delete": "Delete"
+        }
       },
-      "actions": {
-        "edit": "Edit",
-        "delete": "Delete"
-      }
-    },
       "empty": {
-        "title": "No saved SQL queries yet",
-        "description": "Create a saved SQL query to reuse it later."
+        "title": "No queries yet",
+        "description": "Write or generate SQL, then save it to use in dashboard widgets."
       }
     },
-  "new": {
+    "new": {
       "headline": "Queries",
       "title": "New saved SQL query",
       "description": "Create a saved SQL query for your organisation.",
@@ -718,35 +1153,35 @@
         "title": "Create a connection first",
         "description": "A saved SQL query must be linked to a saved database connection.",
         "action": "Add connection"
-    }
-  },
-  "edit": {
-    "headline": "Queries",
-    "title": "Edit saved SQL query",
-    "description": "Update a saved SQL query for your organisation.",
-    "card": {
-      "title": "Query details",
-      "description": "Review the encrypted SQL, test it again if needed, and save the updated query."
+      }
     },
-    "loading": "Loading saved SQL query...",
-    "actions": {
-      "test": "Test query",
-      "testLoading": "Testing query...",
-      "save": "Save changes",
-      "saveLoading": "Saving changes...",
-      "cancel": "Cancel"
+    "edit": {
+      "headline": "Queries",
+      "title": "Edit saved SQL query",
+      "description": "Update a saved SQL query for your organisation.",
+      "card": {
+        "title": "Query details",
+        "description": "Review the encrypted SQL, test it again if needed, and save the updated query."
+      },
+      "loading": "Loading saved SQL query...",
+      "actions": {
+        "test": "Test query",
+        "testLoading": "Testing query...",
+        "save": "Save changes",
+        "saveLoading": "Saving changes...",
+        "cancel": "Cancel"
+      },
+      "success": "Saved SQL query loaded successfully.",
+      "errors": {
+        "loadTitle": "Could not load SQL query",
+        "forbidden": "You do not have permission to edit SQL queries for this organisation.",
+        "queryIdInvalid": "Query id is invalid.",
+        "notFound": "The requested saved SQL query could not be found.",
+        "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+        "unexpected": "Unexpected error while loading the saved SQL query."
+      }
     },
-    "success": "Saved SQL query loaded successfully.",
-    "errors": {
-      "loadTitle": "Could not load SQL query",
-      "forbidden": "You do not have permission to edit SQL queries for this organisation.",
-      "queryIdInvalid": "Query id is invalid.",
-      "notFound": "The requested saved SQL query could not be found.",
-      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
-      "unexpected": "Unexpected error while loading the saved SQL query."
-    }
-  },
-  "form": {
+    "form": {
       "fields": {
         "queryName": {
           "label": "Query name",
@@ -826,6 +1261,7 @@
         "connectionFailed": "ApertureCore could not reach the database server.",
         "timeout": "The database query timed out.",
         "sslRequired": "The database server requires SSL or compatible TLS settings.",
+        "privilegedLogin": "This connection's login has more privileges than AutoDash allows. Use a dedicated read-only login.",
         "queryRejected": "Only a single read-only SELECT query can be tested.",
         "queryFailed": "The SQL query could not be executed.",
         "details": "Database feedback: {details}",
@@ -838,7 +1274,7 @@
         "unexpected": "Unexpected error while running the saved SQL query."
       }
     },
-  "save": {
+    "save": {
       "success": "SQL query saved successfully.",
       "notifications": {
         "successTitle": "Query saved",
@@ -859,62 +1295,62 @@
         "notFound": "The selected connection could not be found.",
         "duplicateQueryName": "A query with this name already exists for the selected connection.",
         "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
-      "unexpected": "Unexpected error while saving the SQL query."
-    }
-  },
-  "update": {
-    "success": "SQL query updated successfully.",
-    "notifications": {
-      "successTitle": "Query updated",
-      "errorTitle": "Update failed"
+        "unexpected": "Unexpected error while saving the SQL query."
+      }
     },
-    "errors": {
-      "forbidden": "You do not have permission to update SQL queries for this organisation.",
-      "bodyInvalid": "Request body is not valid JSON.",
-      "queryIdInvalid": "Query id is invalid.",
-      "queryNameInvalid": "Query name must be a string.",
-      "queryNameRequired": "Query name is required.",
-      "connectionIdInvalid": "Connection id is invalid.",
-      "sqlInvalid": "SQL must be a string.",
-      "sqlRequired": "SQL is required.",
-      "sqlTooLong": "SQL exceeds the maximum allowed length.",
-      "sqlInvalidCharacters": "SQL contains invalid characters.",
-      "sqlMultipleStatements": "Only a single SQL statement can be saved.",
-      "sqlNotReadOnly": "Only a single read-only SELECT query can be saved.",
-      "notFound": "The saved SQL query or selected connection could not be found.",
-      "duplicateQueryName": "A query with this name already exists for the selected connection.",
-      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
-      "unexpected": "Unexpected error while updating the SQL query."
-    }
-  },
-  "delete": {
-    "success": "SQL query deleted successfully.",
-    "notifications": {
-      "successTitle": "Query deleted",
-      "errorTitle": "Delete failed"
+    "update": {
+      "success": "SQL query updated successfully.",
+      "notifications": {
+        "successTitle": "Query updated",
+        "errorTitle": "Update failed"
+      },
+      "errors": {
+        "forbidden": "You do not have permission to update SQL queries for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "queryIdInvalid": "Query id is invalid.",
+        "queryNameInvalid": "Query name must be a string.",
+        "queryNameRequired": "Query name is required.",
+        "connectionIdInvalid": "Connection id is invalid.",
+        "sqlInvalid": "SQL must be a string.",
+        "sqlRequired": "SQL is required.",
+        "sqlTooLong": "SQL exceeds the maximum allowed length.",
+        "sqlInvalidCharacters": "SQL contains invalid characters.",
+        "sqlMultipleStatements": "Only a single SQL statement can be saved.",
+        "sqlNotReadOnly": "Only a single read-only SELECT query can be saved.",
+        "notFound": "The saved SQL query or selected connection could not be found.",
+        "duplicateQueryName": "A query with this name already exists for the selected connection.",
+        "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+        "unexpected": "Unexpected error while updating the SQL query."
+      }
     },
-    "dialog": {
-      "title": "Delete saved SQL query",
-      "description": "Type {queryName} to confirm deletion.",
-      "confirmationLabel": "Query name",
-      "confirmationDescription": "This permanently removes the saved query metadata and encrypted SQL from normal use.",
-      "cancel": "Cancel",
-      "confirm": "Delete query",
-      "confirmLoading": "Deleting query..."
+    "delete": {
+      "success": "SQL query deleted successfully.",
+      "notifications": {
+        "successTitle": "Query deleted",
+        "errorTitle": "Delete failed"
+      },
+      "dialog": {
+        "title": "Delete saved SQL query",
+        "description": "Type {queryName} to confirm deletion.",
+        "confirmationLabel": "Query name",
+        "confirmationDescription": "This permanently removes the saved query metadata and encrypted SQL from normal use.",
+        "cancel": "Cancel",
+        "confirm": "Delete query",
+        "confirmLoading": "Deleting query..."
+      },
+      "errors": {
+        "forbidden": "You do not have permission to delete SQL queries for this organisation.",
+        "bodyInvalid": "Request body is not valid JSON.",
+        "queryIdInvalid": "Query id is invalid.",
+        "confirmationNameInvalid": "Confirmation name must be a string.",
+        "confirmationNameRequired": "Confirmation name is required.",
+        "confirmationMismatch": "The confirmation name does not match the saved query name.",
+        "notFound": "The requested saved SQL query could not be found.",
+        "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
+        "unexpected": "Unexpected error while deleting the SQL query."
+      }
     },
-    "errors": {
-      "forbidden": "You do not have permission to delete SQL queries for this organisation.",
-      "bodyInvalid": "Request body is not valid JSON.",
-      "queryIdInvalid": "Query id is invalid.",
-      "confirmationNameInvalid": "Confirmation name must be a string.",
-      "confirmationNameRequired": "Confirmation name is required.",
-      "confirmationMismatch": "The confirmation name does not match the saved query name.",
-      "notFound": "The requested saved SQL query could not be found.",
-      "persistenceUnavailable": "Saved SQL queries are temporarily unavailable.",
-      "unexpected": "Unexpected error while deleting the SQL query."
-    }
-  },
-  "list": {
+    "list": {
       "success": "Saved SQL queries loaded successfully.",
       "errors": {
         "forbidden": "You do not have permission to view SQL queries for this organisation.",
@@ -926,15 +1362,18 @@
   "sql-workspace": {
     "breadcrumb": {
       "label": "SQL Workspace"
-  }
+    }
   },
   "navigation": {
     "label": "Main navigation",
-    "dashboard": "Dashboard",
+    "dashboard": "Dashboards",
     "connections": "Connections",
-    "queries": "SQL queries",
-    "workspace": "SQL workspace",
-    "aiModels": "AI models"
+    "queries": "Queries",
+    "workspace": "SQL editor",
+    "aiModels": "AI models",
+    "data": "Data",
+    "settings": "Settings",
+    "signOut": "Sign out"
   },
   "interface": {
     "settingsHeadline": "Settings",
@@ -1019,7 +1458,7 @@
     "confirmRemoval": "Confirm removal",
     "removeRemovingAConnectionAlsoRemovesItsConfiguredModelsIf": "Remove {value1}? Removing a connection also removes its configured models. If the default is removed, the first remaining model becomes the default.",
     "cancel": "Cancel",
-    "sqlWorkspace": "SQL workspace",
+    "sqlWorkspace": "SQL editor",
     "askAQuestionRefineTheSQLAndTestItAgainst": "Ask a question, refine the SQL, and test it against your database.",
     "dashboard": "Dashboard",
     "localModelUnavailable": "Local model unavailable",
@@ -1028,7 +1467,7 @@
     "connectionsListErrorsUnexpected": "connections.list.errors.unexpected",
     "retry": "Retry",
     "connectADatabaseFirst": "Connect a database first",
-    "addAPostgreSQLConnectionToGenerateAndTestQueries": "Add a PostgreSQL connection to generate and test queries.",
+    "addAPostgreSQLConnectionToGenerateAndTestQueries": "Add a database connection to generate and test queries.",
     "addConnection": "Add connection",
     "chooseDatabaseStep": "1. Choose your database",
     "databaseConnection": "Database connection",
@@ -1198,5 +1637,5 @@
     "onlyASingleSQLStatementCanBeUsed": "Only a single SQL statement can be used.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Only read-only SELECT queries are allowed.",
     "savedSQLQuerySecretIsInvalid": "Saved SQL query secret is invalid."
-}
+  }
 }

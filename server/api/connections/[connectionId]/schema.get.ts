@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
       database_not_found: 'The saved database name does not exist on this server. Check connection settings.',
       saved_connection_not_found: 'This connection is no longer available. Select another connection.',
       persistence_unavailable: 'Saved connection credentials are unavailable. Check the application database and its encryption key configuration.',
+      query_rejected: 'This database login has more privileges than AutoDash allows. Use a dedicated login that can only read data.',
       timeout: 'Reading the schema timed out. Check the database connection and retry.',
       query_failed: 'The database could not return its schema. Check the database user’s access to schema metadata.'
     }

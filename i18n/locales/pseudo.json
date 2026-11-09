@@ -1,5 +1,89 @@
 {
+  "ai": {
+    "title": "[ÅÎ prôvîdërš]",
+    "subtitle": "[Chôôšë whîch ÅÎ wrîţëš yôûr SQL. Îñ ţhîš brôwšër wôrkš šţråîghţ åwåy, wîţh ñô åccôûñţ.]",
+    "browser": {
+      "name": "[Îñ ţhîš brôwšër]",
+      "description": "[Frëë åñd prîvåţë. Rûñš ôñ yôûr cômpûţër, åñd ñôţhîñg lëåvëš ţhîš dëvîcë.]"
+    },
+    "local": {
+      "name": "[Cûšţôm šërvër]",
+      "description": "[Åñy ÔpëñÅÎ-cômpåţîblë šërvër, ôñ yôûr ôwñ ñëţwôrk ôr ëxpôšëd ôñlîñë.]"
+    },
+    "cloud": {
+      "description": "[Yôûr qûëšţîôñ åñd dåţåbåšë šţrûcţûrë årë šëñţ ţô {provider}.]"
+    },
+    "status": {
+      "connected": "[Côññëcţëd]",
+      "notSetUp": "[Nôţ šëţ ûp]",
+      "attention": "[Nô môdëlš fôûñd]",
+      "ready": "[Rëådy ţô ûšë]"
+    },
+    "actions": {
+      "connect": "[Côññëcţ]",
+      "manage": "[Måñågë]",
+      "disconnect": "[Dîšcôññëcţ]",
+      "refresh": "[Rëfrëšh môdëlš]",
+      "save": "[Såvë åñd côññëcţ]"
+    },
+    "fields": {
+      "apiKey": "[ÅPÎ këy]",
+      "apiKeyHint": "[Påšţë ţhë këy frôm yôûr åccôûñţ.]",
+      "getKey": "[Gëţ å këy]",
+      "keepKey": "[Lëåvë blåñk ţô këëp yôûr šåvëd këy.]",
+      "azureEndpoint": "[Ëñdpôîñţ]",
+      "azureEndpointHint": "[Shôwñ ôñ yôûr Åzûrë ÔpëñÅÎ rëšôûrcë, ûñdër Këyš åñd Ëñdpôîñţ.]",
+      "azureEndpointPlaceholder": "https://your-resource.openai.azure.com",
+      "azureDeployments": "[Dëplôymëñţ ñåmëš]",
+      "azureDeploymentsHint": "[Lîšţëd ûñdër Dëplôymëñţš îñ Åzûrë ÅÎ Fôûñdry. Sëpåråţë šëvërål wîţh cômmåš.]",
+      "azureDeploymentsPlaceholder": "gpt-4o, gpt-4o-mini",
+      "urlPlaceholder": "https://ai.example.com/v1",
+      "url": "[Sërvër åddrëšš]",
+      "urlHint": "[Rëqûëšţš gô šţråîghţ frôm yôûr brôwšër ţô ţhîš šërvër, šô îţ mûšţ ållôw ţhîš åpp (CÔRS).]",
+      "serverKey": "[ÅPÎ këy (ôpţîôñål, këpţ fôr ţhîš vîšîţ ôñly)]"
+    },
+    "modelsFound": "[{count} môdëlš rëådy ţô ûšë.]",
+    "connectedNotice": "[{provider} côññëcţëd. Chôôšë îţ îñ ţhë SQL ëdîţôr.]",
+    "disconnectConfirm": "[Dîšcôññëcţ {provider}? Îţš šåvëd këy åñd môdëlš årë rëmôvëd.]",
+    "browserModels": "[Môdëlš]",
+    "cached": "[Dôwñlôådëd]",
+    "notCached": "[Dôwñlôådš ôñ fîršţ ûšë]"
+  },
   "workspace": {
+    "querySelect": "[Qûëry]",
+    "newQuery": "[Nëw qûëry]",
+    "discard": {
+      "title": "[Dîšcård ûñšåvëd chåñgëš?]",
+      "description": "[Yôûr SQL håš chåñgëš ţhåţ håvë ñôţ bëëñ šåvëd.]",
+      "confirm": "[Dîšcård chåñgëš]",
+      "keep": "[Këëp ëdîţîñg]"
+    },
+    "panels": {
+      "prompt": "[Åšk îñ yôûr ôwñ wôrdš]",
+      "sql": "[SQL]",
+      "results": "[Rëšûlţš]"
+    },
+    "ask": {
+      "question": "[Whåţ wôûld yôû lîkë ţô kñôw?]",
+      "refreshModels": "[Rëfrëšh môdëlš]",
+      "modelListFailed": "[Côûld ñôţ rëåd môdëlš frôm ţhîš šërvër. Chëck ţhåţ îţ îš rûññîñg åñd ållôwš ţhîš åpp.]",
+      "provider": "[ÅÎ prôvîdër]",
+      "model": "[Môdël]",
+      "manage": "[Sëţ ûp ÅÎ prôvîdërš]",
+      "noModels": "[Nô môdëlš yëţ]",
+      "serverKey": "[Sërvër ÅPÎ këy (ôpţîôñål)]",
+      "downloadAndGenerate": "[Dôwñlôåd môdël åñd gëñëråţë]",
+      "downloadNote": "[Fîršţ dôwñlôåd cåñ ţåkë å fëw mîñûţëš.]"
+    },
+    "collapsePanel": "[Côllåpšë {panel}]",
+    "expandPanel": "[Ëxpåñd {panel}]",
+    "resizePanels": "[Rëšîzë påñëlš]",
+    "resultsBelow": "[Shôw rëšûlţš bëlôw ţhë SQL]",
+    "resultsBeside": "[Shôw rëšûlţš bëšîdë ţhë SQL]",
+    "rereadSchema": "[Rë-rëåd šchëmå]",
+    "saved": "[Såvëd]",
+    "testFailed": "[Thë ţëšţ fåîlëd. Sëë ţhë ërrôr åbôvë.]",
+    "connectDatabaseDescription": "[Ådd å dåţåbåšë côññëcţîôñ ţô wrîţë åñd ţëšţ qûërîëš.]",
     "readingSchema": "[Řëåðîñĝ ðåţåƀåšë šçĥëḿå…]",
     "editTitle": "[Ëðîţ qûëřý îñ ŠQĻ ŵôřķšþåçë]",
     "loadFailed": "[Çôûļð ñôţ ļôåð qûëřý]",
@@ -15,11 +99,13 @@
   },
   "database": {
     "types": {
-      "postgres": "[ṔõšťĝřëŠQĻ]"
+      "postgres": "[ṔõšťĝřëŠQĻ]",
+      "mysql": "[MySQL / MariaDB]",
+      "mssql": "[Microsoft SQL Server]"
     },
     "sslModes": {
       "disable": "[Ðîšåƀļë ŠŠĻ]",
-      "require": "[Řëqüîřë ŠŠĻ]"
+      "require": "[Require SSL (verify certificate)]"
     }
   },
   "errors": {
@@ -55,6 +141,7 @@
         "action": "[Çřëåţë ðåšĥƀôåřð]"
       },
       "selector": {
+        "switchLabel": "[Dåšhbôård]",
         "placeholder": "[Šëļëçţ å ðåšĥƀôåřð]",
         "option": "[{dashboardName} ({widgetCount} ŵîðĝëţš)]",
         "actions": {
@@ -86,6 +173,18 @@
               "label": "[Ðåšĥƀôåřð ñåḿë]",
               "description": "[Ûþðåţë ţĥë ðåšĥƀôåřð ļåƀëļ šĥôŵñ îñ ţĥë šëļëçţôř.]",
               "placeholder": "[Ĕxëçûţîṽë ôṽëřṽîëŵ]"
+            },
+            "appearance": {
+              "label": "[Båckgrôûñd]",
+              "description": "[Gîvë ţhîš dåšhbôård îţš ôwñ lôôk.]",
+              "options": {
+                "default": "[Dëfåûlţ]",
+                "aurora": "[Åûrôrå]",
+                "ocean": "[Ôcëåñ]",
+                "sunset": "[Sûñšëţ]",
+                "forest": "[Fôrëšţ]",
+                "plain": "[Plåîñ]"
+              }
             },
             "embedEnabled": {
               "label": "[Ĕñåƀļë ëḿƀëððîñĝ]",
@@ -137,6 +236,10 @@
         "empty": "[Ţĥîš ëḿƀëððëð ðåšĥƀôåřð îš ñôţ åṽåîļåƀļë.]"
       },
       "builder": {
+        "groups": {
+          "widget": "[Wîdgëţ]",
+          "data": "[Dåţå]"
+        },
         "title": "[Åðð ŵîðĝëţ]",
         "description": "[Ṕîçķ å šåṽëð qüëřý, çĥôôšë å þļûĝîñ, åñð ḿåþ qüëřý ƒîëļðš îñţô ŵîðĝëţ îñþûţš.]",
         "editTitle": "[Ĕðîţ ŵîðĝëţ]",
@@ -164,7 +267,10 @@
           }
         },
         "refresh": {
-          "option": "[Ëṽëřý {seconds} šëçôñðš]"
+          "every60": "[Ëvëry mîñûţë]",
+          "every300": "[Ëvëry 5 mîñûţëš]",
+          "every900": "[Ëvëry 15 mîñûţëš]",
+          "every3600": "[Ëvëry hôûr]"
         },
         "mapping": {
           "title": "[Ṕļûĝîñ çôñƒîĝûřåţîôñ]",
@@ -184,7 +290,7 @@
             "unknown": "[ûñķñôŵñ]"
           }
         },
-        "defaultTitle": "[{queryName} · {pluginName}]",
+        "defaultTitle": "[{queryName}]",
         "preview": {
           "loadingTitle": "[Ļôåðîñĝ qüëřý þřëṽîëŵ]",
           "loadingDescription": "[Řûññîñĝ ţĥë šëļëçţëð qüëřý šô ţĥë ƒîëļð ḿåþþîñĝš åñð ŵîðĝëţ þřëṽîëŵ šţåý îñ šýñç.]",
@@ -229,7 +335,292 @@
           "errorTitle": "[Ŵîðĝëţ qüëřý ƒåîļëð]"
         }
       },
+      "style": {
+        "open": "[Dåšhbôård šţylë]",
+        "title": "[Dåšhbôård šţylë]",
+        "description": "[Chåñgëš prëvîëw lîvë. Såvë ţô këëp ţhëm.]",
+        "save": "[Såvë šţylë]",
+        "reset": "[Rëšëţ åll]",
+        "groups": {
+          "page": "[Pågë]",
+          "widgets": "[Wîdgëţš]",
+          "titles": "[Wîdgëţ ţîţlëš]",
+          "values": "[Nûmbërš åñd låbëlš]",
+          "charts": "[Chårţš]"
+        },
+        "fields": {
+          "pageBackground": {
+            "label": "[Båckgrôûñd côlôûr]"
+          },
+          "textColor": {
+            "label": "[Tëxţ côlôûr]"
+          },
+          "fontFamily": {
+            "label": "[Fôñţ]",
+            "options": {
+              "sans": "[Såñš šërîf]",
+              "serif": "[Sërîf]",
+              "mono": "[Môñôšpåcë]"
+            }
+          },
+          "widgetGap": {
+            "label": "[Spåcë bëţwëëñ wîdgëţš]"
+          },
+          "cardBackground": {
+            "label": "[Båckgrôûñd côlôûr]"
+          },
+          "borderColor": {
+            "label": "[Bôrdër côlôûr]"
+          },
+          "borderWidth": {
+            "label": "[Bôrdër wîdţh]"
+          },
+          "borderRadius": {
+            "label": "[Côrñër rådîûš]"
+          },
+          "cardPadding": {
+            "label": "[Îññër påddîñg]"
+          },
+          "shadow": {
+            "label": "[Shådôw]",
+            "options": {
+              "none": "[Nôñë]",
+              "small": "[Småll]",
+              "medium": "[Mëdîûm]",
+              "large": "[Lårgë]"
+            }
+          },
+          "hideTitles": {
+            "label": "[Hîdë ţîţlëš]"
+          },
+          "titleColor": {
+            "label": "[Côlôûr]"
+          },
+          "titleSize": {
+            "label": "[Sîzë]"
+          },
+          "titleWeight": {
+            "label": "[Wëîghţ]",
+            "options": {
+              "400": "[Rëgûlår]",
+              "500": "[Mëdîûm]",
+              "600": "[Sëmîbôld]",
+              "700": "[Bôld]"
+            }
+          },
+          "titleAlign": {
+            "label": "[Ålîgñmëñţ]",
+            "options": {
+              "left": "[Lëfţ]",
+              "center": "[Cëñţrë]",
+              "right": "[Rîghţ]"
+            }
+          },
+          "valueColor": {
+            "label": "[Nûmbër côlôûr]"
+          },
+          "valueSize": {
+            "label": "[Nûmbër šîzë]"
+          },
+          "labelColor": {
+            "label": "[Låbël côlôûr]"
+          },
+          "chartPrimary": {
+            "label": "[Måîñ šërîëš côlôûr]"
+          },
+          "chartText": {
+            "label": "[Åxîš ţëxţ côlôûr]"
+          },
+          "chartGrid": {
+            "label": "[Grîd lîñë côlôûr]"
+          }
+        }
+      },
       "plugins": {
+        "pie": {
+          "name": "[Pîë chårţ]",
+          "description": "[Pårţš ôf å whôlë.]"
+        },
+        "catalog": {
+          "settings": {
+            "valueFontSize": {
+              "label": "[Nûmbër šîzë]"
+            },
+            "labelFontSize": {
+              "label": "[Låbël šîzë]"
+            },
+            "tableFontSize": {
+              "label": "[Tëxţ šîzë]"
+            },
+            "textAlign": {
+              "label": "[Hôrîzôñţål ålîgñmëñţ]",
+              "options": {
+                "left": "[Lëfţ]",
+                "center": "[Cëñţrë]",
+                "right": "[Rîghţ]"
+              }
+            },
+            "verticalAlign": {
+              "label": "[Vërţîcål ålîgñmëñţ]",
+              "options": {
+                "top": "[Tôp]",
+                "middle": "[Mîddlë]",
+                "bottom": "[Bôţţôm]"
+              }
+            },
+            "labelOverrides": {
+              "label": "[Rëñåmë låbëlš]"
+            },
+            "advancedOptions": {
+              "label": "[ËChårţš ôpţîôñš (JSÔN)]"
+            },
+            "valueFormat": {
+              "label": "[Nûmbër fôrmåţ]",
+              "options": {
+                "auto": "[Åûţômåţîc]",
+                "number": "[Nûmbër (1,234.50)]",
+                "compact": "[Cômpåcţ (1.2K)]",
+                "currency": "[Cûrrëñcy]",
+                "percent": "[Përcëñţågë (42 šhôwš åš 42%)]",
+                "fraction": "[Përcëñţågë frôm fråcţîôñ (0.42 šhôwš åš 42%)]"
+              }
+            },
+            "currency": {
+              "label": "[Cûrrëñcy]"
+            },
+            "decimals": {
+              "label": "[Dëcîmål plåcëš]"
+            },
+            "prefix": {
+              "label": "[Tëxţ bëfôrë]"
+            },
+            "suffix": {
+              "label": "[Tëxţ åfţër]"
+            },
+            "color": {
+              "label": "[Côlôûr]"
+            },
+            "axisMin": {
+              "label": "[Åxîš mîñîmûm]"
+            },
+            "axisMax": {
+              "label": "[Åxîš måxîmûm]"
+            },
+            "referenceValue": {
+              "label": "[Tårgëţ lîñë vålûë]"
+            },
+            "referenceLabel": {
+              "label": "[Tårgëţ lîñë låbël]"
+            },
+            "showValues": {
+              "label": "[Shôw vålûëš ôñ ţhë chårţ]"
+            },
+            "normalColor": {
+              "label": "[Sţårţîñg côlôûr]"
+            },
+            "thresholds": {
+              "label": "[Chåñgë côlôûr åţ]"
+            },
+            "goodDirection": {
+              "label": "[Å rîšë îš]",
+              "options": {
+                "neutral": "[Nëûţrål]",
+                "up": "[Gôôd]",
+                "down": "[Båd]"
+              }
+            },
+            "maxValue": {
+              "label": "[Måxîmûm]"
+            },
+            "minValue": {
+              "label": "[Mîñîmûm]"
+            },
+            "lowColor": {
+              "label": "[Lôw côlôûr]"
+            },
+            "highColor": {
+              "label": "[Hîgh côlôûr]"
+            },
+            "limit": {
+              "label": "[Nûmbër ôf îţëmš ţô šhôw]"
+            },
+            "positiveColor": {
+              "label": "[Pôšîţîvë côlôûr]"
+            },
+            "negativeColor": {
+              "label": "[Nëgåţîvë côlôûr]"
+            },
+            "totalColor": {
+              "label": "[Tôţål côlôûr]"
+            },
+            "labelMode": {
+              "label": "[Slîcë låbëlš]",
+              "options": {
+                "auto": "[Åûţômåţîc]",
+                "none": "[Nôñë]",
+                "name": "[Nåmë]",
+                "percent": "[Nåmë åñd përcëñţågë]",
+                "value": "[Nåmë åñd vålûë]"
+              }
+            },
+            "bins": {
+              "label": "[Nûmbër ôf råñgëš]"
+            }
+          },
+          "sections": {
+            "text": "[Tëxţ]",
+            "labels": "[Låbël ôvërrîdëš]",
+            "advanced": "[Ådvåñcëd]",
+            "format": "[Nûmbër fôrmåţ]",
+            "thresholds": "[Côlôûr ţhrëšhôldš]",
+            "range": "[Råñgë åñd ţårgëţš]",
+            "appearance": "[Åppëåråñcë]"
+          },
+          "stepValue": "[Frôm vålûë]",
+          "stepColor": "[Côlôûr]",
+          "addStep": "[Ådd å côlôûr šţëp]",
+          "removeStep": "[Rëmôvë šţëp]",
+          "advancedHelp": "[Åddëd ôñ ţôp ôf ţhîš chårţ'š šëţţîñgš. Åñy ËChårţš ôpţîôñ wôrkš, ëxcëpţ ôñëš ţhåţ ådd HTML ôr lôåd ôûţšîdë côñţëñţ.]",
+          "advancedInvalid": "[Thîš îšñ'ţ vålîd JSÔN, šô îţ îš bëîñg îgñôrëd.]",
+          "advancedDocs": "[Sëë åll ËChårţš ôpţîôñš]",
+          "labelFrom": "[Ôrîgîñål ţëxţ]",
+          "labelTo": "[Shôw åš]",
+          "addLabel": "[Ådd å låbël]",
+          "addLabelsFromData": "[Ådd låbëlš frôm dåţå]",
+          "removeLabel": "[Rëmôvë låbël]",
+          "defaultColor": "[Dëfåûlţ]",
+          "clearColor": "[Ûšë dëfåûlţ côlôûr]",
+          "emptyRows": "[Nô dåţå ţô chårţ fôr ţhëšë fîëldš.]",
+          "other": "[Ôţhër]",
+          "total": "[Tôţål]",
+          "increase": "[Îñcrëåšë]",
+          "decrease": "[Dëcrëåšë]",
+          "low": "[Lôw]",
+          "high": "[Hîgh]",
+          "versus": "[vš {value}]",
+          "fields": {
+            "xField": "[Cåţëgôry ôr dåţë]",
+            "yField": "[Vålûë]",
+            "yFields": "[Vålûëš]",
+            "valueField": "[Vålûë]",
+            "labelField": "[Nåmë]",
+            "groupField": "[Grôûp]",
+            "formatColumns": "[Côlûmñš ţô fôrmåţ (blåñk fôr åll ñûmërîc côlûmñš)]",
+            "maxField": "[Måẋîḿûḿ ƒřôḿ å çôļûḿñ]",
+            "targetField": "[Tårgëţ]",
+            "comparisonField": "[Prëvîôûš vålûë]",
+            "lineField": "[Lîñë vålûë]",
+            "lowField": "[Lôw]",
+            "highField": "[Hîgh]",
+            "startField": "[Frôm vålûë]",
+            "endField": "[Tô vålûë]",
+            "sizeField": "[Sîzë]",
+            "rowField": "[Rôw]",
+            "sourceField": "[Frôm]",
+            "openField": "[Ôpëñ]",
+            "closeField": "[Clôšë]"
+          }
+        },
         "shared": {
           "loading": "[Ļôåðîñĝ çĥåřţ...]"
         },
@@ -298,6 +689,28 @@
           "emptyMapping": "[Çĥôôšë å ṽåļûë ƒîëļð ţô řëñðëř ţĥîš šţåţ çåřð.]",
           "emptyRows": "[Ţĥîš ŵîðĝëţ ñëëðš åţ ļëåšţ ôñë qüëřý řôŵ.]",
           "firstRowHint": "[Šĥôŵîñĝ ţĥë ƒîřšţ řôŵ řëţûřñëð ƀý ţĥîš qüëřý.]"
+        }
+      },
+      "gettingStarted": {
+        "title": "[Get started]",
+        "description": "[Three steps to your first live dashboard.]",
+        "done": "[Done]",
+        "steps": {
+          "connect": {
+            "title": "[Connect a database]",
+            "description": "[Use a read-only login. Nothing is ever written.]",
+            "action": "[Add connection]"
+          },
+          "query": {
+            "title": "[Write a query]",
+            "description": "[Write SQL, or describe what you need and let AI draft it.]",
+            "action": "[Open SQL editor]"
+          },
+          "dashboard": {
+            "title": "[Build a dashboard]",
+            "description": "[Turn your queries into charts, stats and tables.]",
+            "action": "[Create dashboard]"
+          }
         }
       }
     }
@@ -410,7 +823,28 @@
       "edit": "[Ëðîţ Çôññëçţîôñ]"
     },
     "form": {
-      "cancel": "[Çåñçëļ]"
+      "cancel": "[Çåñçëļ]",
+      "testFirst": "[Test the connection to enable saving.]",
+      "sections": {
+        "general": {
+          "title": "[Dëţåîlš]",
+          "description": "[Nåmë ţhîš côññëcţîôñ åñd chôôšë îţš dåţåbåšë ţypë.]"
+        },
+        "server": {
+          "title": "[Sërvër]",
+          "description": "[Whërë ţhë dåţåbåšë rûñš. Îţ mûšţ bë rëåchåblë frôm ţhë åpp šërvër.]"
+        },
+        "login": {
+          "title": "[Dåţåbåšë lôgîñ]",
+          "description": "[Ûšë å dëdîcåţëd rëåd-ôñly lôgîñ. Påššwôrdš årë ëñcrypţëd, åñd å šåvëd ôñë îš këpţ îf yôû lëåvë îţ blåñk.]"
+        }
+      },
+      "readOnly": {
+        "title": "[How to create a read-only login]",
+        "description": "[AutoDash refuses logins that can do more than read. Run this as an administrator and change the password.]",
+        "copy": "[Copy SQL]",
+        "copied": "[Copied]"
+      }
     },
     "index": {
       "headline": "[Çôññëçţîôñš]",
@@ -511,7 +945,7 @@
       },
       "fields": {
         "password": {
-          "placeholder": "[Ļëåṽë ƀļåñķ ţô ķëëþ ţĥë šţôřëð þåššŵôřð]",
+          "placeholder": "[Ļëåṽë ƀļåñķ ţô ķëëþ îţ]",
           "description": "[Ļëåṽë ƀļåñķ ţô ķëëþ ţĥë šţôřëð þåššŵôřð. Îţ ŵîļļ ƀë řëûšëð ŵĥëñ ţëšţîñĝ ôř šåṽîñĝ çĥåñĝëš.]"
         }
       },
@@ -562,9 +996,10 @@
         "databaseNotFound": "[Ţĥë šþëçîƒîëð ðåţåƀåšë çôûļð ñôţ ƀë ƒôûñð.]",
         "connectionFailed": "[ÅpértürëÇørë çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
         "timeout": "[Ţĥë ðåţåƀåšë çôññëçţîôñ ţîḿëð ôûţ.]",
-        "sslRequired": "[Ţĥë ðåţåƀåšë šëřṽëř řëqüîřëš ŠŠĻ ôř çôḿþåţîƀļë ŢĻŠ šëţţîñĝš.]",
+        "sslRequired": "[SSL could not be established. The server may require SSL, or its certificate is not trusted or does not match the host name.]",
         "notImplemented": "[Ţĥîš ðåţåƀåšë ţëšţ îš ñôţ îḿþļëḿëñţëð ýëţ.]",
-        "unexpected": "[Ûñëxþëçţëð ëřřôř ŵĥîļë ţëšţîñĝ ţĥë ðåţåƀåšë çôññëçţîôñ.]"
+        "unexpected": "[Ûñëxþëçţëð ëřřôř ŵĥîļë ţëšţîñĝ ţĥë ðåţåƀåšë çôññëçţîôñ.]",
+        "privilegedRole": "[This login has more privileges than AutoDash allows. Use a dedicated login that can only read data.]"
       }
     },
     "save": {
@@ -826,6 +1261,7 @@
         "connectionFailed": "[ÅpértürëÇørë çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
         "timeout": "[Ţĥë ðåţåƀåšë qüëřý ţîḿëð ôûţ.]",
         "sslRequired": "[Ţĥë ðåţåƀåšë šëřṽëř řëqüîřëš ŠŠĻ ôř çôḿþåţîƀļë ŢĻŠ šëţţîñĝš.]",
+        "privilegedLogin": "[Thîš côññëcţîôñ'š lôgîñ håš môrë prîvîlëgëš ţhåñ AûţôDåšh ållôwš. Ušë å dëdîcåţëd rëåd-ôñly lôgîñ.]",
         "queryRejected": "[Öñļý å šîñĝļë řëåð-ôñļý ŠËĻËÇŢ qüëřý çåñ ƀë ţëšţëð.]",
         "queryFailed": "[Ţĥë ŠQĻ qüëřý çôûļð ñôţ ƀë ëxëçûţëð.]",
         "details": "[Ðåţåƀåšë ƒëëðƀåçķ: {details}]",
@@ -930,11 +1366,14 @@
   },
   "navigation": {
     "label": "[Ḿåîñ ñåṽîĝåţîôñ]",
-    "dashboard": "[Ðåšĥƀôåřð]",
+    "dashboard": "[Dashboards]",
     "connections": "[Çôññëçţîôñš]",
-    "queries": "[ŠQĻ qûëřîëš]",
-    "workspace": "[ŠQĻ ŵôřķšþåçë]",
-    "aiModels": "[ÅÎ ḿôðëļš]"
+    "queries": "[Queries]",
+    "workspace": "[SQL editor]",
+    "aiModels": "[ÅÎ ḿôðëļš]",
+    "data": "[Data]",
+    "settings": "[Settings]",
+    "signOut": "[Sign out]"
   },
   "interface": {
     "settingsHeadline": "[Šëţţîñĝš]",

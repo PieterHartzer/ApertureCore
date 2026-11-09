@@ -9,7 +9,7 @@ export default component
 </script>
 
 <template>
-  <div class="min-h-screen bg-default px-4 py-4 sm:px-6 sm:py-6">
+  <div data-dashboard-canvas class="min-h-screen px-4 py-4 sm:px-6 sm:py-6">
     <div class="space-y-4">
       <AppAlert
         v-if="loadErrorMessage"
@@ -21,14 +21,14 @@ export default component
 
       <div
         v-else-if="status === 'pending'"
-        class="flex min-h-[16rem] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+        class="flex min-h-[16rem] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
       >
         {{ t('pages.dashboard.embed.loading') }}
       </div>
 
       <div
         v-else-if="!dashboard"
-        class="flex min-h-[16rem] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+        class="flex min-h-[16rem] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
       >
         {{ t('pages.dashboard.embed.empty') }}
       </div>
@@ -40,30 +40,28 @@ export default component
       >
         <template #item="{ widget }">
           <UCard
+            data-widget-card
             class="h-full w-full"
             :ui="{
-              root: 'flex h-full min-h-0 w-full flex-col overflow-hidden',
+              root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
               header: 'flex-none p-4 sm:px-6 sm:py-4',
-              body: 'flex min-h-0 flex-1 flex-col p-4 sm:p-6'
+              body: 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
             }"
           >
             <template #header>
-              <h2 class="truncate font-semibold text-highlighted">
-                {{ widget.title || t('pages.dashboard.widgets.card.fallbackTitle') }}
+              <h2 data-widget-title class="truncate text-[13px] font-normal text-muted">
+                {{ getWidgetTitle(widget) }}
               </h2>
             </template>
 
             <div class="flex h-full min-h-0 flex-col gap-4">
-              <AppAlert
-                v-if="getWidgetState(widget)?.status === 'pending'"
-                kind="info"
-                :title="t('pages.dashboard.widgets.card.loadingTitle')"
-              >
-                {{ t('pages.dashboard.widgets.card.loadingDescription') }}
-              </AppAlert>
+              <WidgetSkeleton
+                v-if="!getWidgetState(widget) || ['idle', 'pending'].includes(getWidgetState(widget).status)"
+                :plugin-id="widget.pluginId"
+              />
 
               <AppAlert
-                v-else-if="getWidgetState(widget)?.status === 'error'"
+                v-else-if="getWidgetState(widget).status === 'error'"
                 kind="error"
                 :title="t('pages.dashboard.widgets.card.errorTitle')"
               >
@@ -79,14 +77,14 @@ export default component
                   class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end p-3"
                 >
                   <div
-                    class="max-w-full rounded-lg border px-3 py-2 text-xs shadow-sm backdrop-blur"
+                    class="max-w-full rounded-lg border px-3 py-2 text-xs"
                     :class="isWidgetRefreshing(widget)
                       ? 'border-default bg-default/90 text-muted'
                       : 'border-error/30 bg-error/10 text-error'"
                   >
                     <div
                       v-if="isWidgetRefreshing(widget)"
-                      class="flex items-center gap-2 font-medium uppercase tracking-[0.18em]"
+                      class="flex items-center gap-2 font-medium"
                     >
                       <UIcon
                         name="i-lucide-loader-circle"
@@ -122,7 +120,7 @@ export default component
 
       <div
         v-else
-        class="flex min-h-[16rem] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+        class="flex min-h-[16rem] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
       >
         {{ t('pages.dashboard.widgets.empty.description') }}
       </div>

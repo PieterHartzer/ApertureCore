@@ -74,6 +74,8 @@ describe('dashboard persistence service', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: true,
+        appearance: 'default',
+        style: {},
         widgetCount: 2,
         createdAt: '2026-03-24T00:00:00.000Z',
         updatedAt: '2026-03-24T01:00:00.000Z'
@@ -106,8 +108,8 @@ describe('dashboard persistence service', () => {
       layout: {
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refresh_interval_seconds: 15
     }])
@@ -163,8 +165,8 @@ describe('dashboard persistence service', () => {
         layout: {
           w: 6,
           h: 4,
-          minW: 3,
-          minH: 3
+          minW: 2,
+          minH: 2
         },
         refreshIntervalSeconds: 15
       }]
@@ -176,6 +178,8 @@ describe('dashboard persistence service', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: false,
+        appearance: 'default',
+        style: {},
         widgetCount: 1,
         createdAt: '2026-03-24T00:00:00.000Z',
         updatedAt: '2026-03-24T01:00:00.000Z',
@@ -191,8 +195,8 @@ describe('dashboard persistence service', () => {
           layout: {
             w: 6,
             h: 4,
-            minW: 3,
-            minH: 3
+            minW: 2,
+            minH: 2
           },
           refreshIntervalSeconds: 15
         }]
@@ -246,8 +250,8 @@ describe('dashboard persistence service', () => {
         layout: {
           w: 6,
           h: 4,
-          minW: 3,
-          minH: 3
+          minW: 2,
+          minH: 2
         },
         refreshIntervalSeconds: 15
       }]
@@ -279,8 +283,8 @@ describe('dashboard persistence service', () => {
       layout: {
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refresh_interval_seconds: 15
     }])
@@ -301,6 +305,8 @@ describe('dashboard persistence service', () => {
       dashboard: {
         embedId: 'embed-1',
         dashboardName: 'Executive overview',
+        appearance: 'default',
+        style: {},
         updatedAt: '2026-03-24T01:00:00.000Z',
         widgets: [{
           id: 'widget-1',
@@ -312,8 +318,8 @@ describe('dashboard persistence service', () => {
           layout: {
             w: 6,
             h: 4,
-            minW: 3,
-            minH: 3
+            minW: 2,
+            minH: 2
           },
           refreshIntervalSeconds: 15
         }]

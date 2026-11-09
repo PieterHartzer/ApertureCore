@@ -1,13 +1,13 @@
+import { isIP } from 'node:net'
 import {
   Pool,
   type FieldDef,
   type PoolClient,
   type QueryResultRow
 } from 'pg'
+import Cursor from 'pg-cursor'
 
 import type {
-  DatabaseQueryResultRow,
-  DatabaseQueryResultValue,
   ExecuteDatabaseReadOnlyQueryInput,
   ExecuteDatabaseReadOnlyQueryResult,
   TestDatabaseConnectionInput,
@@ -20,13 +20,26 @@ import type {
 } from './types'
 import { normalizeReadOnlySql } from '../../utils/read-only-sql'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
+import {
+  CONNECT_TIMEOUT_SECONDS,
+  DEFAULT_QUERY_RESULT_ROW_LIMIT,
+  DEFAULT_QUERY_TIMEOUT_MS,
+  PRIVILEGED_ROLE_DETAILS,
+  QUERY_LOCK_TIMEOUT_MS,
+  isTlsVerificationError,
+  sanitizeResultRow
+} from './shared'
 
-const CONNECT_TIMEOUT_SECONDS = 5
-const DEFAULT_QUERY_TIMEOUT_MS = 5_000
-const QUERY_LOCK_TIMEOUT_MS = 1_000
-const DEFAULT_QUERY_RESULT_ROW_LIMIT = 25
-const MAX_RESULT_VALUE_LENGTH = 2_000
-const QUERY_RESULT_ALIAS = 'aperture_query_result'
+// A read-only transaction stops writes, but not these server-level powers.
+const PRIVILEGED_ROLE_SQL = `select (
+    r.rolsuper or r.rolcreaterole or r.rolreplication or r.rolbypassrls
+    or pg_has_role(current_user, 'pg_read_server_files', 'member')
+    or pg_has_role(current_user, 'pg_write_server_files', 'member')
+    or pg_has_role(current_user, 'pg_execute_server_program', 'member')
+    or pg_has_role(current_user, 'pg_signal_backend', 'member')
+  ) as privileged
+  from pg_catalog.pg_roles r
+  where r.rolname = current_user`
 
 type DatabaseError = Error & {
   code?: string
@@ -49,7 +62,15 @@ const CONNECTION_ERROR_CODES = new Set([
   'ENOTFOUND',
   'EAI_AGAIN',
 ])
-const TIMEOUT_ERROR_CODES = new Set(['CONNECT_TIMEOUT', 'ETIMEDOUT'])
+const TIMEOUT_ERROR_CODES = new Set(['57014', '55P03', 'CONNECT_TIMEOUT', 'ETIMEDOUT'])
+
+// The pg driver raises dropped sockets without an error code.
+const isConnectionError = (error: DatabaseError): boolean => {
+  return (
+    (error.code !== undefined && CONNECTION_ERROR_CODES.has(error.code)) ||
+    error.message.includes('Connection terminated')
+  )
+}
 
 const isDatabaseError = (error: unknown): error is DatabaseError => {
   return error instanceof Error
@@ -62,7 +83,7 @@ const buildErrorDetails = (error: DatabaseError): string => {
 const isSslConfigurationError = (error: DatabaseError): boolean => {
   const normalizedMessage = buildErrorDetails(error).toLowerCase()
 
-  return (
+  return isTlsVerificationError(error) || (
     normalizedMessage.includes('ssl') &&
     (
       normalizedMessage.includes('required') ||
@@ -75,18 +96,49 @@ const isSslConfigurationError = (error: DatabaseError): boolean => {
 const createPool = (
   input: Pick<
     TestDatabaseConnectionInput,
-    'host' | 'port' | 'databaseName' | 'username' | 'password' | 'sslMode'
+    'host' | 'port' | 'databaseName' | 'username' | 'password' | 'sslMode' | 'connectAddress'
   >
 ) => {
   return new Pool({
-    host: input.host,
+    host: input.connectAddress ?? input.host,
     port: input.port,
     database: input.databaseName,
     user: input.username,
     password: input.password,
-    ssl: input.sslMode === 'require' ? { rejectUnauthorized: false } : false,
+    // The certificate must still match the name the customer gave.
+    ssl: input.sslMode === 'require'
+      ? { rejectUnauthorized: true, ...(input.connectAddress && !isIP(input.host) ? { servername: input.host } : {}) }
+      : false,
     connectionTimeoutMillis: CONNECT_TIMEOUT_SECONDS * 1000,
     max: 1
+  })
+}
+
+const isPrivilegedRole = async (runner: Pick<PoolClient, 'query'>) => {
+  const result = await runner.query<{ privileged: boolean }>(PRIVILEGED_ROLE_SQL)
+
+  return result.rows[0]?.privileged !== false
+}
+
+// Reading through a cursor enforces the limit without rewriting the SQL, so no
+// comment or stray parenthesis in the query text can change it. The extended
+// protocol it uses also makes PostgreSQL refuse multiple statements.
+const readRows = (client: PoolClient, sql: string, rowLimit: number) => {
+  const cursor = new Cursor<QueryResultRow>(sql)
+
+  client.query(cursor)
+
+  return new Promise<{ columns: string[], rows: QueryResultRow[] }>((resolve, reject) => {
+    cursor.read(rowLimit, (error, rows, result) => {
+      if (error) {
+        reject(error)
+        return
+      }
+
+      const columns = result.fields.map((field: FieldDef) => field.name)
+
+      cursor.close(() => resolve({ columns, rows }))
+    })
   })
 }
 
@@ -138,7 +190,7 @@ const mapPostgreSqlConnectionError = (
     }
   }
 
-  if (error.code && CONNECTION_ERROR_CODES.has(error.code)) {
+  if (isConnectionError(error)) {
     return {
       ok: false,
       code: 'connection_failed',
@@ -153,69 +205,6 @@ const mapPostgreSqlConnectionError = (
     message: 'unexpected_error',
     details: buildErrorDetails(error)
   }
-}
-
-const truncateResultValue = (value: string) => {
-  if (value.length <= MAX_RESULT_VALUE_LENGTH) {
-    return value
-  }
-
-  return `${value.slice(0, MAX_RESULT_VALUE_LENGTH)}...`
-}
-
-const sanitizeResultValue = (value: unknown): DatabaseQueryResultValue => {
-  if (value === null || typeof value === 'boolean') {
-    return value
-  }
-
-  if (typeof value === 'number') {
-    return Number.isFinite(value)
-      ? value
-      : truncateResultValue(String(value))
-  }
-
-  if (typeof value === 'string') {
-    return truncateResultValue(value)
-  }
-
-  if (typeof value === 'bigint') {
-    return truncateResultValue(value.toString())
-  }
-
-  if (value instanceof Date) {
-    return value.toISOString()
-  }
-
-  if (Buffer.isBuffer(value)) {
-    return `[binary ${value.byteLength} bytes]`
-  }
-
-  try {
-    const serializedValue = JSON.stringify(value)
-
-    return truncateResultValue(serializedValue ?? String(value))
-  } catch {
-    return truncateResultValue(String(value))
-  }
-}
-
-const sanitizeResultRow = (
-  row: Record<string, unknown>,
-  columns: string[]
-): DatabaseQueryResultRow => {
-  const sanitizedRow: DatabaseQueryResultRow = {}
-
-  for (const column of columns) {
-    sanitizedRow[column] = sanitizeResultValue(row[column])
-  }
-
-  return sanitizedRow
-}
-
-const buildLimitedQuery = (sql: string, rowLimit: number) => {
-  // Bound result size at the adapter layer so callers cannot accidentally
-  // execute an unbounded dashboard query.
-  return `select * from (${sql}) as ${QUERY_RESULT_ALIAS} limit ${rowLimit}`
 }
 
 const mapPostgreSqlQueryError = (
@@ -266,7 +255,7 @@ const mapPostgreSqlQueryError = (
     }
   }
 
-  if (error.code && CONNECTION_ERROR_CODES.has(error.code)) {
+  if (isConnectionError(error)) {
     return {
       ok: false,
       code: 'connection_failed',
@@ -313,11 +302,9 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     try {
       await pool.query('select 1')
 
-      result = {
-        ok: true,
-        code: 'success',
-        message: 'success'
-      }
+      result = await isPrivilegedRole(pool as unknown as Pick<PoolClient, 'query'>)
+        ? { ok: false, code: 'privileged_role', message: 'privileged_role', details: PRIVILEGED_ROLE_DETAILS }
+        : { ok: true, code: 'success', message: 'success' }
     } catch (error) {
       result = mapPostgreSqlConnectionError(error)
     } finally {
@@ -366,10 +353,18 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
       )
       await client.query('set local transaction read only')
 
-      const result = await client.query<QueryResultRow>(
-        buildLimitedQuery(normalizedQuery.sql, rowLimit)
-      )
-      const columns = result.fields.map((field: FieldDef) => field.name)
+      if (await isPrivilegedRole(client)) {
+        await client.query('rollback')
+
+        return {
+          ok: false,
+          code: 'query_rejected',
+          message: 'query_rejected',
+          details: PRIVILEGED_ROLE_DETAILS
+        }
+      }
+
+      const { columns, rows } = await readRows(client, normalizedQuery.sql, rowLimit)
 
       await client.query('rollback')
 
@@ -378,7 +373,7 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
         code: 'success',
         message: 'success',
         columns,
-        rows: result.rows.map((row: QueryResultRow) => sanitizeResultRow(row, columns)),
+        rows: rows.map((row: QueryResultRow) => sanitizeResultRow(row, columns)),
         rowLimit
       }
     } catch (error) {

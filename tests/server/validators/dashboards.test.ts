@@ -13,6 +13,20 @@ const WIDGET_ID = '7c6d9425-55cf-4d8e-a446-638848de1942'
 const QUERY_ID = '1c6d9425-55cf-4d8e-a446-638848de1942'
 
 describe('dashboard validators', () => {
+  it('accepts known dashboard appearances and rejects anything else', () => {
+    const body = { dashboardName: 'Revenue', embedEnabled: false, widgets: [] }
+
+    expect(validateSaveDashboardInput(DASHBOARD_ID, { ...body, appearance: 'sunset' })).toMatchObject({
+      ok: true,
+      data: { appearance: 'sunset' }
+    })
+    expect(validateSaveDashboardInput(DASHBOARD_ID, body)).toMatchObject({ ok: true })
+    expect(validateSaveDashboardInput(DASHBOARD_ID, {
+      ...body,
+      appearance: 'url(https://example.com/x)'
+    })).toMatchObject({ ok: false, code: 'invalid_input' })
+  })
+
   it('requires a non-empty dashboard name when creating dashboards', () => {
     expect(validateCreateDashboardInput({
       dashboardName: '   '
@@ -43,8 +57,8 @@ describe('dashboard validators', () => {
           y: 1,
           w: 2,
           h: 1,
-          minW: 4,
-          minH: 3
+          minW: 2,
+          minH: 2
         },
         refreshIntervalSeconds: 15
       }]
@@ -66,10 +80,10 @@ describe('dashboard validators', () => {
           layout: {
             x: 0,
             y: 1,
-            w: 4,
-            h: 3,
-            minW: 4,
-            minH: 3
+            w: 2,
+            h: 2,
+            minW: 2,
+            minH: 2
           },
           refreshIntervalSeconds: 15
         }]

@@ -1,4 +1,4 @@
-export const DATABASE_TYPES = ['postgres'] as const
+export const DATABASE_TYPES = ['postgres', 'mysql', 'mssql'] as const
 export type DatabaseType = (typeof DATABASE_TYPES)[number]
 
 export const DATABASE_SSL_MODES = ['disable', 'require'] as const
@@ -6,6 +6,8 @@ export type DatabaseSslMode = (typeof DATABASE_SSL_MODES)[number]
 
 export const DEFAULT_PORTS = {
   postgres: 5432,
+  mysql: 3306,
+  mssql: 1433,
 } as const
 
 export interface DatabaseConnection {
@@ -31,6 +33,7 @@ export type DatabaseConnectionTestResultCode =
   | 'connection_failed'
   | 'timeout'
   | 'ssl_required'
+  | 'privileged_role'
   | 'not_implemented'
   | 'unexpected_error'
 

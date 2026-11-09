@@ -2,7 +2,10 @@ import { computed, defineComponent, type PropType } from 'vue'
 import type { EChartsOption } from 'echarts'
 
 import PluginChart from '~/components/plugins/PluginChart.vue'
+import { useChartTheme } from '~/composables/useChartTheme'
 import { useObservedElementSize } from '~/composables/useObservedElementSize'
+import { getChartColors } from '~/utils/charts/chart-colors'
+import { applyAdvancedOptions, applyCartesianSettings, applyLabelOverridesToOption, colorSetting, createValueFormatter } from '~/utils/charts/chart-settings'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 
 export default defineComponent({
@@ -24,7 +27,10 @@ export default defineComponent({
     }
   },
   setup(props) {
-    const { t } = useI18n()
+    const { locale, t } = useI18n()
+    const chartTheme = useChartTheme()
+    const colorMode = useColorMode()
+    const useColorModeIsDark = () => colorMode.value === 'dark'
     const { element: chartContainer, height: chartHeight, width: chartWidth } = useObservedElementSize<HTMLElement>()
 
     const xField = computed(() => {
@@ -77,7 +83,10 @@ export default defineComponent({
       return chartWidth.value < 320 || chartHeight.value < 200
     })
 
-    const chartOption = computed<EChartsOption>(() => ({
+    const valueFormat = computed(() => createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value))
+    const seriesColor = computed(() => colorSetting(props.config, 'color') ?? chartTheme.value.line)
+
+    const baseOption = computed<EChartsOption>(() => ({
       animationDuration: 250,
       grid: {
         containLabel: true,
@@ -87,12 +96,20 @@ export default defineComponent({
         left: isDenseChart.value ? 8 : 16
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
+        axisPointer: { type: 'line', lineStyle: { color: chartTheme.value.label, width: 1 } },
+        valueFormatter: (value) => typeof value === 'number' ? valueFormat.value.full(value) : String(value),
+        backgroundColor: chartTheme.value.tooltipBackground,
+        borderColor: chartTheme.value.tooltipBorder,
+        textStyle: { color: chartTheme.value.tooltipText, fontSize: 12 }
       },
       xAxis: {
         type: 'category',
+        axisLine: { show: false },
+        axisTick: { show: false },
         data: chartRows.value.map((row) => row.label),
         axisLabel: {
+          color: chartTheme.value.label,
           hideOverlap: true,
           show: !isDenseChart.value,
           fontSize: isCompactChart.value ? 10 : 12
@@ -100,26 +117,37 @@ export default defineComponent({
       },
       yAxis: {
         type: 'value',
-        splitNumber: isCompactChart.value ? 3 : 5,
+        position: 'right',
+        splitLine: { lineStyle: { color: chartTheme.value.grid } },
+        splitNumber: isCompactChart.value ? 3 : 4,
         axisLabel: {
+          formatter: (value: number) => valueFormat.value.short(value),
+          color: chartTheme.value.label,
           show: !isDenseChart.value,
           fontSize: isCompactChart.value ? 10 : 12
         }
       },
       series: [{
         type: 'line',
-        smooth: true,
-        showSymbol: !isCompactChart.value,
-        symbolSize: isCompactChart.value ? 4 : 6,
+        smooth: false,
+        showSymbol: false,
+        color: seriesColor.value,
         lineStyle: {
-          width: isCompactChart.value ? 2 : 3
+          width: 2
         },
         areaStyle: {
-          opacity: 0.12
+          opacity: 0.08
         },
         data: chartRows.value.map((row) => row.value)
       }]
     }))
+
+    const chartOption = computed(() => {
+      const option = applyAdvancedOptions(applyLabelOverridesToOption(applyCartesianSettings(baseOption.value, props.config, valueFormat.value, getChartColors(useColorModeIsDark())), props.config), props.config)
+      const fontFamily = chartTheme.value.fontFamily
+
+      return fontFamily ? { ...option, textStyle: { fontFamily } } : option
+    })
 
     return {
       chartContainer,

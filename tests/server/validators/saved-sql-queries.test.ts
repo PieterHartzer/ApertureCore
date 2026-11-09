@@ -234,6 +234,22 @@ describe('validateSavedSqlQueryId', () => {
 })
 
 describe('validateRunSavedSqlQueryInput', () => {
+  it('keeps only a literal true force flag', () => {
+    const ids = {
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      queryId: '7c6d9425-55cf-4d8e-a446-638848de1942'
+    }
+
+    expect(validateRunSavedSqlQueryInput({ ...ids, force: true })).toEqual({
+      ok: true,
+      data: { ...ids, force: true }
+    })
+    expect(validateRunSavedSqlQueryInput({ ...ids, force: 'yes' })).toEqual({
+      ok: true,
+      data: ids
+    })
+  })
+
   it('requires the request body to be an object', () => {
     expect(validateRunSavedSqlQueryInput(null)).toEqual({
       ok: false,

@@ -11,8 +11,13 @@ export default defineComponent({
     title: {
       type: String,
       default: undefined
+    },
+    hasClose: {
+      type: Boolean,
+      default: false
     }
   },
+  emits: ['close'],
   setup(props) {
     const tone = computed(() => {
       return FEEDBACK_THEME[props.kind]

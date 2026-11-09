@@ -5,69 +5,51 @@ export default component
 </script>
 
 <template>
-  <UPage class="px-4 sm:px-6 lg:px-8">
+  <UPage>
     <UPageHeader
-      :headline="t('pages.dashboard.headline')"
-      :title="t('pages.dashboard.title')"
-      :description="t('pages.dashboard.description')"
-      class="pb-6"
+      :title="selectedDashboardName || t('pages.dashboard.title')"
+      :description="hasSelectedDashboard ? undefined : t('pages.dashboard.description')"
     >
       <template #links>
-        <div class="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
-
-
-
-
-
+        <div class="flex flex-wrap items-center gap-2">
+          <span v-if="dashboards.length > 1" class="hidden text-xs font-medium text-muted sm:inline">{{ t('pages.dashboard.selector.switchLabel') }}</span>
           <USelect
+            v-if="dashboards.length > 1"
             :model-value="selectedDashboardId || undefined"
-            class="w-full min-w-0 sm:w-72"
+            class="w-full min-w-0 sm:w-56"
             :items="dashboardSelectOptions"
             :placeholder="t('pages.dashboard.selector.placeholder')"
-            :disabled="dashboardListStatus === 'pending' || dashboards.length === 0"
+            :aria-label="t('pages.dashboard.selector.placeholder')"
+            :disabled="dashboardListStatus === 'pending'"
             @update:model-value="onDashboardSelectionChange"
           />
 
           <UButton
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-plus"
-            :label="t('pages.dashboard.selector.actions.new')"
-            @click="openCreateDashboardDialog"
-          />
-
-          <UButton
             v-if="hasSelectedDashboard"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-settings-2"
-            :label="t('pages.dashboard.selector.actions.settings')"
-            @click="openDashboardSettings"
-          />
-
-          <UButton
-            v-if="hasSelectedDashboard"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-pen-square"
+            :color="isDashboardEditing ? 'primary' : 'neutral'"
+            :variant="isDashboardEditing ? 'solid' : 'outline'"
+            :icon="isDashboardEditing ? 'i-lucide-check' : 'i-lucide-pencil'"
             :label="dashboardEditActionLabel"
             @click="onToggleDashboardEditing"
           />
 
-          <UButton
-            v-if="hasSelectedDashboard"
-            color="error"
-            variant="ghost"
-            icon="i-lucide-trash-2"
-            :label="t('pages.dashboard.selector.settings.actions.delete')"
-            :disabled="isSavingDashboardSettings || isDeletingDashboard"
-            @click="openDeleteDashboardDialog"
-          />
+          <UDropdownMenu
+            v-if="dashboards.length > 0"
+            :items="[
+              [
+                { label: t('pages.dashboard.selector.actions.new'), icon: 'i-lucide-plus', onSelect: openCreateDashboardDialog },
+                ...(hasSelectedDashboard ? [{ label: t('pages.dashboard.selector.actions.settings'), icon: 'i-lucide-settings-2', onSelect: openDashboardSettings }, { label: t('pages.dashboard.style.open'), icon: 'i-lucide-paintbrush', onSelect: openStyleEditor }] : [])
+              ],
+              ...(hasSelectedDashboard ? [[{ label: t('pages.dashboard.selector.settings.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', disabled: isSavingDashboardSettings || isDeletingDashboard, onSelect: openDeleteDashboardDialog }]] : [])
+            ]"
+          >
+            <UButton color="neutral" variant="outline" square icon="i-lucide-ellipsis" :aria-label="t('pages.dashboard.selector.actions.settings')" />
+          </UDropdownMenu>
         </div>
       </template>
     </UPageHeader>
 
-    <UPageBody class="space-y-8 sm:space-y-10 lg:space-y-12">
+    <UPageBody class="space-y-4">
       <AppAlert
         v-if="dashboardListErrorMessage"
         kind="error"
@@ -161,6 +143,31 @@ export default component
             </UFormField>
 
             <UFormField
+              name="appearance"
+              :label="t('pages.dashboard.selector.settings.fields.appearance.label')"
+              :description="t('pages.dashboard.selector.settings.fields.appearance.description')"
+            >
+              <div
+                role="radiogroup"
+                :aria-label="t('pages.dashboard.selector.settings.fields.appearance.label')"
+                class="grid grid-cols-3 gap-2"
+              >
+                <button
+                  v-for="option in appearanceOptions"
+                  :key="option"
+                  type="button"
+                  role="radio"
+                  :aria-checked="dashboardSettingsInput.appearance === option"
+                  class="appearance-option"
+                  @click="dashboardSettingsInput.appearance = option"
+                >
+                  <span class="appearance-swatch" :data-appearance="option" />
+                  <span>{{ t(`pages.dashboard.selector.settings.fields.appearance.options.${option}`) }}</span>
+                </button>
+              </div>
+            </UFormField>
+
+            <UFormField
               name="embedEnabled"
               :label="t('pages.dashboard.selector.settings.fields.embedEnabled.label')"
               :description="t('pages.dashboard.selector.settings.fields.embedEnabled.description')"
@@ -243,6 +250,14 @@ export default component
         </template>
       </UModal>
 
+      <DashboardStyleEditor
+        v-model="styleDraft"
+        :open="isStyleEditorOpen"
+        :saving="isSavingStyle"
+        @update:open="isStyleEditorOpen = $event"
+        @save="onSaveStyle"
+      />
+
       <DeleteDashboardDialog
         :open="isDeleteDashboardOpen"
         :dashboard-name="selectedDashboardName"
@@ -258,86 +273,33 @@ export default component
         :description="builderDescription"
         scrollable
         :ui="{
-          content: 'w-[calc(100vw-2rem)] max-w-7xl rounded-2xl shadow-xl ring ring-default',
+          content: 'w-[calc(100vw-2rem)] max-w-7xl rounded-[10px] ring ring-default',
           body: 'p-0',
           footer: 'border-t border-default'
         }"
         @update:open="onBuilderOpenChange"
       >
         <template #body>
-          <div class="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-            <UPageCard
-              icon="i-lucide-sliders-horizontal"
-              :title="builderTitle"
-              :description="builderDescription"
-            >
-              <div class="space-y-6">
-                <UFormField
-                  name="queryId"
-                  :label="t('pages.dashboard.builder.fields.query.label')"
-                  :description="t('pages.dashboard.builder.fields.query.description')"
-                >
-                  <USelect
-                    v-model="draft.queryId"
-                    class="w-full"
-                    :items="queryOptions"
-                    :placeholder="t('pages.dashboard.builder.fields.query.placeholder')"
-                  />
-                </UFormField>
-
-                <UFormField
-                  name="pluginId"
-                  :label="t('pages.dashboard.builder.fields.plugin.label')"
-                  :description="t('pages.dashboard.builder.fields.plugin.description')"
-                >
-                  <USelect
-                    v-model="draft.pluginId"
-                    class="w-full"
-                    :items="pluginOptions"
-                    :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')"
-                  />
-                </UFormField>
-
-                <p
-                  v-if="selectedPluginDescription"
-                  class="text-sm leading-6 text-muted"
-                >
-                  {{ selectedPluginDescription }}
-                </p>
-
-                <UFormField
-                  name="title"
-                  :label="t('pages.dashboard.builder.fields.title.label')"
-                  :description="t('pages.dashboard.builder.fields.title.description')"
-                >
-                  <UInput
-                    v-model="draft.title"
-                    class="w-full"
-                    :placeholder="t('pages.dashboard.builder.fields.title.placeholder')"
-                  />
-                </UFormField>
-
-                <UFormField
-                  name="refreshIntervalSeconds"
-                  :label="t('pages.dashboard.builder.fields.refresh.label')"
-                  :description="t('pages.dashboard.builder.fields.refresh.description')"
-                >
-                  <USelect
-                    v-model="draft.refreshIntervalSeconds"
-                    class="w-full"
-                    :items="refreshIntervalOptions"
-                  />
-                </UFormField>
-
-                <div class="space-y-4">
-                  <div class="space-y-1">
-                    <p class="text-sm font-medium text-highlighted">
-                      {{ t('pages.dashboard.builder.mapping.title') }}
-                    </p>
-                    <p class="text-sm leading-6 text-muted">
-                      {{ t('pages.dashboard.builder.mapping.description') }}
-                    </p>
-                  </div>
+          <div class="grid items-start gap-5 p-4 sm:p-5 xl:grid-cols-[minmax(0,540px)_minmax(0,1fr)]">
+            <div class="min-w-0 space-y-3">
+              <section class="rounded-lg border border-default">
+                <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.widget') }}</h3>
+                <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
+                  <UFormField class="col-span-6 sm:col-span-3" name="queryId" :label="t('pages.dashboard.builder.fields.query.label')">
+                    <USelect v-model="draft.queryId" class="w-full" :items="queryOptions" :placeholder="t('pages.dashboard.builder.fields.query.placeholder')" />
+                  </UFormField>
+                  <UFormField class="col-span-6 sm:col-span-3" name="pluginId" :label="t('pages.dashboard.builder.fields.plugin.label')">
+                    <USelect v-model="draft.pluginId" class="w-full" :items="pluginOptions" :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')" />
+                  </UFormField>
+                  <UFormField class="col-span-6 sm:col-span-3" name="title" :label="t('pages.dashboard.builder.fields.title.label')">
+                    <UInput v-model="draft.title" class="w-full" :placeholder="t('pages.dashboard.builder.fields.title.placeholder')" />
+                  </UFormField>
+                  <UFormField class="col-span-6 sm:col-span-3" name="refreshIntervalSeconds" :label="t('pages.dashboard.builder.fields.refresh.label')">
+                    <USelect v-model="draft.refreshIntervalSeconds" class="w-full" :items="refreshIntervalOptions" />
+                  </UFormField>
+                  <p v-if="selectedPluginDescription" class="col-span-6 text-xs leading-5 text-muted">{{ selectedPluginDescription }}</p>
+                </div>
+              </section>
 
                   <AppAlert
                     v-if="draft.queryId && previewState?.status === 'pending'"
@@ -364,23 +326,23 @@ export default component
                   </AppAlert>
 
                   <AppAlert
-                    v-else-if="selectedPlugin.inputSchema.length === 0"
+                    v-else-if="pluginFieldInputs.length === 0 && pluginSettingSections.length === 0"
                     kind="info"
                     :title="t('pages.dashboard.builder.mapping.noneTitle')"
                   >
                     {{ t('pages.dashboard.builder.mapping.noneDescription') }}
                   </AppAlert>
 
-                  <div
-                    v-else
-                    class="space-y-4"
-                  >
+              <template v-else>
+                <section v-if="pluginFieldInputs.length" class="rounded-lg border border-default">
+                  <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.data') }}</h3>
+                  <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
                     <UFormField
-                      v-for="input in selectedPlugin.inputSchema"
+                      v-for="input in pluginFieldInputs"
                       :key="input.key"
+                      class="col-span-6 sm:col-span-3"
                       :name="input.key"
                       :label="getPluginInputLabel(input)"
-                      :description="getPluginInputDescription(input)"
                       :required="input.required"
                     >
                       <USelectMenu
@@ -395,7 +357,6 @@ export default component
                         :placeholder="t('pages.dashboard.builder.mapping.multiplePlaceholder')"
                         @update:model-value="setDraftPluginConfigValues(input.key, $event)"
                       />
-
                       <USelect
                         v-else
                         :model-value="getDraftPluginConfigValue(input.key)"
@@ -406,39 +367,224 @@ export default component
                       />
                     </UFormField>
                   </div>
-                </div>
-              </div>
-            </UPageCard>
+                </section>
+
+                <details
+                  v-for="section in pluginSettingSections"
+                  :key="section.id"
+                  class="group rounded-lg border border-default"
+                >
+                  <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium text-highlighted">
+                    {{ section.title }}
+                    <UIcon name="i-lucide-chevron-down" class="size-4 text-muted transition-transform group-open:rotate-180" aria-hidden="true" />
+                  </summary>
+                  <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
+                    <UFormField
+                      v-for="input in section.inputs"
+                      :key="input.key"
+                      :class="getSettingSpanClass(input)"
+                      :name="input.key"
+                      :label="getPluginInputLabel(input)"
+                    >
+                      <UInput
+                        v-if="input.control === 'number'"
+                        type="number"
+                        class="w-full"
+                        :min="input.min"
+                        :max="input.max"
+                        :model-value="getSettingValue(input.key) ?? ''"
+                        @update:model-value="setNumberSetting(input.key, $event)"
+                      />
+                      <UInput
+                        v-else-if="input.control === 'text'"
+                        class="w-full"
+                        :model-value="getSettingValue(input.key) ?? ''"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <div
+                        v-else-if="input.control === 'color'"
+                        class="flex h-8 items-center gap-2"
+                      >
+                        <input
+                          type="color"
+                          class="h-8 w-10 shrink-0 cursor-pointer rounded border border-default bg-transparent"
+                          :aria-label="getPluginInputLabel(input)"
+                          :value="getSettingValue(input.key) ?? '#808080'"
+                          @input="setSettingValue(input.key, $event.target.value)"
+                        >
+                        <span class="min-w-0 flex-1 truncate font-mono text-xs text-muted">{{ getSettingValue(input.key) ?? t('pages.dashboard.plugins.catalog.defaultColor') }}</span>
+                        <UButton
+                          v-if="getSettingValue(input.key)"
+                          color="neutral"
+                          variant="ghost"
+                          size="xs"
+                          square
+                          icon="i-lucide-x"
+                          :aria-label="t('pages.dashboard.plugins.catalog.clearColor')"
+                          @click="setSettingValue(input.key, null)"
+                        />
+                      </div>
+                      <div
+                        v-else-if="input.control === 'thresholds'"
+                        class="space-y-2"
+                      >
+                        <div
+                          v-for="(step, index) in thresholdSteps"
+                          :key="index"
+                          class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2rem] items-center gap-2"
+                        >
+                          <UInput
+                            type="number"
+                            class="w-full"
+                            :placeholder="t('pages.dashboard.plugins.catalog.stepValue')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.stepValue')"
+                            :model-value="step.from ?? ''"
+                            @update:model-value="setThresholdValue(index, $event)"
+                          />
+                          <div class="flex items-center gap-2">
+                            <input
+                              type="color"
+                              class="h-8 w-10 shrink-0 cursor-pointer rounded border border-default bg-transparent"
+                              :aria-label="t('pages.dashboard.plugins.catalog.stepColor')"
+                              :value="step.color"
+                              @input="setThresholdColor(index, $event.target.value)"
+                            >
+                            <span class="truncate font-mono text-xs text-muted">{{ step.color }}</span>
+                          </div>
+                          <UButton
+                            color="neutral"
+                            variant="ghost"
+                            size="xs"
+                            square
+                            icon="i-lucide-x"
+                            :aria-label="t('pages.dashboard.plugins.catalog.removeStep')"
+                            @click="removeThresholdStep(index)"
+                          />
+                        </div>
+                        <UButton
+                          color="neutral"
+                          variant="outline"
+                          size="xs"
+                          icon="i-lucide-plus"
+                          :label="t('pages.dashboard.plugins.catalog.addStep')"
+                          :disabled="thresholdSteps.length >= maxThresholdSteps"
+                          @click="addThresholdStep"
+                        />
+                      </div>
+                      <div
+                        v-else-if="input.control === 'labels'"
+                        class="space-y-2"
+                      >
+                        <div
+                          v-for="(item, index) in labelOverrides"
+                          :key="index"
+                          class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2rem] items-center gap-2"
+                        >
+                          <UInput
+                            class="w-full"
+                            :placeholder="t('pages.dashboard.plugins.catalog.labelFrom')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.labelFrom')"
+                            :model-value="item.from"
+                            @update:model-value="setLabelOverride(index, 'from', $event)"
+                          />
+                          <UInput
+                            class="w-full"
+                            :placeholder="t('pages.dashboard.plugins.catalog.labelTo')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.labelTo')"
+                            :model-value="item.to"
+                            @update:model-value="setLabelOverride(index, 'to', $event)"
+                          />
+                          <UButton
+                            color="neutral"
+                            variant="ghost"
+                            size="xs"
+                            square
+                            icon="i-lucide-x"
+                            :aria-label="t('pages.dashboard.plugins.catalog.removeLabel')"
+                            @click="removeLabelOverride(index)"
+                          />
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                          <UButton color="neutral" variant="outline" size="xs" icon="i-lucide-wand-sparkles" :label="t('pages.dashboard.plugins.catalog.addLabelsFromData')" @click="addLabelsFromData" />
+                          <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-plus" :label="t('pages.dashboard.plugins.catalog.addLabel')" @click="addLabelOverride" />
+                        </div>
+                      </div>
+                      <div
+                        v-else-if="input.control === 'json'"
+                        class="space-y-1.5"
+                      >
+                        <UTextarea
+                          class="w-full"
+                          :rows="8"
+                          :maxlength="20000"
+                          spellcheck="false"
+                          :ui="{ base: 'font-mono text-xs' }"
+                          :model-value="getSettingValue(input.key) ?? ''"
+                          @update:model-value="setSettingValue(input.key, $event)"
+                        />
+                        <p
+                          v-if="advancedOptionsInvalid"
+                          role="alert"
+                          class="text-xs text-error"
+                        >
+                          {{ t('pages.dashboard.plugins.catalog.advancedInvalid') }}
+                        </p>
+                        <p class="text-xs leading-5 text-muted">
+                          {{ t('pages.dashboard.plugins.catalog.advancedHelp') }}
+                          <a href="https://echarts.apache.org/en/option.html" target="_blank" rel="noopener" class="text-primary hover:underline">{{ t('pages.dashboard.plugins.catalog.advancedDocs') }}</a>
+                        </p>
+                      </div>
+                      <USelect
+                        v-else-if="input.control === 'select'"
+                        class="w-full"
+                        :items="getSettingOptions(input)"
+                        :model-value="getSettingValue(input.key)"
+                        :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <USwitch
+                        v-else
+                        :model-value="getSettingValue(input.key) === true"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                    </UFormField>
+                  </div>
+                </details>
+              </template>
+            </div>
 
             <UPageCard
-              icon="i-lucide-monitor-up"
+              class="xl:sticky xl:top-0"
               :title="t('pages.dashboard.preview.title')"
-              :description="t('pages.dashboard.preview.description')"
             >
               <div class="space-y-4">
                 <div
                   v-if="!selectedQuery"
-                  class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+                  class="flex min-h-[320px] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
                 >
                   {{ t('pages.dashboard.preview.empty') }}
                 </div>
 
                 <div
                   v-else-if="previewState?.status === 'pending' && previewStateKey === selectedQuery.id"
-                  class="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+                  class="flex min-h-[320px] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
                 >
                   {{ t('pages.dashboard.builder.preview.loadingDescription') }}
                 </div>
 
-                <PluginRenderer
+                <div
                   v-else
-                  :widget="{
-                    pluginId: draft.pluginId,
-                    pluginConfig: draft.pluginConfig
-                  }"
-                  :columns="previewState?.columns ?? []"
-                  :rows="previewState?.rows ?? []"
-                />
+                  class="h-96"
+                >
+                  <PluginRenderer
+                    :widget="{
+                      pluginId: draft.pluginId,
+                      pluginConfig: draft.pluginConfig
+                    }"
+                    :columns="previewState?.columns ?? []"
+                    :rows="previewState?.rows ?? []"
+                  />
+                </div>
               </div>
             </UPageCard>
           </div>
@@ -472,20 +618,14 @@ export default component
         </template>
       </UModal>
 
-      <section class="space-y-4">
+      <section data-dashboard-canvas :data-editing="isDashboardEditing ? '' : undefined" class="space-y-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="space-y-1">
-            <h2 class="text-lg font-semibold text-highlighted">
-              {{
-                selectedDashboardName ||
-                  t('pages.dashboard.widgets.title')
-              }}
-            </h2>
             <p class="text-sm leading-6 text-muted">
               {{
                 hasSelectedDashboard
                   ? dashboardSaveStatusMessage
-                  : t('pages.dashboard.widgets.description')
+                  : ''
               }}
             </p>
           </div>
@@ -496,13 +636,15 @@ export default component
           >
             <UButton
               v-if="isDashboardEditing"
+              size="sm"
               icon="i-lucide-plus"
               :label="t('pages.dashboard.builder.actions.add')"
               @click="openWidgetBuilder"
             />
             <UButton
+              size="sm"
               color="neutral"
-              variant="soft"
+              variant="ghost"
               icon="i-lucide-rotate-cw"
               :label="t('pages.dashboard.widgets.actions.refreshAll')"
               :disabled="widgets.length === 0 || queryListStatus === 'pending'"
@@ -518,18 +660,10 @@ export default component
           :description="t('pages.dashboard.states.loadingDashboardsDescription')"
         />
 
-        <UPageCard
+        <GettingStarted
           v-else-if="dashboards.length === 0"
-          icon="i-lucide-layout-dashboard"
-          :title="t('pages.dashboard.empty.title')"
-          :description="t('pages.dashboard.empty.description')"
-        >
-          <UButton
-            icon="i-lucide-plus"
-            :label="t('pages.dashboard.empty.action')"
-            @click="openCreateDashboardDialog"
-          />
-        </UPageCard>
+          @create="openCreateDashboardDialog"
+        />
 
         <AppAlert
           v-else-if="dashboardStatus === 'error'"
@@ -546,12 +680,18 @@ export default component
           :description="t('pages.dashboard.states.loadingDashboardDescription')"
         />
 
-        <UPageCard
+        <AppEmptyState
           v-else-if="widgets.length === 0"
           icon="i-lucide-layout-dashboard"
           :title="t('pages.dashboard.widgets.empty.title')"
           :description="t('pages.dashboard.widgets.empty.description')"
-        />
+        >
+          <UButton
+            icon="i-lucide-plus"
+            :label="t('pages.dashboard.builder.actions.add')"
+            @click="() => { if (!isDashboardEditing) onToggleDashboardEditing(); openWidgetBuilder() }"
+          />
+        </AppEmptyState>
 
         <WidgetGrid
           v-else
@@ -561,17 +701,18 @@ export default component
         >
           <template #item="{ widget }">
             <UCard
+              data-widget-card
               class="h-full w-full"
               :ui="{
-                root: 'flex h-full min-h-0 w-full flex-col overflow-hidden',
-                header: 'flex-none p-4 sm:p-6',
-                body: 'flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:p-8'
+                root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
+                header: 'flex-none px-4 pb-0 pt-3 sm:px-4 sm:pb-0 sm:pt-3',
+                body: 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
               }"
             >
               <template #header>
                 <div class="flex min-w-0 items-start justify-between gap-3">
-                  <h3 class="min-w-0 truncate font-semibold text-highlighted">
-                    {{ widget.title || t('pages.dashboard.widgets.card.fallbackTitle') }}
+                  <h3 data-widget-title class="min-w-0 truncate text-[13px] font-normal text-muted">
+                    {{ getWidgetTitle(widget) }}<span v-if="isDashboardEditing" class="text-dimmed"> · {{ getPluginLabel(widget.pluginId) }}</span>
                   </h3>
 
                   <div
@@ -635,13 +776,10 @@ export default component
                   {{ t('pages.dashboard.widgets.card.queryMissingDescription') }}
                 </AppAlert>
 
-                <AppAlert
-                  v-else-if="getWidgetState(widget)?.status === 'pending'"
-                  kind="info"
-                  :title="t('pages.dashboard.widgets.card.loadingTitle')"
-                >
-                  {{ t('pages.dashboard.widgets.card.loadingDescription') }}
-                </AppAlert>
+                <WidgetSkeleton
+                  v-else-if="!getWidgetState(widget) || ['idle', 'pending'].includes(getWidgetState(widget).status)"
+                  :plugin-id="widget.pluginId"
+                />
 
                 <AppAlert
                   v-else-if="getWidgetState(widget)?.status === 'error'"
@@ -660,14 +798,14 @@ export default component
                     class="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end p-3"
                   >
                     <div
-                      class="max-w-full rounded-lg border px-3 py-2 text-xs shadow-sm backdrop-blur"
+                      class="max-w-full rounded-lg border px-3 py-2 text-xs"
                       :class="isWidgetRefreshing(widget)
                         ? 'border-default bg-default/90 text-muted'
                         : 'border-error/30 bg-error/10 text-error'"
                     >
                       <div
                         v-if="isWidgetRefreshing(widget)"
-                        class="flex items-center gap-2 font-medium uppercase tracking-[0.18em]"
+                        class="flex items-center gap-2 font-medium"
                       >
                         <UIcon
                           name="i-lucide-loader-circle"

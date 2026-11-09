@@ -8,10 +8,23 @@ import { useNotifications } from '~/composables/ui/useNotifications'
 import {
   type DatabaseConnection,
   createEmptyDatabaseConnection,
+  DEFAULT_PORTS,
   DATABASE_SSL_MODES,
   DATABASE_TYPES
 } from '~/types/database'
 import { translateMessage } from '~/utils/translateMessage'
+
+const READ_ONLY_LOGIN_SQL: Record<DatabaseConnection['databaseType'], string> = {
+  postgres: `CREATE ROLE autodash_reader LOGIN PASSWORD 'change-me';
+GRANT USAGE ON SCHEMA public TO autodash_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO autodash_reader;`,
+  mysql: `CREATE USER 'autodash_reader'@'%' IDENTIFIED BY 'change-me';
+GRANT SELECT ON your_database.* TO 'autodash_reader'@'%';`,
+  mssql: `CREATE LOGIN autodash_reader WITH PASSWORD = 'change-me';
+-- Run the next two statements in your database:
+CREATE USER autodash_reader FOR LOGIN autodash_reader;
+ALTER ROLE db_datareader ADD MEMBER autodash_reader;`
+}
 
 interface ScreenAlert {
   kind: 'error'
@@ -84,6 +97,20 @@ export default defineComponent({
       )
     })
 
+    const readOnlyLoginSql = computed(() => READ_ONLY_LOGIN_SQL[connection.value.databaseType])
+    const copied = ref(false)
+    const copy = async (text: string) => {
+      await navigator.clipboard.writeText(text)
+      copied.value = true
+      setTimeout(() => { copied.value = false }, 2000)
+    }
+
+    watch(() => connection.value.databaseType, (next, previous) => {
+      if (previous && connection.value.port === DEFAULT_PORTS[previous]) {
+        connection.value.port = DEFAULT_PORTS[next]
+      }
+    })
+
     const databaseTypeItems = computed(() => {
       return DATABASE_TYPES.map((type) => ({
         label: t(`database.types.${type}`),
@@ -138,14 +165,6 @@ export default defineComponent({
       return props.mode === 'edit'
         ? 'connections.update.notifications.errorTitle'
         : 'connections.save.notifications.errorTitle'
-    })
-
-    const passwordDescription = computed(() => {
-      if (props.mode !== 'edit' || !props.hasStoredPassword) {
-        return undefined
-      }
-
-      return t('connections.edit.fields.password.description')
     })
 
     const resetForm = (nextConnection: DatabaseConnection) => {
@@ -271,14 +290,16 @@ export default defineComponent({
     return {
       canSave,
       connection,
+      copied,
+      copy,
       databaseTypeItems,
+      readOnlyLoginSql,
       formTextPrefix,
       isSaving,
       isTesting,
       onCancel,
       onSave,
       onSubmit,
-      passwordDescription,
       screenAlert,
       sslModeItems,
       t

@@ -32,7 +32,8 @@ vi.mock('../../../../server/utils/database/executeQuery', () => ({
 
 const cacheStorage = {
   getItem: vi.fn(),
-  setItem: vi.fn()
+  setItem: vi.fn(),
+  removeItem: vi.fn()
 }
 
 const buildOrganizationCacheScope = (organizationId: string) => {
@@ -135,7 +136,8 @@ describe('POST /api/query/run', () => {
     cacheStorage.getItem.mockResolvedValue({
       columns: ['id'],
       rows: [{ id: 1 }],
-      etag: '"cached-etag"'
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
     })
 
     const handler = await loadHandler()
@@ -162,6 +164,102 @@ describe('POST /api/query/run', () => {
     expect(executeQueryMock).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['expired', { expiresAt: Date.now() - 1 }],
+    ['missing an expiry', {}]
+  ])('runs the query again when the stored result is %s', async (_label, expiry) => {
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      queryId: '7c6d9425-55cf-4d8e-a446-638848de1942'
+    })
+    validateRunSavedSqlQueryInputMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        queryId: '7c6d9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    cacheStorage.getItem.mockResolvedValue({
+      columns: ['id'],
+      rows: [{ id: 1 }],
+      etag: '"old-etag"',
+      ...expiry
+    })
+    executeQueryMock.mockResolvedValue({
+      ok: false,
+      code: 'query_rejected',
+      message: 'query_rejected'
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = { node: { req: { headers: {} } } }
+
+    await expect(handler(event)).resolves.toMatchObject({ ok: false, code: 'query_rejected' })
+    expect(executeQueryMock).toHaveBeenCalledTimes(1)
+    expect(cacheStorage.removeItem).toHaveBeenCalledTimes(1)
+  })
+
+  it('names an over-privileged login instead of blaming the SQL', async () => {
+    const { PRIVILEGED_ROLE_DETAILS } = await import('../../../../server/services/database/shared')
+
+    readBodyMock.mockResolvedValue({})
+    validateRunSavedSqlQueryInputMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        queryId: '7c6d9425-55cf-4d8e-a446-638848de1942'
+      }
+    })
+    executeQueryMock.mockResolvedValue({
+      ok: false,
+      code: 'query_rejected',
+      message: 'query_rejected',
+      details: PRIVILEGED_ROLE_DETAILS
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = { node: { req: { headers: {} } } }
+
+    await expect(handler(event)).resolves.toMatchObject({
+      code: 'query_rejected',
+      messageKey: 'queries.test.errors.privilegedLogin'
+    })
+  })
+
+  it('skips and drops a fresh stored result on a forced refresh', async () => {
+    readBodyMock.mockResolvedValue({
+      connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+      queryId: '7c6d9425-55cf-4d8e-a446-638848de1942',
+      force: true
+    })
+    validateRunSavedSqlQueryInputMock.mockReturnValue({
+      ok: true,
+      data: {
+        connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
+        queryId: '7c6d9425-55cf-4d8e-a446-638848de1942',
+        force: true
+      }
+    })
+    cacheStorage.getItem.mockResolvedValue({
+      columns: ['id'],
+      rows: [{ id: 1 }],
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
+    })
+    executeQueryMock.mockResolvedValue({
+      ok: false,
+      code: 'query_rejected',
+      message: 'query_rejected'
+    })
+
+    const handler = await loadHandler()
+    const event: Record<string, unknown> = { node: { req: { headers: {} } } }
+
+    await expect(handler(event)).resolves.toMatchObject({ ok: false, code: 'query_rejected' })
+    expect(cacheStorage.getItem).not.toHaveBeenCalled()
+    expect(cacheStorage.removeItem).toHaveBeenCalledTimes(1)
+  })
+
   it('returns 304 when the cached etag matches If-None-Match', async () => {
     readBodyMock.mockResolvedValue({
       connectionId: '2f8f9425-55cf-4d8e-a446-638848de1942',
@@ -177,7 +275,8 @@ describe('POST /api/query/run', () => {
     cacheStorage.getItem.mockResolvedValue({
       columns: ['id'],
       rows: [{ id: 1 }],
-      etag: '"cached-etag"'
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
     })
 
     const handler = await loadHandler()
@@ -214,7 +313,8 @@ describe('POST /api/query/run', () => {
     cacheStorage.getItem.mockResolvedValue({
       columns: ['id'],
       rows: [{ id: 1 }],
-      etag: '"cached-etag"'
+      etag: '"cached-etag"',
+      expiresAt: Date.now() + 60_000
     })
 
     const handler = await loadHandler()
@@ -280,7 +380,10 @@ describe('POST /api/query/run', () => {
     })
     expect(cacheStorage.setItem).toHaveBeenCalledWith(
       `query:${buildOrganizationCacheScope('org-1')}:7c6d9425-55cf-4d8e-a446-638848de1942:2f8f9425-55cf-4d8e-a446-638848de1942`,
-      response,
+      {
+        ...(response as object),
+        expiresAt: expect.any(Number)
+      },
       {
         ttl: 90
       }

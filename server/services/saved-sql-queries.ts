@@ -193,6 +193,26 @@ const loadSavedSqlQueryConnection = async (
 }
 
 /**
+ * Finds the engine behind a saved connection so callers can pick SQL written
+ * for that dialect. Returns null when the connection is not visible to the
+ * organization.
+ */
+export const getSavedConnectionDatabaseType = async (
+  authContext: AuthenticatedOrganizationContext,
+  connectionId: string
+): Promise<DatabaseType | null> => {
+  const connection = await getAppDatabase()
+    .selectFrom('app_database_connections')
+    .select(['database_type'])
+    .where('organization_id', '=', mapOrganizationIdToStorage(authContext.organizationId))
+    .where('connection_id', '=', connectionId)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst() as { database_type: DatabaseType } | undefined
+
+  return connection?.database_type ?? null
+}
+
+/**
  * Executes a saved SQL query against the selected saved connection using a
  * read-only, row-limited database session.
  */

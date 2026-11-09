@@ -13,11 +13,7 @@ export default component
      />
 
     <UPageBody>
-      <UPageCard
-        icon="i-lucide-database-zap"
-        :title="t('connections.new.card.title')"
-        :description="t('connections.new.card.description')"
-      >
+      <UPageCard>
         <ConectionTestForm />
       </UPageCard>
     </UPageBody>

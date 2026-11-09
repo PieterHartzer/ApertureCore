@@ -18,6 +18,25 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 describe('server OpenAI routing and credential isolation', () => {
+  it('checks each named Azure deployment using the api-key header', async () => {
+    mocks.read.mockResolvedValue({ settings: { connections: [{ id: 'owned', providerType: 'azure', baseUrl: 'https://acme.openai.azure.com/openai/v1' }], models: [] }, credentials: { owned: 'azure-key' } })
+    mocks.request.mockClear()
+    mocks.request.mockResolvedValue({ choices: [{ message: { content: 'OK' } }] })
+    const handler = await load({ connectionId: 'owned', deployments: ['gpt-4o', 'bad name'] })
+    expect(await handler(event())).toEqual({ modelIds: ['gpt-4o'] })
+    expect(mocks.request).toHaveBeenCalledTimes(1)
+    const call = mocks.request.mock.calls[0]!
+    expect(call[0]).toBe('https://acme.openai.azure.com/openai/v1')
+    expect(call[3].model).toBe('gpt-4o')
+    expect(call[5]).toBe('api-key')
+  })
+  it('refuses a stored Azure address that is not an Azure host', async () => {
+    mocks.read.mockResolvedValue({ settings: { connections: [{ id: 'owned', providerType: 'azure', baseUrl: 'https://evil.example/openai/v1' }], models: [] }, credentials: { owned: 'azure-key' } })
+    mocks.request.mockClear()
+    const handler = await load({ connectionId: 'owned', deployments: ['gpt-4o'] })
+    await expect(handler(event())).rejects.toMatchObject({ statusCode: 502 })
+    expect(mocks.request).not.toHaveBeenCalled()
+  })
   it('discovers only candidate chat models and never returns credentials', async () => {
     mocks.request.mockResolvedValue({ data: [{ id: 'gpt-4.1' }, { id: 'text-embedding-3-small' }] })
     const handler = await load({ connectionId: 'owned' })

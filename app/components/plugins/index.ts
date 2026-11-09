@@ -2,9 +2,55 @@ import BarChartPlugin from '~/components/plugins/BarChartPlugin.vue'
 import LineChartPlugin from '~/components/plugins/LineChartPlugin.vue'
 import StatCardPlugin from '~/components/plugins/StatCardPlugin.vue'
 import TablePlugin from '~/components/plugins/TablePlugin.vue'
-import type { UIPluginDefinition } from '~/types/uiPlugin'
+import CatalogChartPlugin from '~/components/plugins/CatalogChartPlugin.vue'
+import type { PluginInputDefinition, UIPluginDefinition } from '~/types/uiPlugin'
+import { CHART_CATALOG, type CatalogChart } from '~/utils/charts/chart-catalog'
+import { CHART_SETTINGS, type ChartSetting } from '~/utils/charts/chart-settings'
 
-export const DEFAULT_UI_PLUGINS: UIPluginDefinition[] = [
+const catalogInput = (input: CatalogChart['inputs'][number]): PluginInputDefinition => ({
+  key: input.key,
+  label: input.key,
+  labelKey: `pages.dashboard.plugins.catalog.fields.${input.key}`,
+  type: 'string',
+  required: input.required,
+  ...(input.multiple ? { selectionMode: 'multiple' as const } : {}),
+  compatibleFieldTypes: input.types
+})
+
+const catalogPlugin = (chart: CatalogChart): UIPluginDefinition => ({
+  id: chart.id,
+  name: chart.name,
+  nameKey: `pages.dashboard.plugins.${chart.id}.name`,
+  description: chart.description,
+  descriptionKey: `pages.dashboard.plugins.${chart.id}.description`,
+  group: chart.group,
+  component: CatalogChartPlugin,
+  componentProps: { chartId: chart.id },
+  inputSchema: chart.inputs.map(catalogInput)
+})
+
+const settingKey = (key: string) => `pages.dashboard.plugins.catalog.settings.${key}`
+
+const settingInput = (setting: ChartSetting): PluginInputDefinition => ({
+  key: setting.key,
+  label: setting.label,
+  labelKey: `${settingKey(setting.key)}.label`,
+  type: 'string',
+  source: 'value',
+  control: setting.control,
+  section: setting.section,
+  span: setting.span,
+  visibleWhen: setting.visibleWhen,
+  min: setting.min,
+  max: setting.max,
+  options: setting.options?.map(option => ({
+    value: option.value,
+    label: option.label,
+    ...(option.plain ? {} : { labelKey: `${settingKey(setting.key)}.options.${option.value}` })
+  }))
+})
+
+const BASE_PLUGINS: UIPluginDefinition[] = [
   {
     id: 'table',
     name: 'Table',
@@ -21,6 +67,14 @@ export const DEFAULT_UI_PLUGINS: UIPluginDefinition[] = [
         descriptionKey: 'pages.dashboard.plugins.table.fields.visibleColumns.description',
         type: 'string',
         selectionMode: 'multiple'
+      },
+      {
+        key: 'formatColumns',
+        label: 'Columns to format',
+        labelKey: 'pages.dashboard.plugins.catalog.fields.formatColumns',
+        type: 'string',
+        selectionMode: 'multiple',
+        compatibleFieldTypes: ['number']
       }
     ]
   },
@@ -100,5 +154,11 @@ export const DEFAULT_UI_PLUGINS: UIPluginDefinition[] = [
         compatibleFieldTypes: ['string', 'number', 'date']
       }
     ]
-  }
+  },
+  ...CHART_CATALOG.map(catalogPlugin)
 ]
+
+export const DEFAULT_UI_PLUGINS: UIPluginDefinition[] = BASE_PLUGINS.map(plugin => ({
+  ...plugin,
+  inputSchema: [...plugin.inputSchema, ...(CHART_SETTINGS[plugin.id] ?? []).map(settingInput)]
+}))

@@ -1,3 +1,5 @@
+import type { DashboardStyle } from '../../shared/utils/dashboard-style-fields'
+import type { DashboardAppearance } from '../../shared/utils/dashboard-appearance'
 import type { AuthenticatedOrganizationContext } from './database-connections'
 
 export type { AuthenticatedOrganizationContext }
@@ -47,6 +49,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  appearance: DashboardAppearance
+  style: DashboardStyle
   widgetCount: number
   createdAt: string
   updatedAt: string
@@ -68,6 +72,8 @@ export interface EmbeddedDashboardWidget {
 export interface EmbeddedDashboardDetails {
   embedId: string
   dashboardName: string
+  appearance: DashboardAppearance
+  style: DashboardStyle
   updatedAt: string
   widgets: EmbeddedDashboardWidget[]
 }
@@ -79,6 +85,8 @@ export interface CreateDashboardInput {
 export interface SaveDashboardInput extends CreateDashboardInput {
   dashboardId: string
   embedEnabled: boolean
+  appearance?: DashboardAppearance
+  style?: DashboardStyle
   widgets: DashboardWidgetInput[]
 }
 

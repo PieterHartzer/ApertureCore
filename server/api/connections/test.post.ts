@@ -42,6 +42,7 @@ const ERROR_MESSAGE_KEYS: Record<
   connection_failed: 'connections.test.errors.connectionFailed',
   timeout: 'connections.test.errors.timeout',
   ssl_required: 'connections.test.errors.sslRequired',
+  privileged_role: 'connections.test.errors.privilegedRole',
   unexpected_error: 'connections.test.errors.unexpected'
 }
 
@@ -86,6 +87,7 @@ const isServiceErrorResponse = (
 const mapCodeToStatus = (code: Exclude<TestDatabaseConnectionResultCode, 'success'>): number => {
   switch (code) {
     case 'invalid_input':
+    case 'privileged_role':
     case 'unsupported_database_type':
     case 'ssl_required':
       return 400

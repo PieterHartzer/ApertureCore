@@ -151,8 +151,8 @@ describe('dashboard persistence service additional coverage', () => {
           y: 2,
           w: 2,
           h: 1,
-          minW: 4,
-          minH: 3,
+          minW: 2,
+          minH: 2,
           maxW: 8,
           maxH: 6
         },
@@ -178,6 +178,8 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: true,
+        appearance: 'default',
+        style: {},
         widgetCount: 2,
         createdAt: '2026-03-24T00:00:00.000Z',
         updatedAt: '2026-03-24T01:00:00.000Z',
@@ -192,8 +194,8 @@ describe('dashboard persistence service additional coverage', () => {
             layout: {
               w: 6,
               h: 4,
-              minW: 3,
-              minH: 3
+              minW: 2,
+              minH: 2
             },
             refreshIntervalSeconds: 60
           },
@@ -212,10 +214,10 @@ describe('dashboard persistence service additional coverage', () => {
             layout: {
               x: undefined,
               y: 2,
-              w: 4,
-              h: 3,
-              minW: 4,
-              minH: 3,
+              w: 2,
+              h: 2,
+              minW: 2,
+              minH: 2,
               maxW: 8,
               maxH: 6
             },
@@ -396,6 +398,8 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: false,
+        appearance: 'default',
+        style: {},
         widgetCount: 0,
         createdAt: '2026-03-24T00:00:00.000Z',
         updatedAt: '2026-03-24T01:00:00.000Z',
@@ -576,6 +580,8 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: false,
+        appearance: 'default',
+        style: {},
         widgetCount: 0,
         createdAt: '2026-03-24T00:00:00.000Z',
         updatedAt: '2026-03-24T01:00:00.000Z',
@@ -688,8 +694,8 @@ describe('dashboard persistence service additional coverage', () => {
           y: 1,
           w: 2,
           h: 2,
-          minW: 4,
-          minH: 3,
+          minW: 2,
+          minH: 2,
           maxW: 6,
           maxH: 5
         },
@@ -713,6 +719,8 @@ describe('dashboard persistence service additional coverage', () => {
       dashboard: {
         embedId: 'embed-1',
         dashboardName: 'Executive overview',
+        appearance: 'default',
+        style: {},
         updatedAt: '2026-03-24T01:00:00.000Z',
         widgets: [{
           id: 'widget-1',
@@ -724,10 +732,10 @@ describe('dashboard persistence service additional coverage', () => {
           layout: {
             x: 0,
             y: 1,
-            w: 4,
-            h: 3,
-            minW: 4,
-            minH: 3,
+            w: 2,
+            h: 2,
+            minW: 2,
+            minH: 2,
             maxW: 6,
             maxH: 5
           },

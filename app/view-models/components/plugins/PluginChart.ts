@@ -1,25 +1,8 @@
 import { defineComponent, type PropType } from 'vue'
 import type { EChartsOption } from 'echarts'
-import { BarChart, LineChart } from 'echarts/charts'
-import {
-  GridComponent,
-  LegendComponent,
-  TitleComponent,
-  TooltipComponent
-} from 'echarts/components'
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 
-use([
-  BarChart,
-  CanvasRenderer,
-  GridComponent,
-  LegendComponent,
-  LineChart,
-  TitleComponent,
-  TooltipComponent
-])
+import '~/utils/charts/register-echarts'
 
 export default defineComponent({
   components: {
@@ -33,6 +16,11 @@ export default defineComponent({
     heightClass: {
       type: String,
       default: 'h-full min-h-0'
+    },
+    // Redraws from scratch, so settings from a previous mapping cannot linger.
+    replace: {
+      type: Boolean,
+      default: false
     }
   },
   setup() {

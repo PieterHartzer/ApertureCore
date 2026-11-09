@@ -5,7 +5,7 @@ export const validateLMStudioUrl = (value: string) => {
   return url.toString().replace(/\/$/, '')
 }
 export class AIProviderRequestError extends Error {}
-export const providerRequest = async (baseUrl: string, path: string, apiKey = '', body?: unknown, signal?: AbortSignal) => {
+export const providerRequest = async (baseUrl: string, path: string, apiKey = '', body?: unknown, signal?: AbortSignal, keyHeader: 'bearer' | 'api-key' = 'bearer') => {
   const controller = new AbortController()
   const cancel = () => controller.abort()
   signal?.addEventListener('abort', cancel, { once: true })
@@ -14,7 +14,7 @@ export const providerRequest = async (baseUrl: string, path: string, apiKey = ''
   try {
     const response = await fetch(`${baseUrl}/${path}`, {
       method: body ? 'POST' : 'GET',
-      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(apiKey ? (keyHeader === 'api-key' ? { 'api-key': apiKey } : { Authorization: `Bearer ${apiKey}` }) : {}) },
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
       credentials: 'omit', redirect: 'error'
@@ -28,7 +28,7 @@ export const providerRequest = async (baseUrl: string, path: string, apiKey = ''
   } catch (cause) {
     if (signal?.aborted) throw new AIProviderRequestError('Generation cancelled.')
     if (controller.signal.aborted) throw new AIProviderRequestError('Provider request timed out. Check the server and retry.')
-    if (cause instanceof TypeError) throw new AIProviderRequestError('Cannot connect to the AI server. For LM Studio, start the local server, enable CORS for this app, and allow local network access in your browser. HTTPS pages may block HTTP servers; use a secure endpoint when required.')
+    if (cause instanceof TypeError) throw new AIProviderRequestError('Cannot connect to the AI server. Check that it is running, enable CORS for this app, and use HTTPS when this page does.')
     if (cause instanceof AIProviderRequestError) throw cause
     throw new AIProviderRequestError('The AI server returned an invalid response. Check the endpoint and model, then retry.')
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel) }

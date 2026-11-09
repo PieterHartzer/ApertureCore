@@ -1,22 +1,39 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted } from 'vue'
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
+import WidgetSkeleton from '~/components/dashboard/WidgetSkeleton.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
 import { useEmbeddedDashboard } from '~/composables/dashboard/useEmbeddedDashboard'
 import { useEmbeddedDashboardQueryResults } from '~/composables/dashboard/useEmbeddedDashboardQueryResults'
 import type { EmbeddedDashboardWidget } from '~/types/dashboards'
+import { useUIPlugins } from '~/composables/useUIPlugins'
+import { provideDashboardChartStyle } from '~/composables/useDashboardChartStyle'
+import { buildDashboardCss, getDashboardChartStyle } from '#shared/utils/dashboard-style'
+import { removeWidgetTypeFromTitle } from '~/types/dashboard-widgets'
 import { translateMessage } from '~/utils/translateMessage'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
 
 export default defineComponent({
   components: {
+    WidgetSkeleton,
     AppAlert,
     PluginRenderer,
     WidgetGrid
   },
   async setup() {
+    // useHead must run before the first await in this setup.
+    const appearance = ref('default')
+    const savedStyle = ref<unknown>({})
+
+    provideDashboardChartStyle(computed(() => getDashboardChartStyle(savedStyle.value)))
+
+    useHead({
+      htmlAttrs: { 'data-appearance': appearance },
+      style: computed(() => [{ key: 'dashboard-style', textContent: buildDashboardCss(savedStyle.value) }])
+    })
+
     const { t } = useI18n()
     const route = useRoute()
     const requestFetch = import.meta.server
@@ -32,6 +49,19 @@ export default defineComponent({
 
     let refreshTimer: ReturnType<typeof setInterval> | null = null
 
+    // Lifecycle hooks must be registered before the first await in this setup.
+    onMounted(() => {
+      refreshTimer = setInterval(() => {
+        void refreshWidgets()
+      }, DASHBOARD_REFRESH_TICK_MS)
+    })
+
+    onBeforeUnmount(() => {
+      if (refreshTimer) {
+        clearInterval(refreshTimer)
+      }
+    })
+
     const { data: dashboardResponse, status } = await useAsyncData(
       () => `embedded-dashboard:${embedId.value}`,
       () => getDashboard(embedId.value),
@@ -45,6 +75,11 @@ export default defineComponent({
         ? dashboardResponse.value.dashboard ?? null
         : null
     })
+
+    watch(dashboard, (value) => {
+      appearance.value = value?.appearance ?? 'default'
+      savedStyle.value = value?.style ?? {}
+    }, { immediate: true })
 
     const loadErrorMessage = computed(() => {
       if (!dashboardResponse.value || dashboardResponse.value.ok) {
@@ -81,6 +116,15 @@ export default defineComponent({
         queryId: ''
       }))
     })
+
+    const { getPlugin } = useUIPlugins()
+
+    const getWidgetTitle = (widget: EmbeddedDashboardWidget) => {
+      const plugin = getPlugin(widget.pluginId)
+      const names = plugin ? [plugin.nameKey ? t(plugin.nameKey) : plugin.name, plugin.name] : []
+
+      return removeWidgetTypeFromTitle(widget.title, names) || t('pages.dashboard.widgets.card.fallbackTitle')
+    }
 
     const getWidgetState = (widget: EmbeddedDashboardWidget) => {
       if (!dashboard.value) {
@@ -153,19 +197,8 @@ export default defineComponent({
       }
     )
 
-    onMounted(() => {
-      refreshTimer = setInterval(() => {
-        void refreshWidgets()
-      }, DASHBOARD_REFRESH_TICK_MS)
-    })
-
-    onBeforeUnmount(() => {
-      if (refreshTimer) {
-        clearInterval(refreshTimer)
-      }
-    })
-
     return {
+      getWidgetTitle,
       dashboard,
       getWidgetErrorMessage,
       getWidgetInlineErrorMessage,

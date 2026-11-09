@@ -5,6 +5,7 @@ import { encryptAICredentials, decryptAICredentials } from '../utils/ai-secrets'
 import type { AuthenticatedOrganizationContext } from '../types/database-connections'
 import type { AISettings, AIProviderType } from '../../shared/types/ai'
 import { validateLMStudioUrl } from '../../shared/utils/ai-provider'
+import { CLOUD_AI_PROVIDERS, isCloudAIProvider, normalizeAzureEndpoint } from '../../shared/utils/ai-provider-catalog'
 const emptySettings = (): AISettings => ({ connections: [], models: [] })
 export const readAISettings = async (owner: AuthenticatedOrganizationContext) => {
   const row = await getAppDatabase().selectFrom('app_ai_settings').selectAll()
@@ -23,16 +24,18 @@ export interface AISettingsAction {
   baseUrl?: string
   apiKey?: string
   modelIds?: string[]
+  // Makes modelIds the full list for the connection, dropping models it no longer offers.
+  replace?: boolean
 }
 export const applyAISettingsAction = (settings: AISettings, credentials: Record<string, string>, input: AISettingsAction) => {
   if (input.action === 'connection') {
-    if (input.providerType !== 'openai' && input.providerType !== 'lmstudio') throw createError({ statusCode: 400, statusMessage: 'Choose a supported provider.' })
+    if (!isCloudAIProvider(input.providerType) && input.providerType !== 'lmstudio') throw createError({ statusCode: 400, statusMessage: 'Choose a supported provider.' })
     const existing = settings.connections.find(connection => connection.id === input.id)
     if (input.id && !existing) throw createError({ statusCode: 404, statusMessage: 'Connection not found.' })
     const id = existing?.id ?? randomUUID()
     const apiKey = input.apiKey?.trim()
     if (apiKey && (apiKey.length > 4096 || /[\r\n]/.test(apiKey))) throw createError({ statusCode: 400, statusMessage: 'Invalid API key.' })
-    if (input.providerType === 'openai' && !apiKey && !credentials[id]) throw createError({ statusCode: 400, statusMessage: 'An OpenAI API key is required.' })
+    if (isCloudAIProvider(input.providerType) && !apiKey && !credentials[id]) throw createError({ statusCode: 400, statusMessage: 'An API key is required for this provider.' })
     // Local credentials are session-only: never round-trip a stored key to the browser.
     if (input.providerType === 'lmstudio' && apiKey) throw createError({ statusCode: 400, statusMessage: 'Enter LM Studio keys in the browser session only.' })
     if (apiKey) credentials[id] = apiKey
@@ -41,8 +44,13 @@ export const applyAISettingsAction = (settings: AISettings, credentials: Record<
       try { localUrl = validateLMStudioUrl(input.baseUrl ?? '') }
       catch { throw createError({ statusCode: 400, statusMessage: 'Enter a valid HTTP or HTTPS LM Studio URL without credentials, query parameters or fragments.' }) }
     }
+    let azureUrl = ''
+    if (input.providerType === 'azure') {
+      try { azureUrl = normalizeAzureEndpoint(input.baseUrl ?? '') }
+      catch { throw createError({ statusCode: 400, statusMessage: 'Enter your Azure endpoint, such as https://your-resource.openai.azure.com.' }) }
+    }
     const now = new Date().toISOString()
-    const connection = { id, name: text(input.name), providerType: input.providerType, baseUrl: input.providerType === 'openai' ? 'https://api.openai.com/v1' : localUrl, hasApiKey: !!credentials[id], createdAt: existing?.createdAt ?? now, updatedAt: now }
+    const connection = { id, name: text(input.name), providerType: input.providerType, baseUrl: input.providerType === 'azure' ? azureUrl : isCloudAIProvider(input.providerType) ? CLOUD_AI_PROVIDERS[input.providerType].baseUrl : localUrl, hasApiKey: !!credentials[id], createdAt: existing?.createdAt ?? now, updatedAt: now }
     if (existing && existing.providerType !== connection.providerType) throw createError({ statusCode: 400, statusMessage: 'Provider type cannot be changed.' })
     settings.connections = [...settings.connections.filter(item => item.id !== id), connection]
     return id
@@ -57,6 +65,11 @@ export const applyAISettingsAction = (settings: AISettings, credentials: Record<
       if (providerType === 'webllm' && !/^Qwen2\.5-Coder-(0\.5|1\.5|3|7)B-Instruct-q4f(16|32)_1-MLC$/.test(modelId)) throw createError({ statusCode: 400, statusMessage: 'Choose a supported browser model from the catalogue.' })
       const providerConnectionId = connection?.id ?? null
       if (!settings.models.some(model => model.providerConnectionId === providerConnectionId && model.modelId === modelId)) settings.models.push({ id: randomUUID(), providerConnectionId, providerType, modelId, displayName: modelId, modelType: 'chat', status: 'unknown', isDefault: settings.models.length === 0, capabilities: ['chat'] })
+    }
+    if (input.replace && connection) {
+      const offered = new Set(input.modelIds)
+      settings.models = settings.models.filter(model => model.providerConnectionId !== connection.id || offered.has(model.modelId))
+      if (settings.models.length && !settings.models.some(model => model.isDefault)) settings.models[0]!.isDefault = true
     }
     return
   }

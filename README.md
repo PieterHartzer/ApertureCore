@@ -38,6 +38,14 @@ pnpm test:coverage
 Coverage output is written to `coverage/`, including the HTML report at
 `coverage/index.html`.
 
+Adapter integration tests run against real databases in Docker:
+
+```bash
+docker compose -f docker-compose.test-db.yml up -d --wait
+RUN_DB_INTEGRATION=1 pnpm exec vitest run tests/integration
+docker compose -f docker-compose.test-db.yml down -v
+```
+
 ## Quality Checks
 
 Run the full local quality gate with:
@@ -140,6 +148,32 @@ as well:
 NUXT_OIDC_PROVIDERS_OIDC_ISSUER=https://your-provider.example.com
 NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI=https://your-provider.example.com/path/to/jwks
 ```
+
+## Connecting Databases
+
+PostgreSQL, MySQL, MariaDB (choose MySQL) and Microsoft SQL Server are supported.
+
+Every connection must use a dedicated read-only login. AutoDash checks the login's privileges when a connection is tested and again on every query, and refuses logins that can do more than read. On SQL Server this check is the main protection, because SQL Server has no read-only transaction.
+
+```sql
+-- PostgreSQL
+CREATE ROLE autodash_reader LOGIN PASSWORD 'change-me';
+GRANT USAGE ON SCHEMA public TO autodash_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO autodash_reader;
+
+-- MySQL / MariaDB
+CREATE USER 'autodash_reader'@'%' IDENTIFIED BY 'change-me';
+GRANT SELECT ON your_database.* TO 'autodash_reader'@'%';
+
+-- SQL Server (run the user statements in your database)
+CREATE LOGIN autodash_reader WITH PASSWORD = 'change-me';
+CREATE USER autodash_reader FOR LOGIN autodash_reader;
+ALTER ROLE db_datareader ADD MEMBER autodash_reader;
+```
+
+**Require SSL** verifies the server certificate and host name. For a private certificate authority, or a self-signed server certificate, point `NODE_EXTRA_CA_CERTS` at the PEM file when starting the app.
+
+Hosts in link-local ranges (including cloud metadata addresses) and the application's own database are refused.
 
 ## Docker Workflows
 

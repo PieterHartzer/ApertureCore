@@ -11,16 +11,16 @@ export default component
   >
     <div
       v-if="!xField || !yField"
-      class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+      class="plugin-no-data"
     >
-      {{ t('pages.dashboard.plugins.line-chart.emptyMapping') }}
+      <span class="plugin-no-data-label">{{ t('pages.dashboard.plugins.line-chart.emptyMapping') }}</span>
     </div>
 
     <div
       v-else-if="chartRows.length === 0"
-      class="flex h-full min-h-0 items-center justify-center rounded-xl border border-dashed border-default px-6 py-10 text-sm text-muted"
+      class="plugin-no-data"
     >
-      {{ t('pages.dashboard.plugins.line-chart.emptyRows') }}
+      <span class="plugin-no-data-label">{{ t('pages.dashboard.plugins.line-chart.emptyRows') }}</span>
     </div>
 
     <PluginChart

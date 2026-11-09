@@ -104,14 +104,14 @@ export const useLocalSqlModel = () => {
     }
   }
 
-  const generate = async (schema: string, question: string, databaseType: AISqlDialect = 'postgres') => {
+  const generate = async (schema: string, question: string, databaseType: AISqlDialect = 'postgres', language?: string) => {
     if (!ready.value || !engine || generating.value) throw new Error('Load a model first.')
     const current = operation
     generating.value = true
     error.value = ''
     try {
       const reply = await engine.chat.completions.create({
-        messages: buildSqlPrompt(schema, question, { maxInputCharacters: WEBLLM_SQL_INPUT_CHARACTER_LIMIT, databaseType }), temperature: 0, max_tokens: 1024
+        messages: buildSqlPrompt(schema, question, { maxInputCharacters: WEBLLM_SQL_INPUT_CHARACTER_LIMIT, databaseType, language }), temperature: 0, max_tokens: 1024
       })
       if (disposed || current !== operation) throw new Error('Generation cancelled.')
       if (reply.choices[0]?.finish_reason === 'length') throw new Error('The generated SQL was cut short. Ask a simpler question.')

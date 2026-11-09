@@ -16,6 +16,10 @@ vi.mock('../../../../server/services/database/factory', () => ({
 
 describe('database service facade', () => {
   beforeEach(() => {
+    vi.stubEnv('ALLOW_PRIVATE_DATABASE_HOSTS', 'true')
+  })
+
+  beforeEach(() => {
     vi.clearAllMocks()
   })
 

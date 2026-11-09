@@ -96,7 +96,7 @@ describe('validateTestDatabaseConnectionInput', () => {
       'database_type_invalid',
     ],
     [
-      { ...validInput, databaseType: 'mysql' },
+      { ...validInput, databaseType: 'oracle' },
       'database_type_invalid',
       'databaseType',
       'database_type_invalid',

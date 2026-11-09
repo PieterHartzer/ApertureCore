@@ -6,7 +6,7 @@ export default component
 
 <template>
   <USelectMenu
-    class="min-h-11"
+    :class="compact ? '' : 'min-h-11'"
     :aria-label="$t('common.labels.locale')"
     :model-value="locale"
     :items="availableLocales"
@@ -15,7 +15,7 @@ export default component
     :search-input="false"
     leading-icon="i-lucide-languages"
     size="sm"
-    variant="outline"
+    :variant="compact ? 'ghost' : 'outline'"
     @update:model-value="updateLocale"
   />
 </template>

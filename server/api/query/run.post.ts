@@ -6,11 +6,13 @@ import type {
 } from '../../types/saved-sql-queries'
 
 import { getAuthenticatedOrganizationContext } from '../../utils/auth-organization'
+import { PRIVILEGED_ROLE_DETAILS } from '../../services/database/shared'
 import { executeQuery } from '../../utils/database/executeQuery'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
 import {
   buildQueryResultEtag,
-  isCachedQueryResult,
+  buildStoredQueryResult,
+  readFreshQueryResult,
   matchesIfNoneMatch,
   pickRequestHeader,
   type CachedQueryResult
@@ -182,9 +184,18 @@ export default defineEventHandler(async (event) => {
       runtimeConfig.queryCacheTtlSeconds,
       DEFAULT_QUERY_CACHE_TTL_SECONDS
     )
-    const cachedResponse = await cache.getItem<CachedQueryResult>(cacheKey)
+    // A forced refresh drops the entry first, so a query that now fails cannot
+    // be covered by its old rows on the next scheduled load.
+    const storedResponse = validationResult.data.force
+      ? null
+      : await cache.getItem<unknown>(cacheKey)
+    const cachedResponse = readFreshQueryResult(storedResponse)
 
-    if (isCachedQueryResult(cachedResponse)) {
+    if (validationResult.data.force || (storedResponse !== null && !cachedResponse)) {
+      await cache.removeItem(cacheKey)
+    }
+
+    if (cachedResponse) {
       setResponseHeader(event, 'etag', cachedResponse.etag)
 
       if (matchesIfNoneMatch(ifNoneMatch, cachedResponse.etag)) {
@@ -201,6 +212,14 @@ export default defineEventHandler(async (event) => {
     if (!result.ok) {
       setResponseStatus(event, mapCodeToStatus(result.code))
 
+      if (result.details === PRIVILEGED_ROLE_DETAILS) {
+        return {
+          ...buildErrorResponse(result.code),
+          message: 'queries.test.errors.privilegedLogin',
+          messageKey: 'queries.test.errors.privilegedLogin'
+        }
+      }
+
       return buildErrorResponse(result.code)
     }
 
@@ -213,7 +232,7 @@ export default defineEventHandler(async (event) => {
       etag: buildQueryResultEtag(responseWithoutEtag)
     }
 
-    await cache.setItem(cacheKey, response, {
+    await cache.setItem(cacheKey, buildStoredQueryResult(response, ttlSeconds), {
       ttl: ttlSeconds
     })
 

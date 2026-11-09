@@ -9,6 +9,7 @@ export default component
     <VChart
       autoresize
       :option="option"
+      :update-options="replace ? { notMerge: true } : undefined"
       class="h-full min-h-0 w-full"
       :class="heightClass"
     />

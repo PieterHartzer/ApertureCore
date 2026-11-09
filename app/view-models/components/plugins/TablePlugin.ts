@@ -2,6 +2,8 @@ import { computed, defineComponent, type PropType } from 'vue'
 
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 
+import { createValueFormatter, getTextStyles, hasValueFormat, overrideLabel } from '~/utils/charts/chart-settings'
+
 export default defineComponent({
   props: {
     data: {
@@ -18,7 +20,7 @@ export default defineComponent({
     }
   },
   setup(props) {
-    const { t } = useI18n()
+    const { locale, t } = useI18n()
 
     const tableColumns = computed(() => {
       const availableColumns = props.columns.length > 0
@@ -34,15 +36,34 @@ export default defineComponent({
         ? availableColumns.filter((columnName) => selectedColumnSet.has(columnName))
         : availableColumns
 
-      return columnNames.map((columnName) => ({
-        accessorKey: columnName,
-        header: columnName
-      }))
+      const formatter = createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value)
+      const formatColumns = Array.isArray(props.config.formatColumns) ? props.config.formatColumns : []
+      const isFormatted = (columnName: string) => formatColumns.length === 0 || formatColumns.includes(columnName)
+      const formatCell = (value: unknown) => value === null || value === undefined ? '' : formatter.full(Number(value))
+
+      return columnNames.map((columnName) => {
+        const values = props.data.map((row) => row[columnName]).filter((value) => value !== null)
+        const numeric = values.length > 0 && values.every((value) => {
+          return typeof value === 'number' || (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value))
+        })
+
+        return {
+          accessorKey: columnName,
+          header: overrideLabel(props.config, columnName),
+          ...(numeric ? { meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } } } : {}),
+          ...(numeric && hasValueFormat(props.config) && isFormatted(columnName)
+            ? { cell: ({ getValue }: { getValue: () => unknown }) => formatCell(getValue()) }
+            : {})
+        }
+      })
     })
+
+    const tableTextStyle = computed(() => getTextStyles(props.config).table)
 
     return {
       t,
-      tableColumns
+      tableColumns,
+      tableTextStyle
     }
   }
 })

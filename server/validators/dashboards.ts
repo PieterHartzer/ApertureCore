@@ -1,3 +1,5 @@
+import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
+import { isDashboardAppearance } from '../../shared/utils/dashboard-appearance'
 import type {
   CreateDashboardInput,
   CreateDashboardValidationError,
@@ -23,8 +25,8 @@ import { isUuid } from '../utils/is-uuid'
 
 const DEFAULT_WIDGET_WIDTH = 6
 const DEFAULT_WIDGET_HEIGHT = 4
-const DEFAULT_WIDGET_MIN_WIDTH = 3
-const DEFAULT_WIDGET_MIN_HEIGHT = 3
+const DEFAULT_WIDGET_MIN_WIDTH = 2
+const DEFAULT_WIDGET_MIN_HEIGHT = 2
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -141,8 +143,9 @@ const normalizeWidgetLayout = (
     return null
   }
 
-  const minW = parsePositiveInteger(value.minW) ?? DEFAULT_WIDGET_MIN_WIDTH
-  const minH = parsePositiveInteger(value.minH) ?? DEFAULT_WIDGET_MIN_HEIGHT
+  // Widgets saved with a larger old minimum must not be forced back up.
+  const minW = Math.min(parsePositiveInteger(value.minW) ?? DEFAULT_WIDGET_MIN_WIDTH, DEFAULT_WIDGET_MIN_WIDTH)
+  const minH = Math.min(parsePositiveInteger(value.minH) ?? DEFAULT_WIDGET_MIN_HEIGHT, DEFAULT_WIDGET_MIN_HEIGHT)
   const w = Math.max(
     parsePositiveInteger(value.w) ?? DEFAULT_WIDGET_WIDTH,
     minW
@@ -449,6 +452,22 @@ export const validateSaveDashboardInput = (
     )
   }
 
+  if (value.appearance !== undefined && !isDashboardAppearance(value.appearance)) {
+    return createSaveDashboardValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
+  const style = value.style === undefined ? null : normalizeDashboardStyle(value.style)
+
+  if (style?.invalid) {
+    return createSaveDashboardValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
   if (!Array.isArray(value.widgets)) {
     return createSaveDashboardValidationError(
       'widgets_invalid',
@@ -481,6 +500,8 @@ export const validateSaveDashboardInput = (
     dashboardId: dashboardIdValidation.data.dashboardId,
     dashboardName,
     embedEnabled: value.embedEnabled,
+    ...(value.appearance === undefined ? {} : { appearance: value.appearance }),
+    ...(style ? { style: style.style } : {}),
     widgets
   }
 

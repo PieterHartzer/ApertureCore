@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  removeWidgetTypeFromTitle,
   createDashboardWidget,
   createDashboardWidgetDraftFromWidget,
   createEmptyDashboardWidgetDraft,
@@ -10,6 +11,14 @@ import {
   updateDashboardWidget,
   updateDashboardWidgetLayout
 } from '../../../app/types/dashboard-widgets'
+
+describe('widget titles', () => {
+  it('removes only a suffix matching the widget type', () => {
+    expect(removeWidgetTypeFromTitle('Total Expenses · Stat card', ['Stat card'])).toBe('Total Expenses')
+    expect(removeWidgetTypeFromTitle('Sales · Q1', ['Stat card'])).toBe('Sales · Q1')
+    expect(removeWidgetTypeFromTitle(' · Stat card', ['Stat card'])).toBe(' · Stat card')
+  })
+})
 
 describe('dashboard widget helpers', () => {
   it('creates a blank widget draft', () => {
@@ -29,8 +38,8 @@ describe('dashboard widget helpers', () => {
       y: undefined,
       w: 6,
       h: 4,
-      minW: 3,
-      minH: 3
+      minW: 2,
+      minH: 2
     })
 
     expect(normalizeDashboardWidgetLayout({
@@ -38,17 +47,19 @@ describe('dashboard widget helpers', () => {
       y: 2,
       w: 1,
       h: 2,
-      minW: 4,
-      minH: 5,
+      minW: 2,
+      minH: 2,
       maxW: 3,
       maxH: 4
     })).toEqual({
       x: undefined,
       y: 2,
-      w: 4,
-      h: 5,
-      minW: 4,
-      minH: 5
+      w: 2,
+      h: 2,
+      minW: 2,
+      minH: 2,
+      maxW: 3,
+      maxH: 4
     })
   })
 
@@ -209,8 +220,8 @@ describe('dashboard widget helpers', () => {
         y: undefined,
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 30
     })
@@ -236,8 +247,8 @@ describe('dashboard widget helpers', () => {
       y: undefined,
       w: 6,
       h: 4,
-      minW: 3,
-      minH: 3
+      minW: 2,
+      minH: 2
     })
   })
 
@@ -256,8 +267,8 @@ describe('dashboard widget helpers', () => {
         y: 1,
         w: 8,
         h: 5,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 30
     }
@@ -292,8 +303,8 @@ describe('dashboard widget helpers', () => {
         y: 0,
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 30
     }
@@ -324,8 +335,8 @@ describe('dashboard widget helpers', () => {
         y: 0,
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 60
     })
@@ -342,8 +353,8 @@ describe('dashboard widget helpers', () => {
       layout: {
         w: 6,
         h: 4,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 30
     }
@@ -365,8 +376,8 @@ describe('dashboard widget helpers', () => {
         y: 3,
         w: 8,
         h: 5,
-        minW: 3,
-        minH: 3
+        minW: 2,
+        minH: 2
       },
       refreshIntervalSeconds: 30
     })

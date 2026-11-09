@@ -90,6 +90,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
+  colorMode: { preference: 'dark', fallback: 'dark' },
   devServer: {
     host: process.env.NUXT_HOST || undefined,
     port: nuxtPort
@@ -166,6 +167,13 @@ export default defineNuxtConfig({
         tokenUrl: oidcTokenUrl,
         userInfoUrl: oidcUserInfoUrl,
         logoutUrl: oidcLogoutUrl,
+        // Return to the app after sign-out, which leads to the sign-in form and
+        // then the dashboard. The provider must have this address registered.
+        logoutRedirectUri: `${publicAppOrigin}/`,
+        logoutRedirectParameterName: 'post_logout_redirect_uri',
+        additionalLogoutParameters: {
+          clientId: process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID || ''
+        },
         openIdConfiguration: oidcOpenIdConfiguration,
         redirectUri:
           process.env.NUXT_OIDC_PROVIDERS_OIDC_REDIRECT_URI ||

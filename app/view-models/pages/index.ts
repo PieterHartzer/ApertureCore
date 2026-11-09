@@ -1,8 +1,17 @@
+import AppEmptyState from '~/components/ui/AppEmptyState.vue'
+import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
+import { MAX_THRESHOLD_STEPS, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
+import GettingStarted from '~/components/dashboard/GettingStarted.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import DeleteDashboardDialog from '~/components/dashboard/DeleteDashboardDialog.vue'
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
+import WidgetSkeleton from '~/components/dashboard/WidgetSkeleton.vue'
+import DashboardStyleEditor from '~/components/dashboard/DashboardStyleEditor.vue'
+import { provideDashboardChartStyle } from '~/composables/useDashboardChartStyle'
+import { buildDashboardCss, getDashboardChartStyle } from '#shared/utils/dashboard-style'
+import type { DashboardStyle } from '#shared/utils/dashboard-style-fields'
 import AppAlert from '~/components/ui/AppAlert.vue'
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
 import { useDashboardQueryResults } from '~/composables/dashboard/useDashboardQueryResults'
@@ -32,7 +41,8 @@ import {
   isDashboardWidgetPluginConfigComplete,
   normalizeDashboardWidgetPluginConfig,
   updateDashboardWidget,
-  updateDashboardWidgetLayout
+  updateDashboardWidgetLayout,
+  removeWidgetTypeFromTitle
 } from '~/types/dashboard-widgets'
 import type { SavedSqlQuerySummary } from '~/types/saved-sql-queries'
 import {
@@ -46,8 +56,8 @@ import {
 import { translateMessage } from '~/utils/translateMessage'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
+const WIDGET_REFRESH_INTERVALS = [60, 300, 900, 3600]
 const DASHBOARD_LAYOUT_SAVE_DEBOUNCE_MS = 800
-const WIDGET_REFRESH_INTERVAL_OPTIONS = [15, 30, 60, 300]
 
 type PluginInputSelectValue = Exclude<
   DashboardWidgetPluginConfigPrimitive,
@@ -61,14 +71,18 @@ interface PluginInputSelectOption {
 
 export default defineComponent({
   components: {
+    WidgetSkeleton,
+    DashboardStyleEditor,
     AppAlert,
+    AppEmptyState,
+    GettingStarted,
     AppLocaleSelect,
     DeleteDashboardDialog,
     PluginRenderer,
     WidgetGrid
   },
   async setup() {
-    const { t, te } = useI18n()
+    const { locale, t, te } = useI18n()
     const { success, error } = useNotifications()
     const requestFetch = import.meta.server
       ? useRequestFetch()
@@ -111,8 +125,34 @@ export default defineComponent({
     const createDashboardErrorMessage = ref('')
     const dashboardSettingsInput = ref({
       dashboardName: '',
-      embedEnabled: false
+      embedEnabled: false,
+      appearance: DEFAULT_DASHBOARD_APPEARANCE as DashboardAppearance
     })
+
+    const appearanceOptions = DASHBOARD_APPEARANCES
+
+    // useHead must run before the first await in this setup.
+    // The dialog previews its selection before the dashboard is saved.
+    const activeAppearance = computed(() => {
+      return isDashboardSettingsOpen.value
+        ? dashboardSettingsInput.value.appearance
+        : selectedDashboard.value?.appearance ?? DEFAULT_DASHBOARD_APPEARANCE
+    })
+
+    const isStyleEditorOpen = ref(false)
+    const isSavingStyle = ref(false)
+    const styleDraft = ref<DashboardStyle>({})
+    // The panel previews its draft live; closing it falls back to the saved style.
+    const activeStyle = computed(() => isStyleEditorOpen.value ? styleDraft.value : selectedDashboard.value?.style ?? {})
+    const dashboardCss = computed(() => buildDashboardCss(activeStyle.value))
+
+    provideDashboardChartStyle(computed(() => getDashboardChartStyle(activeStyle.value)))
+
+    useHead({
+      htmlAttrs: { 'data-appearance': activeAppearance },
+      style: computed(() => [{ key: 'dashboard-style', textContent: dashboardCss.value }])
+    })
+
     const dashboardSettingsErrorMessage = ref('')
     const deleteDashboardErrorMessage = ref('')
 
@@ -120,6 +160,23 @@ export default defineComponent({
     let scheduledDashboardSave: ReturnType<typeof setTimeout> | null = null
     let dashboardSavePromise: Promise<boolean> | null = null
     let dashboardSaveQueued = false
+
+    // Lifecycle hooks must be registered before the first await in this setup.
+    onMounted(() => {
+      refreshTimer = setInterval(() => {
+        void refreshWidgets()
+      }, DASHBOARD_REFRESH_TICK_MS)
+    })
+
+    onBeforeUnmount(() => {
+      if (refreshTimer) {
+        clearInterval(refreshTimer)
+      }
+
+      if (scheduledDashboardSave) {
+        clearTimeout(scheduledDashboardSave)
+      }
+    })
 
     const { data: queryListResponse, status: queryListStatus } = await useAsyncData(
       'dashboard-saved-sql-queries',
@@ -171,19 +228,17 @@ export default defineComponent({
     })
 
     const pluginOptions = computed(() => {
-      return pluginDefinitions.value.map((plugin) => ({
-        label: getPluginDefinitionName(plugin),
-        value: plugin.id
-      }))
+      return pluginDefinitions.value
+        .map((plugin) => ({ label: getPluginDefinitionName(plugin), value: plugin.id }))
+        .sort((left, right) => left.label.localeCompare(right.label, locale.value === 'pseudo' ? 'en' : locale.value))
     })
 
     const refreshIntervalOptions = computed(() => {
-      return WIDGET_REFRESH_INTERVAL_OPTIONS.map((intervalSeconds) => ({
-        label: t('pages.dashboard.builder.refresh.option', {
-          seconds: intervalSeconds
-        }),
-        value: intervalSeconds
-      }))
+      return WIDGET_REFRESH_INTERVALS
+        .map((intervalSeconds) => ({
+          label: t(`pages.dashboard.builder.refresh.every${intervalSeconds}`),
+          value: intervalSeconds
+        }))
     })
 
     const selectedQuery = computed(() => {
@@ -280,6 +335,13 @@ export default defineComponent({
       )
     })
 
+    // Widgets saved with an interval that is no longer offered move to the next one up.
+    watch(() => draft.value.refreshIntervalSeconds, (current) => {
+      if (!WIDGET_REFRESH_INTERVALS.includes(current)) {
+        draft.value.refreshIntervalSeconds = WIDGET_REFRESH_INTERVALS.find(interval => interval > current) ?? 3600
+      }
+    })
+
     const builderTitle = computed(() => {
       return isEditingWidget.value
         ? t('pages.dashboard.builder.editTitle')
@@ -343,7 +405,7 @@ export default defineComponent({
         return t('pages.dashboard.status.saved')
       }
 
-      return t('pages.dashboard.status.ready')
+      return isDashboardEditing.value ? t('pages.dashboard.status.ready') : ''
     })
 
     const dashboardEmbedUrl = computed(() => {
@@ -356,6 +418,16 @@ export default defineComponent({
         requestUrl.origin
       ).toString()
     })
+
+    const cleanWidgetTitle = (widget: DashboardWidget) => {
+      const plugin = getPlugin(widget.pluginId)
+
+      return removeWidgetTypeFromTitle(widget.title, plugin ? [getPluginDefinitionName(plugin), plugin.name] : [])
+    }
+
+    const getWidgetTitle = (widget: DashboardWidget) => {
+      return cleanWidgetTitle(widget) || t('pages.dashboard.widgets.card.fallbackTitle')
+    }
 
     const getPluginLabel = (pluginId: string) => {
       const plugin = getPlugin(pluginId)
@@ -499,6 +571,158 @@ export default defineComponent({
       }))
     }
 
+    const pluginFieldInputs = computed(() => {
+      return selectedPlugin.value?.inputSchema.filter(input => getUIPluginInputSource(input) !== 'value') ?? []
+    })
+
+    const pluginSettingSections = computed(() => {
+      const inputs = (selectedPlugin.value?.inputSchema ?? []).filter((input) => {
+        if (getUIPluginInputSource(input) !== 'value') return false
+
+        const condition = input.visibleWhen
+
+        return !condition || condition.values.includes(String(draft.value.pluginConfig[condition.key] ?? ''))
+      })
+
+      return ['format', 'text', 'thresholds', 'range', 'appearance', 'labels', 'advanced'].flatMap((id) => {
+        const sectionInputs = inputs.filter(input => input.section === id)
+
+        return sectionInputs.length
+          ? [{ id, title: t(`pages.dashboard.plugins.catalog.sections.${id}`), inputs: sectionInputs }]
+          : []
+      })
+    })
+
+    const getSettingValue = (key: string) => {
+      const value = draft.value.pluginConfig[key]
+
+      return value === null || value === undefined || Array.isArray(value) ? undefined : value
+    }
+
+    const setSettingValue = (key: string, value: unknown) => {
+      draft.value.pluginConfig[key] = (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') ? value : null
+    }
+
+    const setNumberSetting = (key: string, value: unknown) => {
+      const number = value === '' || value === null || value === undefined ? Number.NaN : Number(value)
+
+      setSettingValue(key, Number.isFinite(number) ? number : null)
+    }
+
+    const SETTING_SPAN_CLASSES = {
+      full: 'col-span-6',
+      half: 'col-span-6 sm:col-span-3',
+      third: 'col-span-6 sm:col-span-2'
+    }
+
+    // Without its currency neighbour, the format picker takes the whole row.
+    const getSettingSpanClass = (input: PluginInputDefinition) => {
+      const alone = input.key === 'valueFormat' && draft.value.pluginConfig.valueFormat !== 'currency'
+
+      return SETTING_SPAN_CLASSES[alone ? 'full' : input.span ?? 'half']
+    }
+
+    const advancedOptionsInvalid = computed(() => parseAdvancedOptions(draft.value.pluginConfig).invalid)
+
+    const maxThresholdSteps = MAX_THRESHOLD_STEPS
+
+    const thresholdSteps = computed(() => parseThresholdSteps(draft.value.pluginConfig))
+
+    const saveThresholdSteps = (steps: ThresholdStep[]) => {
+      draft.value.pluginConfig.thresholds = steps.length ? JSON.stringify(steps) : null
+    }
+
+    const addThresholdStep = () => {
+      const steps = thresholdSteps.value
+
+      if (steps.length < MAX_THRESHOLD_STEPS) {
+        saveThresholdSteps([...steps, { from: null, color: THRESHOLD_STEP_COLORS[steps.length]! }])
+      }
+    }
+
+    const removeThresholdStep = (index: number) => {
+      saveThresholdSteps(thresholdSteps.value.filter((_, position) => position !== index))
+    }
+
+    const setThresholdValue = (index: number, value: unknown) => {
+      const number = value === '' || value === null || value === undefined ? Number.NaN : Number(value)
+
+      saveThresholdSteps(thresholdSteps.value.map((step, position) => position === index ? { ...step, from: Number.isFinite(number) ? number : null } : step))
+    }
+
+    const setThresholdColor = (index: number, color: string) => {
+      saveThresholdSteps(thresholdSteps.value.map((step, position) => position === index ? { ...step, color } : step))
+    }
+
+    const openStyleEditor = () => {
+      styleDraft.value = { ...(selectedDashboard.value?.style ?? {}) }
+      isStyleEditorOpen.value = true
+    }
+
+    const onSaveStyle = async () => {
+      if (!selectedDashboard.value) {
+        return
+      }
+
+      isSavingStyle.value = true
+
+      try {
+        const saved = await persistDashboard({ ...selectedDashboard.value, style: styleDraft.value }, { notifyError: true })
+
+        if (saved) {
+          isStyleEditorOpen.value = false
+        }
+      } finally {
+        isSavingStyle.value = false
+      }
+    }
+
+    const labelOverrides = computed(() => parseLabelOverrides(draft.value.pluginConfig))
+
+    const saveLabelOverrides = (items: LabelOverride[]) => {
+      draft.value.pluginConfig.labelOverrides = items.length ? JSON.stringify(items) : null
+    }
+
+    const addLabelOverride = () => saveLabelOverrides([...labelOverrides.value, { from: '', to: '' }])
+
+    const removeLabelOverride = (index: number) => {
+      saveLabelOverrides(labelOverrides.value.filter((_, position) => position !== index))
+    }
+
+    const setLabelOverride = (index: number, key: 'from' | 'to', value: unknown) => {
+      saveLabelOverrides(labelOverrides.value.map((item, position) => position === index ? { ...item, [key]: String(value ?? '') } : item))
+    }
+
+    // Offers the text values and series columns this widget is actually showing.
+    const addLabelsFromData = () => {
+      const mapped = pluginFieldInputs.value.flatMap((input) => {
+        const value = draft.value.pluginConfig[input.key]
+
+        return Array.isArray(value) ? value.map(String) : typeof value === 'string' && value ? [value] : []
+      })
+      const multiple = pluginFieldInputs.value.flatMap((input) => {
+        const value = draft.value.pluginConfig[input.key]
+
+        return Array.isArray(value) ? value.map(String) : []
+      })
+      const found = [
+        ...multiple,
+        ...(previewState.value?.rows ?? []).flatMap(row => mapped.flatMap((column) => {
+          const value = row[column]
+
+          return typeof value === 'string' && value.trim() && Number.isNaN(Number(value)) ? [value] : []
+        }))
+      ]
+      const existing = new Set(labelOverrides.value.map(item => item.from))
+      const additions = [...new Set(found)].filter(label => !existing.has(label)).slice(0, 50)
+
+      saveLabelOverrides([...labelOverrides.value, ...additions.map(from => ({ from, to: '' }))])
+    }
+
+    const getSettingOptions = (input: PluginInputDefinition) => {
+      return (input.options ?? []).map(option => ({ label: getPluginInputOptionLabel(option), value: option.value }))
+    }
+
     const getDraftPluginConfigValue = (inputKey: string) => {
       const value = draft.value.pluginConfig[inputKey]
 
@@ -547,6 +771,10 @@ export default defineComponent({
 
       if (selectedPlugin.value) {
         selectedPlugin.value.inputSchema.forEach((input) => {
+          if (getUIPluginInputSource(input) === 'value') {
+            return
+          }
+
           const allowedValues = new Set(
             getPluginInputOptions(input).map((option) => option.value)
           )
@@ -632,6 +860,8 @@ export default defineComponent({
       dashboardName: dashboard.dashboardName,
       embedId: dashboard.embedId,
       embedEnabled: dashboard.embedEnabled,
+      appearance: dashboard.appearance,
+      style: dashboard.style,
       widgetCount: dashboard.widgets.length,
       createdAt: dashboard.createdAt,
       updatedAt: dashboard.updatedAt
@@ -875,7 +1105,7 @@ export default defineComponent({
       }
 
       editingWidgetId.value = widget.id
-      draft.value = createDashboardWidgetDraftFromWidget(widget)
+      draft.value = { ...createDashboardWidgetDraftFromWidget(widget), title: cleanWidgetTitle(widget) }
       draft.value.dashboardId = selectedDashboard.value?.id ?? ''
       isWidgetBuilderOpen.value = true
     }
@@ -1092,7 +1322,8 @@ export default defineComponent({
 
       dashboardSettingsInput.value = {
         dashboardName: selectedDashboard.value.dashboardName,
-        embedEnabled: selectedDashboard.value.embedEnabled
+        embedEnabled: selectedDashboard.value.embedEnabled,
+        appearance: selectedDashboard.value.appearance
       }
       dashboardSettingsErrorMessage.value = ''
       isDashboardSettingsOpen.value = true
@@ -1152,7 +1383,8 @@ export default defineComponent({
         const nextDashboard: DashboardDetails = {
           ...selectedDashboard.value,
           dashboardName,
-          embedEnabled: dashboardSettingsInput.value.embedEnabled
+          embedEnabled: dashboardSettingsInput.value.embedEnabled,
+          appearance: dashboardSettingsInput.value.appearance
         }
 
         const saved = await persistDashboard(nextDashboard, {
@@ -1309,23 +1541,34 @@ export default defineComponent({
 
     await initializeDashboards()
 
-    onMounted(() => {
-      refreshTimer = setInterval(() => {
-        void refreshWidgets()
-      }, DASHBOARD_REFRESH_TICK_MS)
-    })
-
-    onBeforeUnmount(() => {
-      if (refreshTimer) {
-        clearInterval(refreshTimer)
-      }
-
-      if (scheduledDashboardSave) {
-        clearTimeout(scheduledDashboardSave)
-      }
-    })
 
     return {
+      addLabelOverride,
+      addLabelsFromData,
+      labelOverrides,
+      removeLabelOverride,
+      setLabelOverride,
+      isSavingStyle,
+      isStyleEditorOpen,
+      onSaveStyle,
+      openStyleEditor,
+      styleDraft,
+      advancedOptionsInvalid,
+      addThresholdStep,
+      getSettingSpanClass,
+      maxThresholdSteps,
+      removeThresholdStep,
+      setThresholdColor,
+      setThresholdValue,
+      thresholdSteps,
+      getWidgetTitle,
+      getSettingOptions,
+      getSettingValue,
+      pluginFieldInputs,
+      pluginSettingSections,
+      setNumberSetting,
+      setSettingValue,
+      appearanceOptions,
       builderDescription,
       builderTitle,
       createDashboardErrorMessage,

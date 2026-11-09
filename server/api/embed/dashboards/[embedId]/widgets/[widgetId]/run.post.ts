@@ -7,7 +7,8 @@ import { resolvePositiveInteger } from '../../../../../../utils/positive-integer
 import {
   buildEmbeddedDashboardWidgetCacheKey,
   buildQueryResultEtag,
-  isCachedQueryResult,
+  buildStoredQueryResult,
+  readFreshQueryResult,
   matchesIfNoneMatch,
   pickRequestHeader,
   type CachedQueryResult
@@ -136,9 +137,14 @@ export default defineEventHandler(async (event) => {
       widgetIdValidation.data.widgetId,
       resolvedExecutionContext.cacheVersion
     )
-    const cachedResponse = await cache.getItem<CachedQueryResult>(cacheKey)
+    const storedResponse = await cache.getItem<unknown>(cacheKey)
+    const cachedResponse = readFreshQueryResult(storedResponse)
 
-    if (isCachedQueryResult(cachedResponse)) {
+    if (storedResponse !== null && !cachedResponse) {
+      await cache.removeItem(cacheKey)
+    }
+
+    if (cachedResponse) {
       setResponseHeader(event, 'etag', cachedResponse.etag)
 
       if (matchesIfNoneMatch(ifNoneMatch, cachedResponse.etag)) {
@@ -169,7 +175,7 @@ export default defineEventHandler(async (event) => {
       etag: buildQueryResultEtag(responseWithoutEtag)
     }
 
-    await cache.setItem(cacheKey, response, {
+    await cache.setItem(cacheKey, buildStoredQueryResult(response, ttlSeconds), {
       ttl: ttlSeconds
     })
 

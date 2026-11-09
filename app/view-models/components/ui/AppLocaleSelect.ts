@@ -1,6 +1,12 @@
 import { computed, defineComponent } from 'vue'
 
 export default defineComponent({
+  props: {
+    compact: {
+      type: Boolean,
+      default: false
+    }
+  },
   setup() {
     const { locale, localeCodes, locales, setLocale } = useI18n()
 

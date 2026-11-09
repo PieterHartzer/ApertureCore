@@ -1,117 +1,174 @@
 <script setup lang="ts">
 import { useAIModels } from '~/composables/useAIModels'
+import { CLOUD_AI_PROVIDERS, isCloudAIProvider, type CloudAIProviderType } from '#shared/utils/ai-provider-catalog'
+
+type ProviderKey = CloudAIProviderType | 'lmstudio'
+
 const ai = useAIModels()
-const { settings, error, checking } = ai
+const { settings, error } = ai
+const { t } = useI18n()
 const busy = ref(false)
 const notice = ref('')
-const setup = ref(false)
-const providerType = ref<'openai' | 'lmstudio' | 'webllm'>('openai')
-watch(providerType, () => { apiKey.value = ''; choosingId.value = ''; selectedIds.value = []; available.value = [] })
-const name = ref('')
-const baseUrl = ref('http://localhost:1234/v1')
+const editing = ref<ProviderKey | 'browser' | null>(null)
 const apiKey = ref('')
-const editingId = ref('')
-const choosingId = ref('')
-const available = ref<string[]>([])
-const selectedIds = ref<string[]>([])
-const renameId = ref('')
-const renameValue = ref('')
-const removal = ref<{ action: string, id: string, label: string } | null>(null)
+const baseUrl = ref('')
+const deployments = ref('')
+const confirmDisconnect = ref(false)
+
+const providers = computed<{ key: ProviderKey, name: string, description: string }[]>(() => [
+  ...(Object.keys(CLOUD_AI_PROVIDERS) as CloudAIProviderType[]).map(key => ({
+    key,
+    name: CLOUD_AI_PROVIDERS[key].label,
+    description: t('ai.cloud.description', { provider: CLOUD_AI_PROVIDERS[key].label })
+  })),
+  { key: 'lmstudio' as const, name: t('ai.local.name'), description: t('ai.local.description') }
+])
+const connectionFor = (key: ProviderKey) => settings.value.connections.find(connection => connection.providerType === key)
+const modelCount = (key: ProviderKey) => settings.value.models.filter(model => model.providerConnectionId === connectionFor(key)?.id).length
+const browserModels = computed(() => settings.value.models.filter(model => model.providerType === 'webllm'))
+const nameOf = (key: ProviderKey) => isCloudAIProvider(key) ? CLOUD_AI_PROVIDERS[key].label : t('ai.local.name')
+const editingCloud = computed(() => editing.value && editing.value !== 'browser' && isCloudAIProvider(editing.value) ? CLOUD_AI_PROVIDERS[editing.value] : null)
+const editingConnection = computed(() => editing.value && editing.value !== 'browser' ? connectionFor(editing.value) : undefined)
+const statusOf = (key: ProviderKey) => !connectionFor(key)
+  ? t('ai.status.notSetUp')
+  : modelCount(key) ? t('ai.status.connected') : t('ai.status.attention')
+
 const perform = async (action: () => Promise<unknown>) => {
-  busy.value = true; error.value = ''; notice.value = ''
-  try { await action() } catch (cause) {
-    const failure = cause as { data?: { statusMessage?: string }, message?: string }
-    if (!ai.sessionExpired.value) error.value = failure.data?.statusMessage ?? failure.message ?? 'Request failed. Please retry.'
-  } finally { busy.value = false }
+  busy.value = true
+  error.value = ''
+  notice.value = ''
+  try {
+    await action()
+  } catch (cause) {
+    const failure = cause as { data?: { statusMessage?: string }, statusMessage?: string, message?: string }
+    if (!ai.sessionExpired.value) error.value = failure.data?.statusMessage ?? failure.statusMessage ?? failure.message ?? 'Request failed. Please retry.'
+  } finally {
+    busy.value = false
+  }
 }
-const begin = (type: typeof providerType.value) => {
-  providerType.value = type; name.value = ''; apiKey.value = ''; editingId.value = ''; choosingId.value = ''; available.value = []; selectedIds.value = []; setup.value = true
+const open = (key: ProviderKey | 'browser') => {
+  apiKey.value = ''
+  error.value = ''
+  confirmDisconnect.value = false
+  if (key !== 'browser') {
+    const connection = connectionFor(key)
+    baseUrl.value = key === 'azure' ? connection?.baseUrl.replace(/\/openai\/v1$/, '') ?? '' : isCloudAIProvider(key) ? '' : connection?.baseUrl ?? ''
+    deployments.value = settings.value.models.filter(model => model.providerConnectionId === connection?.id).map(model => model.modelId).join(', ')
+  }
+  editing.value = key
 }
-const discover = async (id: string) => {
-  available.value = await ai.availableModels(id)
-  choosingId.value = id; selectedIds.value = []
-  notice.value = available.value.length ? 'Connection successful. Select models that support text chat.' : 'Connection succeeded, but no candidate chat models were returned. Load a chat model on your server and refresh.'
+const addModels = async (key: ProviderKey, id: string) => {
+  const names = key === 'azure' ? deployments.value.split(',').map(name => name.trim()).filter(Boolean) : undefined
+  const modelIds = await ai.availableModels(id, names)
+  if (modelIds.length) await ai.update({ action: 'models', id, providerType: key, modelIds: modelIds.slice(0, 100), ...(names ? { replace: true } : {}) })
+  return modelIds.length
 }
-const saveConnection = () => perform(async () => {
-  const id = await ai.update({ action: 'connection', id: editingId.value || undefined, providerType: providerType.value, name: name.value, baseUrl: baseUrl.value, ...(providerType.value === 'openai' && apiKey.value ? { apiKey: apiKey.value } : {}) })
+const save = () => perform(async () => {
+  const key = editing.value
+  if (!key || key === 'browser') return
+  const cloud = isCloudAIProvider(key)
+  const id = await ai.update({ action: 'connection', id: connectionFor(key)?.id, providerType: key, name: nameOf(key), baseUrl: baseUrl.value, ...(cloud && apiKey.value ? { apiKey: apiKey.value } : {}) })
   if (!id) return
-  if (providerType.value === 'lmstudio') ai.sessionKeys.set(id, apiKey.value)
-  apiKey.value = ''; editingId.value = id
-  await discover(id)
+  if (!cloud && apiKey.value) ai.sessionKeys.set(id, apiKey.value)
+  apiKey.value = ''
+  await addModels(key, id)
+  editing.value = null
+  notice.value = t('ai.connectedNotice', { provider: nameOf(key) })
 })
-const addModels = () => perform(async () => {
-  await ai.update({ action: 'models', id: choosingId.value || undefined, providerType: providerType.value, modelIds: selectedIds.value })
-  setup.value = false; choosingId.value = ''; selectedIds.value = []; available.value = []
+const refreshModels = () => perform(async () => {
+  const key = editing.value
+  const id = editingConnection.value?.id
+  if (!key || key === 'browser' || !id) return
+  notice.value = t('ai.modelsFound', { count: await addModels(key, id) })
+  editing.value = null
 })
-const edit = (id: string) => {
-  const connection = settings.value.connections.find(item => item.id === id)
-  if (!connection) return
-  begin(connection.providerType); editingId.value = id; name.value = connection.name; baseUrl.value = connection.baseUrl
-}
-const browserStatus = (id: string) => ai.local.readyModel.value === id ? 'Ready' : ai.local.models.value.find(model => model.value === id)?.cached ? 'Weights cached · load to verify' : 'Not downloaded in this browser'
-const loadBrowser = (id: string) => perform(async () => { ai.selectedModel.value = id; await ai.load() })
+const disconnect = () => perform(async () => {
+  await ai.update({ action: 'removeConnection', id: editingConnection.value?.id })
+  editing.value = null
+})
+const browserOption = (modelId: string) => ai.local.models.value.find(option => option.value === modelId)
 </script>
+
 <template>
-  <UPage class="mx-auto max-w-5xl px-4 sm:px-8">
-    <UPageHeader :headline="$t('interface.settingsHeadline')" :title="$t('interface.aiModels')" :description="$t('interface.settingsChooseWhereYourSQLAssistantRuns')" />
-    <UPageBody class="space-y-8">
-      <UAlert v-if="error || ai.local.error.value" color="error" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error || ai.local.error.value)" />
+  <UPage>
+    <UPageHeader :title="$t('ai.title')" :description="$t('ai.subtitle')" />
+    <UPageBody>
+      <UAlert v-if="error" color="error" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error)" />
       <UButton v-if="ai.sessionExpired.value" :to="{ path: '/login', query: { callbackRedirectUrl: '/settings/ai-models' } }" :label="$t('interface.signInAgain')" />
-      <p v-if="notice" role="status" class="text-sm text-muted">{{ localizeAppMessage($t, notice) }}</p>
-      <div class="flex flex-wrap gap-3">
-        <UButton :label="$t('interface.addAIProvider')" icon="i-lucide-plus" @click="begin('openai')" />
-        <UButton :label="$t('interface.addDownloadBrowserModel')" color="neutral" variant="soft" @click="begin('webllm')" />
-        <UButton :label="$t('interface.refreshSettings')" color="neutral" variant="ghost" :loading="checking" @click="perform(ai.refresh)" />
-      </div>
-      <section v-if="setup" :aria-label="$t('interface.addAIProvider2')" class="rounded-2xl bg-elevated/70 p-6 backdrop-blur space-y-5">
-        <h2 class="text-lg font-semibold">{{ editingId ? $t('interface.editConnection') : $t('interface.chooseAProvider') }}</h2>
-        <UFormField :label="$t('interface.provider')"><USelect v-model="providerType" :disabled="!!editingId || busy" :items="[{ label: $t('interface.openAI'), value: 'openai' }, { label: $t('interface.lmStudio'), value: 'lmstudio' }, { label: $t('interface.browserModelWebLLM'), value: 'webllm' }]" /></UFormField>
-        <p class="text-sm text-muted">{{ providerType === 'openai' ? $t('interface.cloudInferenceYourQuestionAndDatabaseSchemaAreSentTo') : providerType === 'lmstudio' ? $t('interface.connectDirectlyFromThisBrowserToLMStudioStartThe') : $t('interface.runSupportedQwenCoderModelsOnYourGPUDownloadsPersist') }}</p>
-        <form v-if="providerType !== 'webllm'" class="space-y-4" @submit.prevent="saveConnection">
-          <UFormField :label="$t('interface.connectionName')" required><UInput v-model="name" required :maxlength="250" class="w-full" /></UFormField>
-          <UFormField v-if="providerType === 'lmstudio'" :label="$t('interface.serverURL')" required><UInput v-model="baseUrl" type="url" required class="w-full" /></UFormField>
-          <UFormField :label="providerType === 'openai' ? $t('interface.apiKey') : $t('interface.apiKeyOptionalThisPageSessionOnly')" :description="editingId && providerType === 'openai' ? $t('interface.leaveBlankToRetainYourStoredKey') : undefined"><UInput v-model="apiKey" type="password" autocomplete="off" :required="providerType === 'openai' && !editingId" class="w-full" /></UFormField>
-          <UButton type="submit" :label="$t('interface.saveAndTestConnection')" :loading="busy" />
-        </form>
-        <template v-else>
-          <p v-if="!ai.local.supported.value" role="alert">{{ $t('interface.yourBrowserOrGraphicsHardwareDoesNotSupportWebGPUUse') }}</p>
-          <UFormField :label="$t('interface.browserModel')" :description="$t('interface.parameterCountsAndEstimatedGPUMemoryAreIncludedInEach')"><USelect v-model="selectedIds" multiple :items="localizeModelOptions($t, ai.local.models.value)" class="w-full" /></UFormField>
-          <UButton :label="$t('interface.addSelectedBrowserModels')" :disabled="!selectedIds.length || busy" @click="addModels" />
-        </template>
-        <UButton color="neutral" variant="ghost" :label="$t('interface.closeSetup')" @click="setup = false; apiKey = ''" />
-      </section>
-      <section v-if="choosingId && available.length" :aria-label="$t('interface.availableModels')" class="space-y-4">
-        <h2 class="text-lg font-semibold">{{ $t('interface.availableModels') }}</h2>
-        <p class="text-sm text-muted">{{ $t('interface.discoveryIdentifiesCandidateModelsAccessAndChatCompatibilityAreVerified') }}</p>
-        <UFormField :label="$t('interface.modelsToAdd')"><USelect v-model="selectedIds" multiple :items="available" class="w-full" /></UFormField>
-        <UButton :label="$t('interface.addSelectedModels')" :disabled="!selectedIds.length || busy" @click="addModels" />
-      </section>
-      <section :aria-label="$t('interface.configuredModels')" class="divide-y divide-default">
-        <p v-if="!settings.models.length" class="py-8 text-muted">{{ $t('interface.noAIModelsConfiguredAddAProviderOrABrowser') }}</p>
-        <article v-for="model in settings.models" :key="model.id" class="flex flex-wrap items-center justify-between gap-4 py-5">
-          <div><h2 class="font-medium">{{ model.displayName }} <UBadge v-if="model.isDefault" :label="$t('interface.default2')" variant="subtle" /></h2><p class="text-sm text-muted">{{ ai.connectionFor(model)?.name ?? $t('interface.browserModels') }} · {{ model.providerType === 'webllm' ? localizeAppMessage($t, browserStatus(model.modelId)) : localizeAppMessage($t, ai.connectionStatus.value[model.providerConnectionId ?? ''] ?? $t('interface.connectionNotCheckedTestBelow')) }}</p></div>
-          <div class="flex flex-wrap gap-2">
-            <UButton v-if="!model.isDefault" :label="$t('interface.setDefault')" color="neutral" variant="ghost" :disabled="busy" @click="perform(() => ai.update({ action: 'default', id: model.id }))" />
-            <UButton :label="$t('interface.rename')" color="neutral" variant="ghost" @click="renameId = model.id; renameValue = model.displayName" />
-            <template v-if="model.providerType === 'webllm'">
-              <UButton :label="ai.local.readyModel.value === model.modelId ? $t('interface.reload') : $t('interface.downloadLoad')" color="neutral" variant="soft" :disabled="busy || ai.local.loading.value" @click="loadBrowser(model.id)" />
-              <UButton v-if="ai.local.readyModel.value === model.modelId" :label="$t('interface.unload')" color="neutral" variant="ghost" @click="ai.stop" />
-              <UButton :label="$t('interface.deleteDownloadedFiles')" color="neutral" variant="ghost" @click="removal = { action: 'cache', id: model.modelId, label: model.displayName }" />
-            </template>
-            <UButton :label="$t('interface.remove')" color="error" variant="ghost" @click="removal = { action: 'remove', id: model.id, label: model.displayName }" />
+      <p v-if="notice" role="status" class="text-sm text-success">{{ notice }}</p>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <article class="flex flex-col gap-2 rounded-[10px] bg-[var(--surface)] p-4 ring ring-primary/50 backdrop-blur-md">
+          <div class="flex items-center gap-2">
+            <h2 class="flex-1 text-sm font-semibold text-highlighted">{{ $t('ai.browser.name') }}</h2>
+            <UBadge :label="$t('interface.default2')" variant="subtle" />
+          </div>
+          <p class="flex-1 text-sm text-muted">{{ $t('ai.browser.description') }}</p>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs text-success">{{ ai.local.supported.value ? $t('ai.status.ready') : '' }}</span>
+            <UButton color="neutral" variant="outline" size="sm" :label="$t('ai.actions.manage')" @click="open('browser')" />
           </div>
         </article>
-      </section>
-      <div v-if="ai.local.loading.value" role="status" class="space-y-3"><UProgress :model-value="ai.local.progress.value" /><p>{{ localizeAppMessage($t, ai.local.status.value) }}</p><UButton :label="$t('interface.cancelDownload')" color="neutral" @click="ai.stop" /></div>
-      <section :aria-label="$t('interface.providerConnections')" class="space-y-4">
-        <h2 class="text-lg font-semibold">{{ $t('interface.providerConnections') }}</h2>
-        <div v-for="connection in settings.connections" :key="connection.id" class="flex flex-wrap justify-between gap-3 py-3">
-          <div><p class="font-medium">{{ connection.name }}</p><p class="text-sm text-muted">{{ connection.baseUrl }}</p><p role="status" class="text-sm text-muted">{{ localizeAppMessage($t, ai.connectionStatus.value[connection.id] ?? $t('interface.connectionNotChecked')) }}</p></div>
-          <div class="flex flex-wrap gap-2"><UButton :label="$t('interface.testRefreshAvailableModels')" color="neutral" variant="ghost" :disabled="busy" @click="perform(async () => { providerType = connection.providerType; await discover(connection.id) })" /><UButton :label="$t('interface.editConnection')" color="neutral" variant="ghost" @click="edit(connection.id)" /><UButton :label="$t('interface.removeConnection')" color="error" variant="ghost" @click="removal = { action: 'removeConnection', id: connection.id, label: connection.name }" /></div>
-        </div>
-      </section>
-      <UModal :open="!!renameId" :title="$t('interface.renameModel')" @update:open="renameId = ''"><template #body><form class="space-y-4" @submit.prevent="perform(async () => { await ai.update({ action: 'rename', id: renameId, name: renameValue }); renameId = '' })"><UFormField :label="$t('interface.displayName')"><UInput v-model="renameValue" required :maxlength="250" /></UFormField><UButton type="submit" :label="$t('interface.saveName')" :loading="busy" /></form></template></UModal>
-      <UModal :open="!!removal" :title="$t('interface.confirmRemoval')" @update:open="removal = null"><template #body><p>{{ $t('interface.removeRemovingAConnectionAlsoRemovesItsConfiguredModelsIf', { value1: removal?.label }) }}</p><div class="mt-5 flex gap-3"><UButton :label="$t('interface.remove')" color="error" :loading="busy" @click="perform(async () => { if (!removal) return; if (removal.action === 'cache') await ai.local.deleteDownload(removal.id); else await ai.update({ action: removal.action, id: removal.id }); removal = null })" /><UButton :label="$t('interface.cancel')" color="neutral" @click="removal = null" /></div></template></UModal>
+
+        <article v-for="provider in providers" :key="provider.key" class="flex flex-col gap-2 rounded-[10px] bg-[var(--surface)] p-4 ring ring-default backdrop-blur-md">
+          <h2 class="text-sm font-semibold text-highlighted">{{ provider.name }}</h2>
+          <p class="flex-1 text-sm text-muted">{{ provider.description }}</p>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs" :class="modelCount(provider.key) ? 'text-success' : 'text-muted'">{{ statusOf(provider.key) }}</span>
+            <UButton :color="connectionFor(provider.key) ? 'neutral' : 'primary'" :variant="connectionFor(provider.key) ? 'outline' : 'solid'" size="sm" :label="connectionFor(provider.key) ? $t('ai.actions.manage') : $t('ai.actions.connect')" @click="open(provider.key)" />
+          </div>
+        </article>
+      </div>
+
+      <UModal :open="editing === 'browser'" :title="$t('ai.browser.name')" :description="$t('ai.browser.description')" @update:open="editing = null">
+        <template #body>
+          <p v-if="!ai.local.supported.value" role="alert" class="text-sm text-warning">{{ $t('interface.yourBrowserOrGraphicsHardwareDoesNotSupportWebGPUUse') }}</p>
+          <ul v-else class="divide-y divide-default">
+            <li v-for="model in browserModels" :key="model.id" class="flex flex-wrap items-center justify-between gap-2 py-2.5">
+              <div class="min-w-0">
+                <p class="truncate text-sm text-highlighted">{{ browserOption(model.modelId)?.label ?? model.displayName }}</p>
+                <p class="text-xs text-muted">{{ browserOption(model.modelId)?.cached ? $t('ai.cached') : $t('ai.notCached') }}</p>
+              </div>
+              <UButton v-if="browserOption(model.modelId)?.cached" color="neutral" variant="ghost" size="xs" :label="$t('interface.deleteDownloadedFiles')" :disabled="busy" @click="perform(() => ai.local.deleteDownload(model.modelId))" />
+            </li>
+          </ul>
+        </template>
+      </UModal>
+
+      <UModal :open="!!editing && editing !== 'browser'" :title="editing && editing !== 'browser' ? nameOf(editing) : ''" @update:open="editing = null">
+        <template #body>
+          <form id="ai-provider-form" class="space-y-4" @submit.prevent="save">
+            <UFormField v-if="editing === 'azure'" :label="$t('ai.fields.azureEndpoint')" :description="$t('ai.fields.azureEndpointHint')" required>
+              <UInput v-model="baseUrl" type="url" required :placeholder="$t('ai.fields.azureEndpointPlaceholder')" class="w-full" />
+            </UFormField>
+            <UFormField v-if="editingCloud" :label="$t('ai.fields.apiKey')" :description="editingConnection ? $t('ai.fields.keepKey') : $t('ai.fields.apiKeyHint')" :required="!editingConnection">
+              <template #hint><a :href="editingCloud.keyUrl" target="_blank" rel="noopener" class="text-xs text-primary hover:underline">{{ $t('ai.fields.getKey') }}</a></template>
+              <UInput v-model="apiKey" type="password" autocomplete="off" :required="!editingConnection" class="w-full" />
+            </UFormField>
+            <UFormField v-if="editing === 'azure'" :label="$t('ai.fields.azureDeployments')" :description="$t('ai.fields.azureDeploymentsHint')" required>
+              <UInput v-model="deployments" required :placeholder="$t('ai.fields.azureDeploymentsPlaceholder')" class="w-full" />
+            </UFormField>
+            <template v-else>
+              <UFormField :label="$t('ai.fields.url')" :description="$t('ai.fields.urlHint')" required>
+                <UInput v-model="baseUrl" type="url" required :placeholder="$t('ai.fields.urlPlaceholder')" class="w-full" />
+              </UFormField>
+              <UFormField :label="$t('ai.fields.serverKey')">
+                <UInput v-model="apiKey" type="password" autocomplete="off" class="w-full" />
+              </UFormField>
+            </template>
+          </form>
+          <p v-if="confirmDisconnect" role="alert" class="mt-4 text-sm text-error">{{ $t('ai.disconnectConfirm', { provider: editing && editing !== 'browser' ? nameOf(editing) : '' }) }}</p>
+        </template>
+        <template #footer>
+          <div class="flex w-full flex-wrap items-center justify-between gap-2">
+            <div class="flex gap-2">
+              <UButton v-if="editingConnection" color="error" variant="ghost" :label="$t('ai.actions.disconnect')" :loading="busy && confirmDisconnect" @click="confirmDisconnect ? disconnect() : confirmDisconnect = true" />
+              <UButton v-if="editingConnection && !confirmDisconnect && editing !== 'azure'" color="neutral" variant="ghost" :label="$t('ai.actions.refresh')" :disabled="busy" @click="refreshModels" />
+            </div>
+            <UButton type="submit" form="ai-provider-form" :label="$t('ai.actions.save')" :loading="busy && !confirmDisconnect" :disabled="busy" />
+          </div>
+        </template>
+      </UModal>
     </UPageBody>
   </UPage>
 </template>

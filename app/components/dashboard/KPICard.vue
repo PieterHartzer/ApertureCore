@@ -111,19 +111,11 @@ export default {
 .kpi-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-}
-
-.kpi-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-  border-color: var(--color-primary);
+  gap: 8px;
 }
 
 .kpi-card-header {
@@ -136,11 +128,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  border-radius: 8px;
+  color: var(--color-muted-foreground);
 }
 
 .kpi-card-icon :deep(svg) {
@@ -149,11 +137,9 @@ export default {
 }
 
 .kpi-card-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--color-muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .kpi-card-refresh {
@@ -193,9 +179,9 @@ export default {
 }
 
 .kpi-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ui-text-highlighted);
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
@@ -224,29 +210,22 @@ export default {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border);
 }
 
 .kpi-trend {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 16px;
-  transition: all var(--transition-fast);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .kpi-trend-positive {
-  color: #10B981;
-  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--ui-success);
 }
 
 .kpi-trend-negative {
-  color: #DC2626;
-  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--ui-error);
 }
 
 .kpi-trend-icon {
@@ -255,8 +234,8 @@ export default {
 }
 
 .kpi-trend-value {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .kpi-trend-label {
@@ -291,19 +270,4 @@ export default {
   }
 }
 
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .kpi-card {
-    background: var(--color-card);
-    border-color: var(--color-border);
-  }
-
-  .kpi-value {
-    color: #60A5FA;
-  }
-
-  .kpi-card-title {
-    color: #94A3B8;
-  }
-}
 </style>
