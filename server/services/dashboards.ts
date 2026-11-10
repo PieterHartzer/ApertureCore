@@ -233,7 +233,7 @@ const loadDashboardWidgets = async (
     ])
     .where('dashboard_id', '=', dashboardId)
     .where('deleted_at', 'is', null)
-    .orderBy('created_at asc')
+    .orderBy('created_at', 'asc')
     .execute() as DashboardWidgetRow[]
 }
 
@@ -352,7 +352,7 @@ export const listDashboards = async (
       ])
       .where('organization_id', '=', organizationId)
       .where('deleted_at', 'is', null)
-      .orderBy('dashboard_name asc')
+      .orderBy('dashboard_name', 'asc')
       .execute() as DashboardRow[]
 
     if (dashboards.length === 0) {

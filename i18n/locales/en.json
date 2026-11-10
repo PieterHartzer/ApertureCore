@@ -641,7 +641,9 @@
             "sourceField": "From",
             "openField": "Open",
             "closeField": "Close"
-          }
+          },
+          "opacity": "Opacity",
+          "opacityFor": "{name} opacity"
         },
         "shared": {
           "loading": "Loading chart..."

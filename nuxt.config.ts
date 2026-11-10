@@ -126,9 +126,16 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxtjs/i18n', 'nuxt-oidc-auth', '@nuxt/eslint'],
   vite: {
     optimizeDeps: {
+      // Listed up front so the dev server doesn't reload when they are first used.
       include: [
-        '@vue/devtools-core',
-        '@intlify/shared'
+        '@intlify/shared',
+        'gridstack',
+        'vue-echarts',
+        'echarts/charts',
+        'echarts/components',
+        'echarts/core',
+        'echarts/features',
+        'echarts/renderers'
       ]
     }
   },

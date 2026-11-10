@@ -1,3 +1,4 @@
+import ColorField from '~/components/ui/ColorField.vue'
 import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import { appExtensions } from '~/extensions'
 import { computed, defineComponent, type PropType } from 'vue'
@@ -6,6 +7,7 @@ import { DASHBOARD_STYLE_FIELDS, DASHBOARD_STYLE_GROUPS, type DashboardStyle, ty
 
 export default defineComponent({
   components: {
+    ColorField,
     ExtensionSlot
   },
   props: {

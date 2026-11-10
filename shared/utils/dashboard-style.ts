@@ -1,8 +1,8 @@
+import { isHexColor } from './color'
 import { DASHBOARD_STYLE_FIELDS, type DashboardStyle } from './dashboard-style-fields'
 
 export const DASHBOARD_CANVAS = '[data-dashboard-canvas]'
 
-const HEX_COLOR = /^#[0-9a-f]{6}$/i
 const FONT_STACKS: Record<string, string> = {
   sans: 'Inter, ui-sans-serif, system-ui, sans-serif',
   serif: 'ui-serif, Georgia, Cambria, serif',
@@ -35,7 +35,7 @@ export const normalizeDashboardStyle = (value: unknown): { style: DashboardStyle
   for (const field of DASHBOARD_STYLE_FIELDS) {
     const entry = source[field.key]
 
-    if (field.control === 'color' && typeof entry === 'string' && HEX_COLOR.test(entry)) style[field.key] = entry
+    if (field.control === 'color' && isHexColor(entry)) style[field.key] = entry
     else if (field.control === 'number' && typeof entry === 'number' && Number.isFinite(entry)) style[field.key] = Math.min(Math.max(entry, field.min ?? 0), field.max ?? entry)
     else if (field.control === 'select' && typeof entry === 'string' && field.options?.some(option => option.value === entry)) style[field.key] = entry
     else if (field.control === 'switch' && entry === true) style[field.key] = true

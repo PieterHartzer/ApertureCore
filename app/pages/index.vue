@@ -408,29 +408,13 @@ export default component
                         :model-value="getSettingValue(input.key) ?? ''"
                         @update:model-value="setSettingValue(input.key, $event)"
                       />
-                      <div
+                      <ColorField
                         v-else-if="input.control === 'color'"
-                        class="flex h-8 items-center gap-2"
-                      >
-                        <input
-                          type="color"
-                          class="h-8 w-10 shrink-0 cursor-pointer rounded border border-default bg-transparent"
-                          :aria-label="getPluginInputLabel(input)"
-                          :value="getSettingValue(input.key) ?? '#808080'"
-                          @input="setSettingValue(input.key, $event.target.value)"
-                        >
-                        <span class="min-w-0 flex-1 truncate font-mono text-xs text-muted">{{ getSettingValue(input.key) ?? t('pages.dashboard.plugins.catalog.defaultColor') }}</span>
-                        <UButton
-                          v-if="getSettingValue(input.key)"
-                          color="neutral"
-                          variant="ghost"
-                          size="xs"
-                          square
-                          icon="i-lucide-x"
-                          :aria-label="t('pages.dashboard.plugins.catalog.clearColor')"
-                          @click="setSettingValue(input.key, null)"
-                        />
-                      </div>
+                        :label="getPluginInputLabel(input)"
+                        :placeholder="t('pages.dashboard.plugins.catalog.defaultColor')"
+                        :model-value="getSettingValue(input.key) ?? null"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
                       <div
                         v-else-if="input.control === 'thresholds'"
                         class="space-y-2"
@@ -448,16 +432,12 @@ export default component
                             :model-value="step.from ?? ''"
                             @update:model-value="setThresholdValue(index, $event)"
                           />
-                          <div class="flex items-center gap-2">
-                            <input
-                              type="color"
-                              class="h-8 w-10 shrink-0 cursor-pointer rounded border border-default bg-transparent"
-                              :aria-label="t('pages.dashboard.plugins.catalog.stepColor')"
-                              :value="step.color"
-                              @input="setThresholdColor(index, $event.target.value)"
-                            >
-                            <span class="truncate font-mono text-xs text-muted">{{ step.color }}</span>
-                          </div>
+                          <ColorField
+                            :label="t('pages.dashboard.plugins.catalog.stepColor')"
+                            :model-value="step.color"
+                            :clearable="false"
+                            @update:model-value="setThresholdColor(index, $event ?? step.color)"
+                          />
                           <UButton
                             color="neutral"
                             variant="ghost"
@@ -561,10 +541,11 @@ export default component
             </div>
 
             <UPageCard
-              class="xl:sticky xl:top-0"
+              class="min-w-0 xl:sticky xl:top-0"
+              :ui="{ container: 'min-w-0', wrapper: 'min-w-0', body: 'min-w-0 w-full' }"
               :title="t('pages.dashboard.preview.title')"
             >
-              <div class="space-y-4">
+              <div class="min-w-0 space-y-4">
                 <div
                   v-if="!selectedQuery"
                   class="flex min-h-[320px] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
@@ -581,7 +562,7 @@ export default component
 
                 <div
                   v-else
-                  class="h-96"
+                  class="h-96 min-w-0 overflow-hidden"
                 >
                   <PluginRenderer
                     :widget="{

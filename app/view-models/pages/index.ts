@@ -1,4 +1,5 @@
 import AppEmptyState from '~/components/ui/AppEmptyState.vue'
+import ColorField from '~/components/ui/ColorField.vue'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
 import { MAX_THRESHOLD_STEPS, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
@@ -74,6 +75,7 @@ interface PluginInputSelectOption {
 
 export default defineComponent({
   components: {
+    ColorField,
     ExtensionSlot,
     WidgetSkeleton,
     DashboardStyleEditor,

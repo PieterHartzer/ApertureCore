@@ -619,7 +619,9 @@
             "sourceField": "[Frôm]",
             "openField": "[Ôpëñ]",
             "closeField": "[Clôšë]"
-          }
+          },
+          "opacity": "[Ôpåcîţy]",
+          "opacityFor": "[{name} ôpåcîţy]"
         },
         "shared": {
           "loading": "[Ļôåðîñĝ çĥåřţ...]"

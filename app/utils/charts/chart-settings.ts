@@ -1,4 +1,5 @@
 import type { ChartColors } from './chart-colors'
+import { isHexColor } from '#shared/utils/color'
 
 export type SettingControl = 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
 export type SettingSpan = 'full' | 'half' | 'third'
@@ -145,7 +146,7 @@ const textSetting = (config: Config, key: string) => typeof config[key] === 'str
 export const colorSetting = (config: Config, key: string) => {
   const value = textSetting(config, key)
 
-  return /^#[0-9a-f]{6}$/i.test(value) ? value : null
+  return isHexColor(value) ? value : null
 }
 
 const VALUE_FORMATS = ['number', 'compact', 'currency', 'percent', 'fraction']
@@ -206,7 +207,6 @@ export const MAX_THRESHOLD_STEPS = 5
 // Offered in turn as steps are added; each can then be changed.
 export const THRESHOLD_STEP_COLORS = ['#fab219', '#d03b3b', '#ec835a', '#6250d6', '#2a78d6']
 const STARTING_COLOR = '#0ca30c'
-const HEX_COLOR = /^#[0-9a-f]{6}$/i
 
 /** Steps are saved as one JSON string because widget settings hold plain values only. */
 export const parseThresholdSteps = (config: Config): ThresholdStep[] => {
@@ -217,7 +217,7 @@ export const parseThresholdSteps = (config: Config): ThresholdStep[] => {
 
     return parsed.slice(0, MAX_THRESHOLD_STEPS).map((step: { from?: unknown, color?: unknown }, index) => ({
       from: typeof step?.from === 'number' && Number.isFinite(step.from) ? step.from : null,
-      color: typeof step?.color === 'string' && HEX_COLOR.test(step.color) ? step.color : THRESHOLD_STEP_COLORS[index]!
+      color: isHexColor(step?.color) ? step.color : THRESHOLD_STEP_COLORS[index]!
     }))
   } catch {
     return []

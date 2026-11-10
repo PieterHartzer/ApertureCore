@@ -29,29 +29,13 @@ export default component
               :name="field.key"
               :label="fieldLabel(field)"
             >
-              <div
+              <ColorField
                 v-if="field.control === 'color'"
-                class="flex h-8 items-center gap-2"
-              >
-                <input
-                  type="color"
-                  class="h-8 w-10 shrink-0 cursor-pointer rounded border border-default bg-transparent"
-                  :aria-label="fieldLabel(field)"
-                  :value="value(field.key) ?? '#808080'"
-                  @input="setValue(field.key, $event.target.value)"
-                >
-                <span class="min-w-0 flex-1 truncate font-mono text-xs text-muted">{{ value(field.key) ?? t('pages.dashboard.plugins.catalog.defaultColor') }}</span>
-                <UButton
-                  v-if="value(field.key)"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  icon="i-lucide-x"
-                  :aria-label="t('pages.dashboard.plugins.catalog.clearColor')"
-                  @click="setValue(field.key, null)"
-                />
-              </div>
+                :label="fieldLabel(field)"
+                :placeholder="t('pages.dashboard.plugins.catalog.defaultColor')"
+                :model-value="value(field.key) ?? null"
+                @update:model-value="setValue(field.key, $event)"
+              />
               <UInput
                 v-else-if="field.control === 'number'"
                 type="number"
