@@ -1,7 +1,8 @@
 import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import ColorField from '~/components/ui/ColorField.vue'
+import { settingInput } from '~/components/plugins/index'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
-import { MAX_THRESHOLD_STEPS, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
+import { CARD, MAX_THRESHOLD_STEPS, getCardStyle, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
@@ -601,22 +602,61 @@ export default defineComponent({
       return selectedPlugin.value?.inputSchema.filter(input => getUIPluginInputSource(input) !== 'value') ?? []
     })
 
-    const pluginSettingSections = computed(() => {
-      const inputs = (selectedPlugin.value?.inputSchema ?? []).filter((input) => {
+    // Every widget gets the same card settings, after its own.
+    const CARD_INPUTS = CARD.map(settingInput)
+    const STYLE_SECTIONS = new Set(['appearance', 'thresholds', 'card'])
+    const SECTION_ORDER = {
+      format: ['format', 'text', 'range', 'labels', 'advanced'],
+      style: ['appearance', 'thresholds', 'range', 'card']
+    } as const
+
+    const visibleSettingInputs = computed(() => {
+      if (!selectedPlugin.value) return []
+
+      return [...selectedPlugin.value.inputSchema, ...CARD_INPUTS].filter((input) => {
         if (getUIPluginInputSource(input) !== 'value') return false
 
         const condition = input.visibleWhen
 
         return !condition || condition.values.includes(String(draft.value.pluginConfig[condition.key] ?? ''))
       })
+    })
 
-      return ['format', 'text', 'thresholds', 'range', 'appearance', 'labels', 'advanced'].flatMap((id) => {
+    // Colours and anything about looks go on the Style tab, wherever the plugin put them.
+    const isStyleInput = (input: PluginInputDefinition) => input.control === 'color' || STYLE_SECTIONS.has(input.section ?? '')
+
+    const buildSections = (tab: 'format' | 'style') => {
+      const inputs = visibleSettingInputs.value.filter(input => (tab === 'style') === isStyleInput(input))
+
+      return SECTION_ORDER[tab].flatMap((id) => {
         const sectionInputs = inputs.filter(input => input.section === id)
 
         return sectionInputs.length
           ? [{ id, title: t(`pages.dashboard.plugins.catalog.sections.${id}`), inputs: sectionInputs }]
           : []
       })
+    }
+
+    const formatSections = computed(() => buildSections('format'))
+    const styleSections = computed(() => buildSections('style'))
+    const pluginSettingSections = computed(() => [...formatSections.value, ...styleSections.value])
+
+    const builderTab = ref<'data' | 'format' | 'style'>('data')
+    const builderTabs = computed(() => [
+      { label: t('pages.dashboard.builder.tabs.data'), value: 'data', icon: 'i-lucide-database' },
+      { label: t('pages.dashboard.builder.tabs.format'), value: 'format', icon: 'i-lucide-sliders-horizontal', disabled: formatSections.value.length === 0 },
+      { label: t('pages.dashboard.builder.tabs.style'), value: 'style', icon: 'i-lucide-palette', disabled: styleSections.value.length === 0 }
+    ])
+    const activeSettingSections = computed(() => builderTab.value === 'format'
+      ? formatSections.value
+      : builderTab.value === 'style' ? styleSections.value : [])
+
+    // A tab with nothing on it for the new plugin falls back to Data.
+    watch(builderTabs, (tabs) => {
+      if (tabs.find(tab => tab.value === builderTab.value)?.disabled) builderTab.value = 'data'
+    })
+    watch(isWidgetBuilderOpen, (open) => {
+      if (open) builderTab.value = 'data'
     })
 
     const getSettingValue = (key: string) => {
@@ -1593,6 +1633,10 @@ export default defineComponent({
       getSettingValue,
       pluginFieldInputs,
       pluginSettingSections,
+      activeSettingSections,
+      builderTab,
+      builderTabs,
+      getCardStyle,
       setNumberSetting,
       setSettingValue,
       appearanceOptions,

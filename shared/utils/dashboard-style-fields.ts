@@ -37,6 +37,7 @@ export const DASHBOARD_STYLE_FIELDS: DashboardStyleField[] = [
   color('cardBackground', 'Background colour', 'widgets'),
   color('borderColor', 'Border colour', 'widgets'),
   size('borderWidth', 'Border width', 'widgets', 0, 8),
+  choice('borderStyle', 'Border style', 'widgets', [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['double', 'Double']]),
   size('borderRadius', 'Corner radius', 'widgets', 0, 40),
   size('cardPadding', 'Inner padding', 'widgets', 0, 40),
   choice('shadow', 'Shadow', 'widgets', [['none', 'None'], ['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']]),

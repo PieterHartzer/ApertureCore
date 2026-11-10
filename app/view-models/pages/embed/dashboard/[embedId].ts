@@ -5,6 +5,7 @@ import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
 import WidgetSkeleton from '~/components/dashboard/WidgetSkeleton.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
+import { getCardStyle } from '~/utils/charts/chart-settings'
 import { useEmbeddedDashboard } from '~/composables/dashboard/useEmbeddedDashboard'
 import { useEmbeddedDashboardQueryResults } from '~/composables/dashboard/useEmbeddedDashboardQueryResults'
 import type { EmbeddedDashboardWidget } from '~/types/dashboards'
@@ -200,6 +201,7 @@ export default defineComponent({
     )
 
     return {
+      getCardStyle,
       getWidgetTitle,
       dashboard,
       getWidgetErrorMessage,

@@ -1,9 +1,10 @@
 import type { ChartColors } from './chart-colors'
+import { BORDER_STYLES, isBorderStyle, outlineDeclarations } from '#shared/utils/border'
 import { isHexColor } from '#shared/utils/color'
 
 export type SettingControl = 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
 export type SettingSpan = 'full' | 'half' | 'third'
-export type SettingSection = 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'labels' | 'advanced'
+export type SettingSection = 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
 
 export interface ChartSetting {
   key: string
@@ -58,7 +59,11 @@ export const AXIS = [
 ]
 export const REFERENCE = [
   setting('referenceValue', 'Target line value', 'range', 'number'),
-  setting('referenceLabel', 'Target line label', 'range', 'text')
+  setting('referenceLabel', 'Target line label', 'range', 'text'),
+  setting('referenceColor', 'Target line colour', 'range', 'color'),
+  setting('referenceLineStyle', 'Target line style', 'range', 'select', {
+    options: [{ value: 'dashed', label: 'Dashed' }, { value: 'solid', label: 'Solid' }, { value: 'dotted', label: 'Dotted' }]
+  })
 ]
 export const SHOW_VALUES = setting('showValues', 'Show values on the chart', 'appearance', 'switch')
 const SLICE_LABELS = setting('labelMode', 'Slice labels', 'appearance', 'select', {
@@ -100,6 +105,49 @@ const TEXT_SETTINGS: Record<string, ChartSetting[]> = {
 }
 
 for (const [id, settings] of Object.entries(TEXT_SETTINGS)) CHART_SETTINGS[id] = [...settings, ...CHART_SETTINGS[id]!]
+
+/** Every widget can override its own card, on top of the dashboard style. */
+export const CARD = [
+  setting('cardBackground', 'Background colour', 'card', 'color'),
+  setting('cardBorderColor', 'Border colour', 'card', 'color'),
+  setting('cardBorderWidth', 'Border width', 'card', 'number', { min: 0, max: 8, span: 'third' }),
+  setting('cardBorderStyle', 'Border style', 'card', 'select', {
+    span: 'third',
+    options: BORDER_STYLES.map(value => ({ value, label: value[0]!.toUpperCase() + value.slice(1) }))
+  }),
+  setting('cardRadius', 'Corner radius', 'card', 'number', { min: 0, max: 40, span: 'third' })
+]
+
+/**
+ * Inline styles for a widget's card. They are !important so the widget's own
+ * choice beats the dashboard style.
+ */
+export const getCardStyle = (config: Config): Record<string, string> => {
+  const important = (value: string) => `${value} !important`
+  const style: Record<string, string> = {}
+  const background = colorSetting(config, 'cardBackground')
+  const borderColor = colorSetting(config, 'cardBorderColor')
+  const borderWidth = numberSetting(config, 'cardBorderWidth')
+  const borderStyle = textSetting(config, 'cardBorderStyle')
+  const radius = numberSetting(config, 'cardRadius')
+
+  if (background) style.backgroundColor = important(background)
+
+  if (borderColor || borderWidth !== null || isBorderStyle(borderStyle)) {
+    const outline = outlineDeclarations(
+      borderWidth ?? 1,
+      isBorderStyle(borderStyle) ? borderStyle : 'solid',
+      borderColor ?? 'var(--ui-border)'
+    )
+
+    style.outline = important(outline.outline)
+    style.outlineOffset = important(outline.outlineOffset)
+  }
+
+  if (radius !== null) style.borderRadius = important(`${Math.min(Math.max(radius, 0), 40)}px`)
+
+  return style
+}
 
 export const LABELS = setting('labelOverrides', 'Rename labels', 'labels', 'labels', { span: 'full' })
 
@@ -308,7 +356,11 @@ export const applyCartesianSettings = <T extends object>(option: T, config: Conf
       next.markLine = {
         silent: true,
         symbol: 'none',
-        lineStyle: { color: colors.ink, type: 'dashed', width: 1 },
+        lineStyle: {
+          color: colorSetting(config, 'referenceColor') ?? colors.ink,
+          type: ['solid', 'dotted'].includes(textSetting(config, 'referenceLineStyle')) ? textSetting(config, 'referenceLineStyle') : 'dashed',
+          width: 1
+        },
         label: { color: colors.label, fontSize: 10, position: 'insideEndTop', formatter: textSetting(config, 'referenceLabel') || format.short(reference) },
         data: [horizontal ? { xAxis: reference } : { yAxis: reference }]
       }

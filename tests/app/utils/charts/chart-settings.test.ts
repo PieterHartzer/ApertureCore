@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { getChartColors } from '../../../../app/utils/charts/chart-colors'
-import { applyCartesianSettings, applyColorSettings, bandFor, bandStops, CHART_SETTINGS, colorSetting, createValueFormatter, getTextStyles, applyLabelOverridesToOption, applyLabelOverridesToRows, overrideLabel, parseAdvancedOptions, parseThresholdSteps, resolveBands, applyAdvancedOptions } from '../../../../app/utils/charts/chart-settings'
+import { applyCartesianSettings, applyColorSettings, getCardStyle, bandFor, bandStops, CHART_SETTINGS, colorSetting, createValueFormatter, getTextStyles, applyLabelOverridesToOption, applyLabelOverridesToRows, overrideLabel, parseAdvancedOptions, parseThresholdSteps, resolveBands, applyAdvancedOptions } from '../../../../app/utils/charts/chart-settings'
 import { buildChartOption, CHART_CATALOG, CHART_SAMPLE_DATA, type CatalogChart } from '../../../../app/utils/charts/chart-catalog'
 
 const format = (config: Record<string, unknown>) => createValueFormatter(config, 'en-US')
@@ -197,5 +197,41 @@ describe('text styles', () => {
   it('offers text settings on text widgets only', () => {
     expect(CHART_SETTINGS['stat-card']!.map(item => item.key)).toEqual(expect.arrayContaining(['valueFontSize', 'labelFontSize', 'textAlign', 'verticalAlign']))
     expect(CHART_SETTINGS.pie!.some(item => item.section === 'text')).toBe(false)
+  })
+})
+
+describe('widget card style', () => {
+  it('is empty when the widget sets nothing', () => {
+    expect(getCardStyle({})).toEqual({})
+  })
+
+  it('applies background, border and corners, winning over the dashboard', () => {
+    expect(getCardStyle({ cardBackground: '#11223380', cardBorderColor: '#ff0000', cardBorderWidth: 3, cardBorderStyle: 'dotted', cardRadius: 12 })).toEqual({
+      backgroundColor: '#11223380 !important',
+      outline: '3px dotted #ff0000 !important',
+      outlineOffset: '-3px !important',
+      borderRadius: '12px !important'
+    })
+  })
+
+  it('never passes unsafe values into styles', () => {
+    expect(getCardStyle({ cardBackground: 'url(x)', cardBorderStyle: 'groove', cardBorderWidth: 99, cardRadius: -5 })).toEqual({
+      outline: '8px solid var(--ui-border) !important',
+      outlineOffset: '-8px !important',
+      borderRadius: '0px !important'
+    })
+  })
+})
+
+describe('target line style', () => {
+  it('uses the chosen colour and line style', () => {
+    const option = applyCartesianSettings(
+      { xAxis: { type: 'category' }, yAxis: { type: 'value' }, series: [{ type: 'bar', data: [1] }] },
+      { referenceValue: 5, referenceColor: '#00ff0080', referenceLineStyle: 'solid' },
+      format({}),
+      getChartColors('light')
+    ) as { series: Array<{ markLine?: { lineStyle: Record<string, unknown> } }> }
+
+    expect(option.series[0]?.markLine?.lineStyle).toMatchObject({ color: '#00ff0080', type: 'solid' })
   })
 })

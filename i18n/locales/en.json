@@ -323,6 +323,11 @@
           "save": "Save changes",
           "cancelEdit": "Cancel editing",
           "refreshPreview": "Refresh preview"
+        },
+        "tabs": {
+          "data": "Data",
+          "format": "Format",
+          "style": "Style"
         }
       },
       "preview": {
@@ -455,6 +460,15 @@
           },
           "chartGrid": {
             "label": "Grid line colour"
+          },
+          "borderStyle": {
+            "label": "Border style",
+            "options": {
+              "solid": "Solid",
+              "dashed": "Dashed",
+              "dotted": "Dotted",
+              "double": "Double"
+            }
           }
         }
       },
@@ -587,6 +601,38 @@
             },
             "bins": {
               "label": "Number of ranges"
+            },
+            "referenceColor": {
+              "label": "Target line colour"
+            },
+            "referenceLineStyle": {
+              "label": "Target line style",
+              "options": {
+                "dashed": "Dashed",
+                "solid": "Solid",
+                "dotted": "Dotted"
+              }
+            },
+            "cardBackground": {
+              "label": "Background colour"
+            },
+            "cardBorderColor": {
+              "label": "Border colour"
+            },
+            "cardBorderWidth": {
+              "label": "Border width"
+            },
+            "cardBorderStyle": {
+              "label": "Border style",
+              "options": {
+                "solid": "Solid",
+                "dashed": "Dashed",
+                "dotted": "Dotted",
+                "double": "Double"
+              }
+            },
+            "cardRadius": {
+              "label": "Corner radius"
             }
           },
           "sections": {
@@ -596,7 +642,8 @@
             "format": "Number format",
             "thresholds": "Colour thresholds",
             "range": "Range and targets",
-            "appearance": "Appearance"
+            "appearance": "Appearance",
+            "card": "Card"
           },
           "stepValue": "From value",
           "stepColor": "Colour",
@@ -643,7 +690,8 @@
             "closeField": "Close"
           },
           "opacity": "Opacity",
-          "opacityFor": "{name} opacity"
+          "opacityFor": "{name} opacity",
+          "opacityNeedsColor": "Pick a colour first to set its opacity."
         },
         "shared": {
           "loading": "Loading chart..."

@@ -301,6 +301,11 @@
           "save": "[Šåṽë çĥåñĝëš]",
           "cancelEdit": "[Çåñçëļ ëðîţîñĝ]",
           "refreshPreview": "[Řëƒřëšĥ þřëṽîëŵ]"
+        },
+        "tabs": {
+          "data": "[Dåţå]",
+          "format": "[Fôrmåţ]",
+          "style": "[Sţylë]"
         }
       },
       "preview": {
@@ -433,6 +438,15 @@
           },
           "chartGrid": {
             "label": "[Grîd lîñë côlôûr]"
+          },
+          "borderStyle": {
+            "label": "[Bôrdër šţylë]",
+            "options": {
+              "solid": "[Sôlîd]",
+              "dashed": "[Dåšhëd]",
+              "dotted": "[Dôţţëd]",
+              "double": "[Dôûblë]"
+            }
           }
         }
       },
@@ -565,6 +579,38 @@
             },
             "bins": {
               "label": "[Nûmbër ôf råñgëš]"
+            },
+            "referenceColor": {
+              "label": "[Tårgëţ lîñë côlôûr]"
+            },
+            "referenceLineStyle": {
+              "label": "[Tårgëţ lîñë šţylë]",
+              "options": {
+                "dashed": "[Dåšhëd]",
+                "solid": "[Sôlîd]",
+                "dotted": "[Dôţţëd]"
+              }
+            },
+            "cardBackground": {
+              "label": "[Båckgrôûñd côlôûr]"
+            },
+            "cardBorderColor": {
+              "label": "[Bôrdër côlôûr]"
+            },
+            "cardBorderWidth": {
+              "label": "[Bôrdër wîdţh]"
+            },
+            "cardBorderStyle": {
+              "label": "[Bôrdër šţylë]",
+              "options": {
+                "solid": "[Sôlîd]",
+                "dashed": "[Dåšhëd]",
+                "dotted": "[Dôţţëd]",
+                "double": "[Dôûblë]"
+              }
+            },
+            "cardRadius": {
+              "label": "[Côrñër rådîûš]"
             }
           },
           "sections": {
@@ -574,7 +620,8 @@
             "format": "[Nûmbër fôrmåţ]",
             "thresholds": "[Côlôûr ţhrëšhôldš]",
             "range": "[Råñgë åñd ţårgëţš]",
-            "appearance": "[Åppëåråñcë]"
+            "appearance": "[Åppëåråñcë]",
+            "card": "[Cård]"
           },
           "stepValue": "[Frôm vålûë]",
           "stepColor": "[Côlôûr]",
@@ -621,7 +668,8 @@
             "closeField": "[Clôšë]"
           },
           "opacity": "[Ôpåcîţy]",
-          "opacityFor": "[{name} ôpåcîţy]"
+          "opacityFor": "[{name} ôpåcîţy]",
+          "opacityNeedsColor": "[Pîck å côlôûr fîršţ ţô šëţ îţš ôpåcîţy.]"
         },
         "shared": {
           "loading": "[Ļôåðîñĝ çĥåřţ...]"

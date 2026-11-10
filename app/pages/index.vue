@@ -285,6 +285,16 @@ export default component
         <template #body>
           <div class="grid items-start gap-5 p-4 sm:p-5 xl:grid-cols-[minmax(0,540px)_minmax(0,1fr)]">
             <div class="min-w-0 space-y-3">
+              <UTabs
+                v-model="builderTab"
+                :items="builderTabs"
+                :content="false"
+                variant="link"
+                size="sm"
+                class="w-full"
+              />
+
+              <div v-show="builderTab === 'data'" class="space-y-3">
               <section class="rounded-lg border border-default">
                 <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.widget') }}</h3>
                 <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
@@ -340,8 +350,7 @@ export default component
                     {{ t('pages.dashboard.builder.mapping.noneDescription') }}
                   </AppAlert>
 
-              <template v-else>
-                <section v-if="pluginFieldInputs.length" class="rounded-lg border border-default">
+                <section v-else-if="pluginFieldInputs.length" class="rounded-lg border border-default">
                   <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.data') }}</h3>
                   <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
                     <UFormField
@@ -375,10 +384,13 @@ export default component
                     </UFormField>
                   </div>
                 </section>
+              </div>
 
+              <div v-if="builderTab !== 'data'" class="space-y-3">
                 <details
-                  v-for="section in pluginSettingSections"
-                  :key="section.id"
+                  v-for="section in activeSettingSections"
+                  :key="`${builderTab}-${section.id}`"
+                  :open="section.id !== 'advanced'"
                   class="group rounded-lg border border-default"
                 >
                   <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium text-highlighted">
@@ -399,6 +411,7 @@ export default component
                         class="w-full"
                         :min="input.min"
                         :max="input.max"
+                        :placeholder="builderTab === 'style' ? t('pages.dashboard.plugins.catalog.defaultColor') : undefined"
                         :model-value="getSettingValue(input.key) ?? ''"
                         @update:model-value="setNumberSetting(input.key, $event)"
                       />
@@ -422,7 +435,7 @@ export default component
                         <div
                           v-for="(step, index) in thresholdSteps"
                           :key="index"
-                          class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2rem] items-center gap-2"
+                          class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_2rem] items-start gap-2"
                         >
                           <UInput
                             type="number"
@@ -526,7 +539,7 @@ export default component
                         class="w-full"
                         :items="getSettingOptions(input)"
                         :model-value="getSettingValue(input.key)"
-                        :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
+                        :placeholder="builderTab === 'style' ? t('pages.dashboard.plugins.catalog.defaultColor') : t('pages.dashboard.builder.mapping.placeholder')"
                         @update:model-value="setSettingValue(input.key, $event)"
                       />
                       <USwitch
@@ -537,7 +550,7 @@ export default component
                     </UFormField>
                   </div>
                 </details>
-              </template>
+              </div>
             </div>
 
             <UPageCard
@@ -692,6 +705,7 @@ export default component
             <UCard
               data-widget-card
               class="h-full w-full"
+              :style="getCardStyle(widget.pluginConfig ?? {})"
               :ui="{
                 root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
                 header: 'flex-none px-4 pb-0 pt-3 sm:px-4 sm:pb-0 sm:pt-3',

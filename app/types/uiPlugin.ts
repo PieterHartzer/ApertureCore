@@ -48,7 +48,7 @@ export interface PluginInputDefinition {
   // The remaining properties describe settings typed by the user (source: 'value').
   control?: 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
   span?: 'full' | 'half' | 'third'
-  section?: 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'labels' | 'advanced'
+  section?: 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
   visibleWhen?: { key: string, values: string[] }
   min?: number
   max?: number

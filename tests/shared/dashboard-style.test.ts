@@ -8,7 +8,7 @@ describe('style properties', () => {
   })
 
   it('removes borders when the width is zero', () => {
-    expect(buildDashboardCss({ borderWidth: 0 })).toContain('box-shadow: inset 0 0 0 0px var(--ui-border) !important')
+    expect(buildDashboardCss({ borderWidth: 0 })).toContain('outline: 0px solid var(--ui-border) !important')
   })
 
   it('ignores custom CSS', () => {
@@ -17,5 +17,18 @@ describe('style properties', () => {
 
   it('passes chart colours and fonts through', () => {
     expect(getDashboardChartStyle({ chartPrimary: '#112233', fontFamily: 'serif' })).toMatchObject({ primary: '#112233', fontFamily: expect.stringContaining('serif') })
+  })
+})
+
+describe('dashboard border styles', () => {
+  it('draws the chosen border style inside the card', () => {
+    const css = buildDashboardCss({ borderWidth: 2, borderStyle: 'dashed', borderColor: '#ff000080' })
+
+    expect(css).toContain('outline: 2px dashed #ff000080 !important')
+    expect(css).toContain('outline-offset: -2px !important')
+  })
+
+  it('ignores unknown border styles', () => {
+    expect(buildDashboardCss({ borderStyle: 'groove; background: red' })).not.toContain('groove')
   })
 })

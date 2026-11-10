@@ -42,6 +42,7 @@ export default component
           <UCard
             data-widget-card
             class="h-full w-full"
+            :style="getCardStyle(widget.pluginConfig ?? {})"
             :ui="{
               root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
               header: 'flex-none p-4 sm:px-6 sm:py-4',

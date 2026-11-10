@@ -1,4 +1,4 @@
-import { computed, defineComponent, type PropType } from 'vue'
+import { computed, defineComponent, useId, type PropType } from 'vue'
 
 import { isHexColor, joinHexColor, splitHexColor } from '#shared/utils/color'
 
@@ -43,18 +43,23 @@ export default defineComponent({
       emit('update:modelValue', joinHexColor(value, props.modelValue ? opacity.value : 100))
     }
 
-    const onOpacityInput = (value: string | number) => {
-      const number = typeof value === 'number' ? value : Number.parseFloat(value)
+    const sliderLabelId = useId()
 
-      if (Number.isFinite(number)) {
-        emit('update:modelValue', joinHexColor(solid.value, number))
+    const onOpacityInput = (value: number | number[] | undefined) => {
+      const number = Array.isArray(value) ? value[0] : value
+
+      if (!props.modelValue || number === undefined) {
+        return
       }
+
+      emit('update:modelValue', joinHexColor(solid.value, number))
     }
 
     return {
       onOpacityInput,
       onSolidInput,
       opacity,
+      sliderLabelId,
       solid,
       t
     }
