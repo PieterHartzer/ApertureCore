@@ -72,7 +72,8 @@ export default component
   display: flex;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  /* The card clips its own content; this must not clip the card's shadow. */
+  overflow: visible;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -119,7 +120,6 @@ export default component
 .dashboard-widget-grid.edit-mode :deep(.grid-stack-item) {
   border: 2px solid var(--color-border);
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .dashboard-widget-grid.edit-mode :deep(.grid-stack-item:hover) {

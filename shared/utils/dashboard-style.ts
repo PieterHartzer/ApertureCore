@@ -70,7 +70,7 @@ export const buildDashboardCss = (input: unknown) => {
   const font = typeof style.fontFamily === 'string' ? FONT_STACKS[style.fontFamily] : undefined
 
   return [
-    cssRule(DASHBOARD_CANVAS, ['isolation: isolate;', 'overflow: clip;', 'overflow-clip-margin: 12px;', declaration('color', style.textColor), declaration('font-family', font)]),
+    cssRule(DASHBOARD_CANVAS, ['isolation: isolate;', 'overflow: clip;', 'overflow-clip-margin: 64px;', declaration('color', style.textColor), declaration('font-family', font)]),
     cssRule('body::before', [style.pageBackground === undefined ? null : `background: ${style.pageBackground} !important;`]),
     cssRule(`${DASHBOARD_CANVAS} .grid-stack`, style.widgetGap === undefined ? [] : ['top', 'right', 'bottom', 'left'].map(side => `--gs-item-margin-${side}: ${Number(style.widgetGap) / 2}px !important;`)),
     cssRule(card, [declaration('background-color', style.cardBackground), declaration('box-shadow', boxShadow), declaration('outline', outline?.outline), declaration('outline-offset', outline?.outlineOffset), declaration('border-radius', style.borderRadius, 'px')]),
