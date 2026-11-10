@@ -1,85 +1,22 @@
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { dirname } from 'node:path'
-import { resolvePositiveInteger } from './server/utils/positive-integer'
+import { readRuntimeEnv } from './config/runtime-env.mjs'
 
 const nuxtPort = Number(process.env.NUXT_PORT ?? process.env.PORT ?? '3300')
-const publicAppUrl = process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3300'
-const oidcAuthorizationUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_AUTHORIZATION_URL || ''
-const oidcTokenUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_TOKEN_URL || ''
-const oidcUserInfoUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_USER_INFO_URL || ''
-const oidcLogoutUrl = process.env.NUXT_OIDC_PROVIDERS_OIDC_LOGOUT_URL || ''
-const DEFAULT_OIDC_SCOPES = [
-  'openid',
-  'profile',
-  'email',
-  'offline_access'
-]
-const splitEnvList = (value: string | undefined): string[] => {
-  return (value ?? '')
-    .split(/[\s,]+/)
-    .map(item => item.trim())
-    .filter(Boolean)
-}
-const oidcOpenIdConfigurationUrl =
-  process.env.NUXT_OIDC_PROVIDERS_OIDC_OPENID_CONFIGURATION || undefined
-const oidcIssuer = process.env.NUXT_OIDC_PROVIDERS_OIDC_ISSUER || (() => {
-  try {
-    return oidcAuthorizationUrl ? new URL(oidcAuthorizationUrl).origin : undefined
-  } catch {
-    return undefined
-  }
-})()
-const oidcJwksUri = process.env.NUXT_OIDC_PROVIDERS_OIDC_JWKS_URI || undefined
-const oidcOpenIdConfiguration =
-  oidcIssuer && oidcJwksUri
-    ? {
-        issuer: oidcIssuer,
-        jwks_uri: oidcJwksUri,
-      }
-    : oidcOpenIdConfigurationUrl
+// The built server reads them again at start-up through config/apply-runtime-env.mjs.
+const settings = readRuntimeEnv(process.env)
 const oidcDevProviderHostPort = process.env.OIDC_DEV_PROVIDER_HOST_PORT ?? '18080'
 const oidcDevMailUiHostPort = process.env.OIDC_DEV_MAIL_UI_HOST_PORT ?? '8025'
-const publicAppOrigin = (() => {
-  try {
-    return new URL(publicAppUrl).origin
-  } catch {
-    return 'http://localhost:3300'
-  }
-})()
-const oidcScopes = splitEnvList(process.env.APP_OIDC_SCOPE)
-const oidcOrganizationIdClaim =
-  process.env.APP_OIDC_ORGANIZATION_ID_CLAIM ||
-  ''
-const oidcOrganizationNameClaim =
-  process.env.APP_OIDC_ORGANIZATION_NAME_CLAIM ||
-  ''
-const oidcOrganizationPrimaryDomainClaim =
-  process.env.APP_OIDC_ORGANIZATION_PRIMARY_DOMAIN_CLAIM ||
-  ''
-const queryCacheTtlSeconds = resolvePositiveInteger(
-  process.env.QUERY_CACHE_TTL_SECONDS,
-  60
-)
-const maxQueryRows = resolvePositiveInteger(
-  process.env.MAX_QUERY_ROWS,
-  1000
-)
-const queryTimeoutMs = resolvePositiveInteger(
-  process.env.QUERY_TIMEOUT_MS,
-  10_000
-)
-const oidcOptionalClaims = Array.from(new Set([
-  'sub',
-  oidcOrganizationIdClaim,
-  oidcOrganizationNameClaim,
-  oidcOrganizationPrimaryDomainClaim
-].filter(Boolean)))
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   nitro: {
     devStorage: {
+      oidc: { driver: 'fs', base: './.data/oidc-sessions' }
+    },
+    // Sessions survive a restart, so people stay signed in across deploys.
+    storage: {
       oidc: { driver: 'fs', base: './.data/oidc-sessions' }
     },
     // Serve the self-contained runtime without Vite transforming its embedded WASM.
@@ -98,20 +35,14 @@ export default defineNuxtConfig({
     port: nuxtPort
   },
   runtimeConfig: {
-    appDatabaseUrl: process.env.APP_DATABASE_URL || '',
-    appDatabaseEncryptionKey:
-      process.env.APP_DATABASE_ENCRYPTION_KEY ||
-      '',
-    queryCacheTtlSeconds,
-    maxQueryRows,
-    queryTimeoutMs,
-    oidcOrganizationClaims: {
-      idClaim: oidcOrganizationIdClaim,
-      nameClaim: oidcOrganizationNameClaim,
-      primaryDomainClaim: oidcOrganizationPrimaryDomainClaim
-    },
+    appDatabaseUrl: settings.appDatabaseUrl,
+    appDatabaseEncryptionKey: settings.appDatabaseEncryptionKey,
+    queryCacheTtlSeconds: settings.queryCacheTtlSeconds,
+    maxQueryRows: settings.maxQueryRows,
+    queryTimeoutMs: settings.queryTimeoutMs,
+    oidcOrganizationClaims: settings.oidcOrganizationClaims,
     public: {
-      oidcConfigured: Boolean(process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID),
+      oidcConfigured: settings.oidcConfigured,
       devToolsLinks: {
         enabled: process.env.NODE_ENV !== 'production',
         mailInboxUrl:
@@ -170,37 +101,16 @@ export default defineNuxtConfig({
     },
     providers: {
       oidc: {
-        clientId: process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID || '',
-        clientSecret: process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_SECRET || '',
-        authorizationUrl: oidcAuthorizationUrl,
-        tokenUrl: oidcTokenUrl,
-        userInfoUrl: oidcUserInfoUrl,
-        logoutUrl: oidcLogoutUrl,
-        // Return to the app after sign-out, which leads to the sign-in form and
-        // then the dashboard. The provider must have this address registered.
-        logoutRedirectUri: `${publicAppOrigin}/`,
+        ...settings.oidcProvider,
         logoutRedirectParameterName: 'post_logout_redirect_uri',
-        additionalLogoutParameters: {
-          clientId: process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID || ''
-        },
-        openIdConfiguration: oidcOpenIdConfiguration,
-        redirectUri:
-          process.env.NUXT_OIDC_PROVIDERS_OIDC_REDIRECT_URI ||
-          `${publicAppOrigin}/auth/oidc/callback`,
         authenticationScheme: 'none',
         grantType: 'authorization_code',
-        scope: [
-          ...(oidcScopes.length > 0
-            ? oidcScopes
-            : DEFAULT_OIDC_SCOPES)
-        ],
         scopeInTokenRequest: true,
         tokenRequestType: 'form-urlencoded',
         pkce: true,
         state: true,
         nonce: true,
         userNameClaim: 'preferred_username',
-        optionalClaims: oidcOptionalClaims,
         skipAccessTokenParsing: true,
         validateAccessToken: false,
         validateIdToken: true,
