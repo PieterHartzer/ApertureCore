@@ -453,7 +453,8 @@
       "plugins": {
         "pie": {
           "name": "[Pîë chårţ]",
-          "description": "[Pårţš ôf å whôlë.]"
+          "description": "[Pårţš ôf å whôlë.]",
+          "useWhen": "[Yôû wåñţ ţô šhôw hôw å ţôţål šplîţš îñţô å fëw pårţš. Bëšţ wîţh fîvë šlîcëš ôr fëwër.]"
         },
         "catalog": {
           "settings": {
@@ -690,7 +691,8 @@
             }
           },
           "emptyColumns": "[Ñô çôļûḿñš åřë åṽåîļåƀļë ƒôř ţĥîš qüëřý ýëţ.]",
-          "emptyRows": "[Ñô řôŵš ŵëřë řëţûřñëð ƒôř ţĥîš ŵîðĝëţ.]"
+          "emptyRows": "[Ñô řôŵš ŵëřë řëţûřñëð ƒôř ţĥîš ŵîðĝëţ.]",
+          "useWhen": "[Yôû ñëëd ţhë ëxåcţ rôwš åñd vålûëš, šûch åš å lîšţ ôf rëcëñţ ôrdërš ôr åñyţhîñg pëôplë wîll rëåd lîñë by lîñë.]"
         },
         "line-chart": {
           "name": "[Ļîñë çĥåřţ]",
@@ -704,7 +706,8 @@
             }
           },
           "emptyMapping": "[Ḿåþ ƀôţĥ åxëš ţô qüëřý ƒîëļðš ţô řëñðëř ţĥîš çĥåřţ.]",
-          "emptyRows": "[Ţĥîš çĥåřţ ñëëðš řôŵš ŵîţĥ ñûḿëřîç ṽåļûëš îñ ţĥë šëļëçţëð ḿëåšûřë ƒîëļð.]"
+          "emptyRows": "[Ţĥîš çĥåřţ ñëëðš řôŵš ŵîţĥ ñûḿëřîç ṽåļûëš îñ ţĥë šëļëçţëð ḿëåšûřë ƒîëļð.]",
+          "useWhen": "[Yôû wåñţ ţô šhôw hôw ôñë ñûmbër chåñgëš ôvër ţîmë, šûch åš rëvëñûë by môñţh.]"
         },
         "bar-chart": {
           "name": "[Ɓåř çĥåřţ]",
@@ -718,7 +721,8 @@
             }
           },
           "emptyMapping": "[Ḿåþ ƀôţĥ ƒîëļðš ţô řëñðëř ţĥîš çĥåřţ.]",
-          "emptyRows": "[Ţĥîš çĥåřţ ñëëðš řôŵš ŵîţĥ ñûḿëřîç ṽåļûëš îñ ţĥë šëļëçţëð ṽåļûë ƒîëļð.]"
+          "emptyRows": "[Ţĥîš çĥåřţ ñëëðš řôŵš ŵîţĥ ñûḿëřîç ṽåļûëš îñ ţĥë šëļëçţëð ṽåļûë ƒîëļð.]",
+          "useWhen": "[Yôû wåñţ ţô cômpårë ôñë ñûmbër åcrôšš å håñdfûl ôf cåţëgôrîëš, šûch åš šålëš për prôdûcţ.]"
         },
         "stat-card": {
           "name": "[Šţåţ çåřð]",
@@ -738,7 +742,8 @@
           "emptyValue": "[Ñô ṽåļûë]",
           "emptyMapping": "[Çĥôôšë å ṽåļûë ƒîëļð ţô řëñðëř ţĥîš šţåţ çåřð.]",
           "emptyRows": "[Ţĥîš ŵîðĝëţ ñëëðš åţ ļëåšţ ôñë qüëřý řôŵ.]",
-          "firstRowHint": "[Šĥôŵîñĝ ţĥë ƒîřšţ řôŵ řëţûřñëð ƀý ţĥîš qüëřý.]"
+          "firstRowHint": "[Šĥôŵîñĝ ţĥë ƒîřšţ řôŵ řëţûřñëð ƀý ţĥîš qüëřý.]",
+          "useWhen": "[Ôñë ñûmbër måţţërš môšţ, šûch åš ţhîš môñţh’š rëvëñûë ôr ţhë ñûmbër ôf ôpëñ ţîckëţš.]"
         }
       },
       "gettingStarted": {
@@ -761,6 +766,33 @@
             "description": "[Turn your queries into charts, stats and tables.]",
             "action": "[Create dashboard]"
           }
+        }
+      },
+      "gallery": {
+        "open": "[Brôwšë wîdgëţš]",
+        "title": "[Chôôšë å wîdgëţ]",
+        "description": "[Ëåch wîdgëţ îš dråwñ wîţh ëxåmplë dåţå. Pîck ôñë ţô šëë whëñ ţô ûšë îţ åñd whåţ dåţå îţ ñëëdš.]",
+        "search": "[Sëårch wîdgëţš]",
+        "groupsLabel": "[Wîdgëţ ţypëš]",
+        "empty": "[Nô wîdgëţš måţch yôûr šëårch.]",
+        "included": "[Îñclûdëd îñ yôûr plåñ]",
+        "others": "[Ôţhër wîdgëţš]",
+        "useWhen": "[Ûšë îţ whëñ]",
+        "needs": "[Côlûmñš îţ ñëëdš]",
+        "exampleData": "[Ëxåmplë dåţå]",
+        "moreRows": "[Åñd {count} môrë rôwš.]",
+        "use": "[Ûšë ţhîš wîdgëţ]",
+        "cancel": "[Cåñcël]",
+        "groups": {
+          "all": "[Åll]",
+          "kpi": "[Këy ñûmbërš]",
+          "trend": "[Ôvër ţîmë]",
+          "compare": "[Cômpårîšôñš]",
+          "parts": "[Pårţš ôf å whôlë]",
+          "distribution": "[Sprëåd ôf vålûëš]",
+          "flow": "[Flôwš åñd šţågëš]",
+          "table": "[Tåblëš]",
+          "other": "[Ôţhër]"
         }
       }
     }

@@ -475,7 +475,8 @@
       "plugins": {
         "pie": {
           "name": "Pie chart",
-          "description": "Parts of a whole."
+          "description": "Parts of a whole.",
+          "useWhen": "You want to show how a total splits into a few parts. Best with five slices or fewer."
         },
         "catalog": {
           "settings": {
@@ -712,7 +713,8 @@
             }
           },
           "emptyColumns": "No columns are available for this query yet.",
-          "emptyRows": "No rows were returned for this widget."
+          "emptyRows": "No rows were returned for this widget.",
+          "useWhen": "You need the exact rows and values, such as a list of recent orders or anything people will read line by line."
         },
         "line-chart": {
           "name": "Line chart",
@@ -726,7 +728,8 @@
             }
           },
           "emptyMapping": "Map both axes to query fields to render this chart.",
-          "emptyRows": "This chart needs rows with numeric values in the selected measure field."
+          "emptyRows": "This chart needs rows with numeric values in the selected measure field.",
+          "useWhen": "You want to show how one number changes over time, such as revenue by month."
         },
         "bar-chart": {
           "name": "Bar chart",
@@ -740,7 +743,8 @@
             }
           },
           "emptyMapping": "Map both fields to render this chart.",
-          "emptyRows": "This chart needs rows with numeric values in the selected value field."
+          "emptyRows": "This chart needs rows with numeric values in the selected value field.",
+          "useWhen": "You want to compare one number across a handful of categories, such as sales per product."
         },
         "stat-card": {
           "name": "Stat card",
@@ -760,7 +764,35 @@
           "emptyValue": "No value",
           "emptyMapping": "Choose a value field to render this stat card.",
           "emptyRows": "This widget needs at least one query row.",
-          "firstRowHint": "Showing the first row returned by this query."
+          "firstRowHint": "Showing the first row returned by this query.",
+          "useWhen": "One number matters most, such as this month’s revenue or the number of open tickets."
+        }
+      },
+      "gallery": {
+        "open": "Browse widgets",
+        "title": "Choose a widget",
+        "description": "Each widget is drawn with example data. Pick one to see when to use it and what data it needs.",
+        "search": "Search widgets",
+        "groupsLabel": "Widget types",
+        "empty": "No widgets match your search.",
+        "included": "Included in your plan",
+        "others": "Other widgets",
+        "useWhen": "Use it when",
+        "needs": "Columns it needs",
+        "exampleData": "Example data",
+        "moreRows": "And {count} more rows.",
+        "use": "Use this widget",
+        "cancel": "Cancel",
+        "groups": {
+          "all": "All",
+          "kpi": "Key numbers",
+          "trend": "Over time",
+          "compare": "Comparisons",
+          "parts": "Parts of a whole",
+          "distribution": "Spread of values",
+          "flow": "Flows and stages",
+          "table": "Tables",
+          "other": "Other"
         }
       }
     }

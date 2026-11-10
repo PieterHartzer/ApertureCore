@@ -10,6 +10,7 @@ import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import { appExtensions, type WidgetPickerItem } from '~/extensions'
 
 import DeleteDashboardDialog from '~/components/dashboard/DeleteDashboardDialog.vue'
+import WidgetGallery from '~/components/dashboard/WidgetGallery.vue'
 import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
 import WidgetSkeleton from '~/components/dashboard/WidgetSkeleton.vue'
@@ -76,6 +77,7 @@ interface PluginInputSelectOption {
 
 export default defineComponent({
   components: {
+    WidgetGallery,
     ColorField,
     ExtensionSlot,
     WidgetSkeleton,
@@ -642,6 +644,7 @@ export default defineComponent({
     const pluginSettingSections = computed(() => [...formatSections.value, ...styleSections.value])
 
     const builderTab = ref<'data' | 'format' | 'style'>('data')
+    const isWidgetGalleryOpen = ref(false)
     const builderTabs = computed(() => [
       { label: t('pages.dashboard.builder.tabs.data'), value: 'data', icon: 'i-lucide-database' },
       { label: t('pages.dashboard.builder.tabs.format'), value: 'format', icon: 'i-lucide-sliders-horizontal', disabled: formatSections.value.length === 0 },
@@ -1635,6 +1638,7 @@ export default defineComponent({
       pluginSettingSections,
       activeSettingSections,
       builderTab,
+      isWidgetGalleryOpen,
       builderTabs,
       getCardStyle,
       setNumberSetting,

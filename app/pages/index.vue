@@ -285,6 +285,13 @@ export default component
         <template #body>
           <div class="grid items-start gap-5 p-4 sm:p-5 xl:grid-cols-[minmax(0,540px)_minmax(0,1fr)]">
             <div class="min-w-0 space-y-3">
+              <WidgetGallery
+                v-model:open="isWidgetGalleryOpen"
+                :items="pluginOptions"
+                :selected-id="draft.pluginId"
+                @select="draft.pluginId = $event"
+              />
+
               <UTabs
                 v-model="builderTab"
                 :items="builderTabs"
@@ -302,6 +309,17 @@ export default component
                     <USelect v-model="draft.queryId" class="w-full" :items="queryOptions" :placeholder="t('pages.dashboard.builder.fields.query.placeholder')" />
                   </UFormField>
                   <UFormField class="col-span-6 sm:col-span-3" name="pluginId" :label="t('pages.dashboard.builder.fields.plugin.label')">
+                    <template #hint>
+                      <UButton
+                        variant="link"
+                        size="xs"
+                        class="p-0"
+                        icon="i-lucide-layout-grid"
+                        :label="t('pages.dashboard.gallery.open')"
+                        data-open-widget-gallery
+                        @click="isWidgetGalleryOpen = true"
+                      />
+                    </template>
                     <USelect v-model="draft.pluginId" class="w-full" :items="pluginOptions" :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')">
                       <template #item-trailing="{ item }">
                         <span v-if="item.trailingLabel" class="text-xs text-dimmed">{{ item.trailingLabel }}</span>

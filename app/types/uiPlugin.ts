@@ -54,6 +54,12 @@ export interface PluginInputDefinition {
   max?: number
 }
 
+/** Example rows and settings that show what a widget is for. */
+export interface UIPluginSample {
+  rows: SavedSqlQueryResultRow[]
+  config: Record<string, unknown>
+}
+
 export interface UIPluginDefinition {
   id: string
   name: string
@@ -65,6 +71,7 @@ export interface UIPluginDefinition {
   componentProps?: Record<string, unknown>
   group?: string
   inputSchema: PluginInputDefinition[]
+  sample?: UIPluginSample
 }
 
 export interface UIPluginFieldOption {
