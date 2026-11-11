@@ -91,7 +91,7 @@ export default component
                   <div
                     class="max-w-full rounded-lg border px-3 py-2 text-xs"
                     :class="isWidgetRefreshing(widget)
-                      ? 'border-default bg-default/90 text-muted'
+                      ? 'border-current/15 bg-current/5 text-current/70 backdrop-blur-sm'
                       : 'border-error/30 bg-error/10 text-error'"
                   >
                     <div

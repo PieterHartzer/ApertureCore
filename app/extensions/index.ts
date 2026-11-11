@@ -15,7 +15,15 @@ export type WidgetPickerItem = (WidgetOption & { trailingLabel?: string }) | { t
 
 export interface DashboardBuilderExtension {
   arrangeWidgetOptions: (options: WidgetOption[]) => WidgetPickerItem[]
-  blockReason: (request: { pluginId: string, editingPluginId: string, isEditing: boolean }) => string
+  blockReason: (request: {
+    pluginId: string
+    editingPluginId: string
+    isEditing: boolean
+    widgetCount: number
+    /** The draft's settings, and the saved widget's (empty for a new widget). */
+    pluginConfig: Record<string, unknown>
+    savedPluginConfig: Record<string, unknown>
+  }) => string
   fastestRefreshSeconds: ComputedRef<number>
   isEmbedBlocked: (isAlreadyEmbedded: boolean) => boolean
   refresh: () => Promise<void>

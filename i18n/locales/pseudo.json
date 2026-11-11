@@ -89,9 +89,6 @@
     "loadFailed": "[Çôûļð ñôţ ļôåð qûëřý]",
     "testBeforeSaving": "[Ţëšţ ţĥë çûřřëñţ ŠQĻ šûççëššƒûļļý ƀëƒôřë šåṽîñĝ.]"
   },
-  "app": {
-    "name": "[ÅpértürëÇørë]"
-  },
   "common": {
     "labels": {
       "locale": "[Ļåñĝûåĝë]"
@@ -116,7 +113,7 @@
   },
   "pages": {
     "dashboard": {
-      "headline": "[ÅpértürëÇørë]",
+      "headline": "[@:{'app.name'}]",
       "title": "[Ðåšĥƀôåřð]",
       "description": "[Çřëåţë ṽîëŵ-ôñļý ðåšĥƀôåřðš, šţåţš, åñð çåřðš ƒřôḿ ýöûř ôŵñ ðåţåƀåšë.]",
       "errors": {
@@ -932,9 +929,9 @@
           "widgetIdInvalid": "[Ţĥë ŵîðĝëţ îðëñţîƒîëř îš îñṽåļîð.]",
           "notFound": "[Ţĥë ëḿƀëððëð ŵîðĝëţ qüëřý çôûļð ñôţ ƀë ƒôûñð.]",
           "unsupportedDatabaseType": "[Ţĥîš ŵîðĝëţ ûšëš åñ ûñšûþþôřţëð ðåţåƀåšë ţýþë.]",
-          "authenticationFailed": "[ÅpértürëÇørë çôûļð ñôţ åûţĥëñţîçåţë ŵîţĥ ţĥë ðåţåƀåšë šëřṽëř.]",
+          "authenticationFailed": "[@:{'app.name'} çôûļð ñôţ åûţĥëñţîçåţë ŵîţĥ ţĥë ðåţåƀåšë šëřṽëř.]",
           "databaseNotFound": "[Ţĥë çôñƒîĝûřëð ðåţåƀåšë çôûļð ñôţ ƀë ƒôûñð.]",
-          "connectionFailed": "[ÅpértürëÇørë çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
+          "connectionFailed": "[@:{'app.name'} çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
           "timeout": "[Ţĥë ŵîðĝëţ qüëřý ţîḿëð ôûţ ƀëƒôřë îţ çôḿþļëţëð.]",
           "sslRequired": "[Ţĥë ðåţåƀåšë šëřṽëř řëqüîřëš ŠŠĻ ƒôř ţĥîš çôññëçţîôñ.]",
           "queryRejected": "[Ţĥë ŵîðĝëţ qüëřý ŵåš řëĵëçţëð ƀëçåûšë îţ îš ñôţ řëåð-ôñļý.]",
@@ -980,7 +977,7 @@
       },
       "readOnly": {
         "title": "[How to create a read-only login]",
-        "description": "[AutoDash refuses logins that can do more than read. Run this as an administrator and change the password.]",
+        "description": "[@:{'app.name'} refuses logins that can do more than read. Run this as an administrator and change the password.]",
         "copy": "[Copy SQL]",
         "copied": "[Copied]"
       }
@@ -1018,7 +1015,7 @@
     "new": {
       "headline": "[Çôññëçţîôñš]",
       "title": "[Ñëŵ ðåţåƀåšë çôññëçţîôñ]",
-      "description": "[Åðð å ðåţåƀåšë çôññëçţîôñ åñð ṽëřîƒý ţĥåţ ÅpértürëÇørë çåñ řëåçĥ îţ šëçûřëļý.]",
+      "description": "[Åðð å ðåţåƀåšë çôññëçţîôñ åñð ṽëřîƒý ţĥåţ @:{'app.name'} çåñ řëåçĥ îţ šëçûřëļý.]",
       "card": {
         "title": "[Çôññëçţîôñ ðëţåîļš]",
         "description": "[Ëñţëř ţĥë çřëðëñţîåļš řëqüîřëð ţô ţëšţ ţĥë ðåţåƀåšë çôññëçţîôñ.]"
@@ -1133,12 +1130,12 @@
         "unsupportedDatabaseType": "[Ţĥîš ðåţåƀåšë ţýþë îš ñôţ šûþþôřţëð ýëţ.]",
         "authenticationFailed": "[Ţĥë ðåţåƀåšë çřëðëñţîåļš ŵëřë řëĵëçţëð.]",
         "databaseNotFound": "[Ţĥë šþëçîƒîëð ðåţåƀåšë çôûļð ñôţ ƀë ƒôûñð.]",
-        "connectionFailed": "[ÅpértürëÇørë çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
+        "connectionFailed": "[@:{'app.name'} çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
         "timeout": "[Ţĥë ðåţåƀåšë çôññëçţîôñ ţîḿëð ôûţ.]",
         "sslRequired": "[SSL could not be established. The server may require SSL, or its certificate is not trusted or does not match the host name.]",
         "notImplemented": "[Ţĥîš ðåţåƀåšë ţëšţ îš ñôţ îḿþļëḿëñţëð ýëţ.]",
         "unexpected": "[Ûñëxþëçţëð ëřřôř ŵĥîļë ţëšţîñĝ ţĥë ðåţåƀåšë çôññëçţîôñ.]",
-        "privilegedRole": "[This login has more privileges than AutoDash allows. Use a dedicated login that can only read data.]"
+        "privilegedRole": "[This login has more privileges than @:{'app.name'} allows. Use a dedicated login that can only read data.]"
       }
     },
     "save": {
@@ -1397,10 +1394,10 @@
         "unsupportedDatabaseType": "[Ţĥîš ðåţåƀåšë ţýþë îš ñôţ šûþþôřţëð ýëţ.]",
         "authenticationFailed": "[Ţĥë ðåţåƀåšë çřëðëñţîåļš ŵëřë řëĵëçţëð.]",
         "databaseNotFound": "[Ţĥë šþëçîƒîëð ðåţåƀåšë çôûļð ñôţ ƀë ƒôûñð.]",
-        "connectionFailed": "[ÅpértürëÇørë çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
+        "connectionFailed": "[@:{'app.name'} çôûļð ñôţ řëåçĥ ţĥë ðåţåƀåšë šëřṽëř.]",
         "timeout": "[Ţĥë ðåţåƀåšë qüëřý ţîḿëð ôûţ.]",
         "sslRequired": "[Ţĥë ðåţåƀåšë šëřṽëř řëqüîřëš ŠŠĻ ôř çôḿþåţîƀļë ŢĻŠ šëţţîñĝš.]",
-        "privilegedLogin": "[Thîš côññëcţîôñ'š lôgîñ håš môrë prîvîlëgëš ţhåñ AûţôDåšh ållôwš. Ušë å dëdîcåţëd rëåd-ôñly lôgîñ.]",
+        "privilegedLogin": "[Thîš côññëcţîôñ'š lôgîñ håš môrë prîvîlëgëš ţhåñ @:{'app.name'} ållôwš. Ušë å dëdîcåţëd rëåd-ôñly lôgîñ.]",
         "queryRejected": "[Öñļý å šîñĝļë řëåð-ôñļý ŠËĻËÇŢ qüëřý çåñ ƀë ţëšţëð.]",
         "queryFailed": "[Ţĥë ŠQĻ qüëřý çôûļð ñôţ ƀë ëxëçûţëð.]",
         "details": "[Ðåţåƀåšë ƒëëðƀåçķ: {details}]",

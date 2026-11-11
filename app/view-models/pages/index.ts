@@ -346,7 +346,10 @@ export default defineComponent({
       return builderExtension?.blockReason({
         pluginId: selectedPlugin.value?.id ?? '',
         editingPluginId: editingWidget.value?.pluginId ?? '',
-        isEditing: isEditingWidget.value
+        isEditing: isEditingWidget.value,
+        widgetCount: widgets.value.length,
+        pluginConfig: draft.value.pluginConfig,
+        savedPluginConfig: editingWidget.value?.pluginConfig ?? {}
       }) ?? ''
     })
 

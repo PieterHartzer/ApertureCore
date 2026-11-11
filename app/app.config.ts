@@ -1,4 +1,6 @@
 export default defineAppConfig({
+  // The name shown in the interface and messages. A layer can override it.
+  brand: { name: 'ApertureCore' },
   ui: {
     colors: { primary: 'blue', neutral: 'neutral' },
     card: {

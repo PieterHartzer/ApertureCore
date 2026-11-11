@@ -4,6 +4,7 @@ import { appExtensions, type NavigationGroup } from '~/extensions'
 
 const route = useRoute()
 const { t } = useI18n()
+const brandName = useAppConfig().brand.name
 const { user, logout } = useOidcAuth()
 
 const extraGroups = appExtensions.useNavigationGroups?.()
@@ -54,7 +55,7 @@ const linkClass = (path: string) => active(path)
     <div class="flex items-center gap-2 px-4 py-2">
       <NuxtLink to="/" class="flex items-center gap-2 text-sm font-semibold text-highlighted">
         <span class="grid size-6 place-items-center rounded-md bg-linear-to-br from-blue-500 to-violet-600 text-white"><UIcon name="i-lucide-aperture" class="size-4" aria-hidden="true" /></span>
-        {{ t('app.name') }}
+        {{ brandName }}
       </NuxtLink>
       <div class="ml-auto flex items-center gap-1">
         <UColorModeButton size="sm" />
@@ -76,7 +77,7 @@ const linkClass = (path: string) => active(path)
   <aside class="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-default bg-[var(--surface)] backdrop-blur-xl lg:flex">
     <NuxtLink to="/" class="flex h-14 items-center gap-2 px-4 text-sm font-semibold text-highlighted">
       <span class="grid size-6 place-items-center rounded-md bg-linear-to-br from-blue-500 to-violet-600 text-white"><UIcon name="i-lucide-aperture" class="size-4" aria-hidden="true" /></span>
-      {{ t('app.name') }}
+      {{ brandName }}
     </NuxtLink>
 
     <nav :aria-label="t('navigation.label')" class="flex-1 space-y-5 overflow-y-auto px-2 py-2">

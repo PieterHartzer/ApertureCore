@@ -89,9 +89,6 @@
     "loadFailed": "Could not load query",
     "testBeforeSaving": "Test the current SQL successfully before saving."
   },
-  "app": {
-    "name": "ApertureCore"
-  },
   "common": {
     "labels": {
       "locale": "Language"
@@ -116,7 +113,7 @@
   },
   "pages": {
     "dashboard": {
-      "headline": "ApertureCore",
+      "headline": "@:{'app.name'}",
       "title": "Dashboard",
       "description": "Create view-only dashboards, stats, and cards from your own database.",
       "errors": {
@@ -932,9 +929,9 @@
           "widgetIdInvalid": "The widget identifier is invalid.",
           "notFound": "The embedded widget query could not be found.",
           "unsupportedDatabaseType": "This widget uses an unsupported database type.",
-          "authenticationFailed": "ApertureCore could not authenticate with the database server.",
+          "authenticationFailed": "@:{'app.name'} could not authenticate with the database server.",
           "databaseNotFound": "The configured database could not be found.",
-          "connectionFailed": "ApertureCore could not reach the database server.",
+          "connectionFailed": "@:{'app.name'} could not reach the database server.",
           "timeout": "The widget query timed out before it completed.",
           "sslRequired": "The database server requires SSL for this connection.",
           "queryRejected": "The widget query was rejected because it is not read-only.",
@@ -979,7 +976,7 @@
       },
       "readOnly": {
         "title": "How to create a read-only login",
-        "description": "AutoDash refuses logins that can do more than read. Run this as an administrator and change the password.",
+        "description": "@:{'app.name'} refuses logins that can do more than read. Run this as an administrator and change the password.",
         "copy": "Copy SQL",
         "copied": "Copied"
       },
@@ -1018,7 +1015,7 @@
     "new": {
       "headline": "Connections",
       "title": "New database connection",
-      "description": "Add a database connection and verify that ApertureCore can reach it securely.",
+      "description": "Add a database connection and verify that @:{'app.name'} can reach it securely.",
       "card": {
         "title": "Connection details",
         "description": "Enter the credentials required to test the database connection."
@@ -1133,10 +1130,10 @@
         "unsupportedDatabaseType": "This database type is not supported yet.",
         "authenticationFailed": "The database credentials were rejected.",
         "databaseNotFound": "The specified database could not be found.",
-        "connectionFailed": "ApertureCore could not reach the database server.",
+        "connectionFailed": "@:{'app.name'} could not reach the database server.",
         "timeout": "The database connection timed out.",
         "sslRequired": "SSL could not be established. The server may require SSL, or its certificate is not trusted or does not match the host name.",
-        "privilegedRole": "This login has more privileges than AutoDash allows. Use a dedicated login that can only read data.",
+        "privilegedRole": "This login has more privileges than @:{'app.name'} allows. Use a dedicated login that can only read data.",
         "notImplemented": "This database test is not implemented yet.",
         "unexpected": "Unexpected error while testing the database connection."
       }
@@ -1397,10 +1394,10 @@
         "unsupportedDatabaseType": "This database type is not supported yet.",
         "authenticationFailed": "The database credentials were rejected.",
         "databaseNotFound": "The specified database could not be found.",
-        "connectionFailed": "ApertureCore could not reach the database server.",
+        "connectionFailed": "@:{'app.name'} could not reach the database server.",
         "timeout": "The database query timed out.",
         "sslRequired": "The database server requires SSL or compatible TLS settings.",
-        "privilegedLogin": "This connection's login has more privileges than AutoDash allows. Use a dedicated read-only login.",
+        "privilegedLogin": "This connection's login has more privileges than @:{'app.name'} allows. Use a dedicated read-only login.",
         "queryRejected": "Only a single read-only SELECT query can be tested.",
         "queryFailed": "The SQL query could not be executed.",
         "details": "Database feedback: {details}",

@@ -14,6 +14,7 @@ import { normalizeReadOnlySql } from '../../utils/read-only-sql'
 import {
   CONNECT_TIMEOUT_SECONDS,
   DEFAULT_QUERY_RESULT_ROW_LIMIT,
+  createResultSizeBudget,
   DEFAULT_QUERY_TIMEOUT_MS,
   PRIVILEGED_ROLE_DETAILS,
   isTlsVerificationError,
@@ -144,6 +145,7 @@ const readRows = (
 ) => new Promise<{ columns: string[], rows: Record<string, unknown>[] }>((resolve, reject) => {
   const columns: string[] = []
   const rows: Record<string, unknown>[] = []
+  const fits = createResultSizeBudget()
   let settled = false
 
   const settle = (finish: () => void) => {
@@ -173,9 +175,11 @@ const readRows = (
     .on('result', (row: unknown) => {
       if (settled) return
 
-      rows.push(row as Record<string, unknown>)
+      const full = !fits(row as Record<string, unknown>)
 
-      if (rows.length >= rowLimit) {
+      if (!full) rows.push(row as Record<string, unknown>)
+
+      if (full || rows.length >= rowLimit) {
         settle(() => {
           connection.destroy()
           resolve({ columns, rows })

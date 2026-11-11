@@ -5,6 +5,7 @@ export default component
 </script>
 
 <template>
+  <!-- Drawn in the dashboard's own text colour, so loading matches its style. -->
   <div
     role="status"
     :aria-label="t('pages.dashboard.widgets.card.loadingTitle')"
@@ -14,8 +15,8 @@ export default component
       v-if="kind === 'stat'"
       class="flex h-full flex-col justify-center gap-2"
     >
-      <USkeleton class="h-8 w-32 max-w-full" />
-      <USkeleton class="h-3.5 w-24 max-w-full" />
+      <USkeleton class="h-8 w-32 max-w-full bg-current/10" />
+      <USkeleton class="h-3.5 w-24 max-w-full bg-current/10" />
     </div>
 
     <div
@@ -25,7 +26,7 @@ export default component
       <USkeleton
         v-for="row in 12"
         :key="row"
-        class="h-4 w-full shrink-0"
+        class="h-4 w-full shrink-0 bg-current/10"
       />
     </div>
 
@@ -42,7 +43,7 @@ export default component
         stroke-width="2"
         stroke-linejoin="round"
         vector-effect="non-scaling-stroke"
-        style="stroke: var(--ui-bg-accented)"
+        style="stroke: currentColor; opacity: 0.15"
       />
     </svg>
 
@@ -53,7 +54,7 @@ export default component
       <USkeleton
         v-for="(height, index) in barHeights"
         :key="index"
-        class="max-w-10 flex-1 rounded-b-none"
+        class="max-w-10 flex-1 rounded-b-none bg-current/10"
         :style="{ height: `${height}%` }"
       />
     </div>

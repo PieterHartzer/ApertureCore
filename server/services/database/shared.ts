@@ -9,6 +9,27 @@ export const QUERY_LOCK_TIMEOUT_MS = 1_000
 export const DEFAULT_QUERY_RESULT_ROW_LIMIT = 25
 
 const MAX_RESULT_VALUE_LENGTH = 2_000
+/** Roughly the most a single result may take up, whatever its row and column count. */
+export const MAX_RESULT_SIZE = 5 * 1024 * 1024
+
+/**
+ * Counts what each row will take up once sanitised, so an adapter can stop
+ * reading before a query of very wide rows uses up the server's memory.
+ * Returns false once the result is full; that row is not kept.
+ */
+export const createResultSizeBudget = (maximum = MAX_RESULT_SIZE) => {
+  let used = 0
+
+  return (row: Record<string, unknown>) => {
+    for (const [column, value] of Object.entries(row)) {
+      const length = typeof value === 'string' ? value.length : Buffer.isBuffer(value) ? 32 : String(value).length
+
+      used += column.length + Math.min(length, MAX_RESULT_VALUE_LENGTH + 3) + 8
+    }
+
+    return used <= maximum
+  }
+}
 
 const TLS_VERIFICATION_ERROR_CODES = new Set([
   'CERT_HAS_EXPIRED',
@@ -31,7 +52,7 @@ export const isTlsVerificationError = (error: Error & { code?: string }) => {
 }
 
 export const PRIVILEGED_ROLE_DETAILS =
-  'This database login has more privileges than AutoDash allows. Use a dedicated login that can only read data.'
+  'This database login can do more than read data. Use a dedicated login that can only read data.'
 
 const truncateResultValue = (value: string) => {
   if (value.length <= MAX_RESULT_VALUE_LENGTH) {

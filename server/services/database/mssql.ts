@@ -13,6 +13,7 @@ import { findForbiddenTsqlKeyword, normalizeReadOnlySql } from '../../utils/read
 import {
   CONNECT_TIMEOUT_SECONDS,
   DEFAULT_QUERY_RESULT_ROW_LIMIT,
+  createResultSizeBudget,
   DEFAULT_QUERY_TIMEOUT_MS,
   PRIVILEGED_ROLE_DETAILS,
   QUERY_LOCK_TIMEOUT_MS,
@@ -119,6 +120,7 @@ const readRows = (
 ) => new Promise<{ columns: string[], rows: Record<string, unknown>[] }>((resolve, reject) => {
   const request = new sql.Request(transaction)
   const rows: Record<string, unknown>[] = []
+  const fits = createResultSizeBudget()
   let columns: string[] | null = null
   let stopped = false
   let failure: Error | null = null
@@ -142,6 +144,11 @@ const readRows = (
   })
   request.on('row', (row: Record<string, unknown>) => {
     if (stopped) return
+
+    if (!fits(row)) {
+      stop()
+      return
+    }
 
     rows.push(row)
 

@@ -23,6 +23,7 @@ import { resolvePositiveInteger } from '../../utils/positive-integer'
 import {
   CONNECT_TIMEOUT_SECONDS,
   DEFAULT_QUERY_RESULT_ROW_LIMIT,
+  createResultSizeBudget,
   DEFAULT_QUERY_TIMEOUT_MS,
   PRIVILEGED_ROLE_DETAILS,
   QUERY_LOCK_TIMEOUT_MS,
@@ -120,6 +121,8 @@ const isPrivilegedRole = async (runner: Pick<PoolClient, 'query'>) => {
   return result.rows[0]?.privileged !== false
 }
 
+const READ_BATCH_SIZE = 100
+
 // Reading through a cursor enforces the limit without rewriting the SQL, so no
 // comment or stray parenthesis in the query text can change it. The extended
 // protocol it uses also makes PostgreSQL refuse multiple statements.
@@ -128,17 +131,43 @@ const readRows = (client: PoolClient, sql: string, rowLimit: number) => {
 
   client.query(cursor)
 
+  const fits = createResultSizeBudget()
+  const rows: QueryResultRow[] = []
+
+  // Read in batches, so the size budget can stop a result of very wide rows early.
   return new Promise<{ columns: string[], rows: QueryResultRow[] }>((resolve, reject) => {
-    cursor.read(rowLimit, (error, rows, result) => {
-      if (error) {
-        reject(error)
-        return
-      }
+    const readBatch = () => {
+      const wanted = Math.min(READ_BATCH_SIZE, rowLimit - rows.length)
 
-      const columns = result.fields.map((field: FieldDef) => field.name)
+      cursor.read(wanted, (error, batch, result) => {
+        if (error) {
+          reject(error)
+          return
+        }
 
-      cursor.close(() => resolve({ columns, rows }))
-    })
+        let full = false
+
+        for (const row of batch) {
+          if (!fits(row)) {
+            full = true
+            break
+          }
+
+          rows.push(row)
+        }
+
+        if (full || batch.length < wanted || rows.length >= rowLimit) {
+          const columns = result.fields.map((field: FieldDef) => field.name)
+
+          cursor.close(() => resolve({ columns, rows }))
+          return
+        }
+
+        readBatch()
+      })
+    }
+
+    readBatch()
   })
 }
 
