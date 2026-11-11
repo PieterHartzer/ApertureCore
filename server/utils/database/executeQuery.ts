@@ -22,6 +22,7 @@ import {
   decryptSavedSqlQuerySecret
 } from '../saved-sql-query-secrets'
 import { resolvePositiveInteger } from '../positive-integer'
+import { serverExtensions, type QueryRunRecord } from '../extensions'
 
 export interface QueryExecutionResourceRow {
   encrypted_sql: string
@@ -49,8 +50,18 @@ export type ResolvedSavedQueryExecutionResult =
       details?: string
     }
 
+// Recording a run must never slow down or break the query itself.
+const reportRun = (run: QueryRunRecord) => {
+  try {
+    void Promise.resolve(serverExtensions.queryExecuted?.(run)).catch((error) => console.error(error))
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 export const executeResolvedSavedQuery = async (
-  executionResource: QueryExecutionResourceRow
+  executionResource: QueryExecutionResourceRow,
+  run?: Pick<QueryRunRecord, 'organizationId' | 'queryId' | 'source'>
 ): Promise<ResolvedSavedQueryExecutionResult> => {
   try {
     const runtimeConfig = useRuntimeConfig()
@@ -58,6 +69,7 @@ export const executeResolvedSavedQuery = async (
     const secret = decryptSavedDatabaseConnectionSecret(
       executionResource.encrypted_secret
     )
+    const startedAt = performance.now()
     const result = await executeDatabaseReadOnlyQuery({
       databaseType: executionResource.database_type,
       host: secret.host,
@@ -76,6 +88,16 @@ export const executeResolvedSavedQuery = async (
         DEFAULT_QUERY_TIMEOUT_MS
       )
     })
+
+    if (run) {
+      reportRun({
+        ...run,
+        durationMs: Math.round(performance.now() - startedAt),
+        ok: result.ok,
+        code: result.code,
+        rowCount: result.ok ? result.rows.length : 0
+      })
+    }
 
     if (!result.ok) {
       return {
@@ -150,7 +172,11 @@ export const executeQuery = async (
       }
     }
 
-    return await executeResolvedSavedQuery(executionResource)
+    return await executeResolvedSavedQuery(executionResource, {
+      organizationId,
+      queryId: input.queryId,
+      source: 'app'
+    })
   } catch (error) {
     if (isPersistenceConfigurationError(error)) {
       return {

@@ -217,6 +217,45 @@ describe('executeQuery utility', () => {
     )
   })
 
+  it('reports each run to a layer, and a failing report never breaks the query', async () => {
+    const { selectBuilder } = createExecutionLookupBuilder({
+      encrypted_sql: 'encrypted-sql',
+      database_type: 'postgres',
+      encrypted_secret: 'encrypted-secret'
+    })
+    getAppDatabaseMock.mockReturnValue({ selectFrom: vi.fn().mockReturnValue(selectBuilder) })
+    executeDatabaseReadOnlyQueryMock.mockResolvedValue({
+      ok: true, code: 'success', message: 'success', columns: ['id'], rows: [{ id: 1 }, { id: 2 }], rowLimit: 500
+    })
+
+    const { serverExtensions } = await import('../../../../server/utils/extensions')
+    const { executeQuery } = await import('../../../../server/utils/database/executeQuery')
+    const queryExecuted = vi.fn()
+
+    serverExtensions.queryExecuted = queryExecuted
+    await expect(executeQuery(authContext, input)).resolves.toMatchObject({ ok: true })
+    expect(queryExecuted).toHaveBeenCalledWith(expect.objectContaining({
+      organizationId: 'org-storage-1',
+      queryId: input.queryId,
+      source: 'app',
+      ok: true,
+      code: 'success',
+      rowCount: 2,
+      durationMs: expect.any(Number)
+    }))
+
+    serverExtensions.queryExecuted = () => {
+      throw new Error('stats store down')
+    }
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(executeQuery(authContext, input)).resolves.toMatchObject({ ok: true })
+    expect(errorSpy).toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+    delete serverExtensions.queryExecuted
+  })
+
   it('returns forbidden when the saved query is missing or bound to a different connection', async () => {
     const { selectBuilder } = createExecutionLookupBuilder(undefined)
     getAppDatabaseMock.mockReturnValue({

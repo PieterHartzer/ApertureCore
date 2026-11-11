@@ -165,7 +165,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const result = await executeResolvedSavedQuery(
-      resolvedExecutionContext.executionResource
+      resolvedExecutionContext.executionResource,
+      resolvedExecutionContext.run
     )
 
     if (!result.ok) {

@@ -17,6 +17,18 @@ export interface DashboardSaveContext<Input, Row, WidgetRow> {
   existingWidgets: WidgetRow[]
 }
 
+/** One run against a customer's database (cache hits are not runs). */
+export interface QueryRunRecord {
+  /** The organization id as stored in the app database. */
+  organizationId: string
+  queryId: string
+  source: 'app' | 'embed'
+  durationMs: number
+  ok: boolean
+  code: string
+  rowCount: number
+}
+
 export interface QueryRunPolicy {
   /** Changes whenever cached rows should stop being used. Must not contain colons. */
   cacheVersion?: string
@@ -51,6 +63,8 @@ export interface ServerExtensions {
     widgetId: string
   ) => Promise<Pick<QueryRunPolicy, 'cacheVersion' | 'minimumTtlSeconds'>>
   embeddedDashboardDetails?: (organizationId: string) => Promise<Record<string, unknown>>
+  /** Told about every query run. Never awaited, and its errors are ignored. */
+  queryExecuted?: (run: QueryRunRecord) => Promise<void> | void
 }
 
 export const serverExtensions: ServerExtensions = {}

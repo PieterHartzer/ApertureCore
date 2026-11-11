@@ -63,6 +63,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret',
       widget_query_id: 'query-1',
+      organization_id: 'org-storage-1',
       widget_updated_at: new Date('2026-03-25T00:00:00.000Z'),
       dashboard_updated_at: new Date('2026-03-25T01:00:00.000Z')
     }
@@ -146,7 +147,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       encrypted_sql: 'encrypted-sql',
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret'
-    })
+    }, { organizationId: 'org-storage-1', queryId: 'query-1', source: 'embed' })
   })
 
   it('resolves the embedded widget execution context with a cache version', async () => {
@@ -155,6 +156,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret',
       widget_query_id: 'query-1',
+      organization_id: 'org-storage-1',
       widget_updated_at: new Date('2026-03-25T00:00:00.000Z'),
       dashboard_updated_at: new Date('2026-03-25T01:00:00.000Z')
     }
@@ -178,7 +180,8 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
         database_type: 'postgres',
         encrypted_secret: 'encrypted-secret'
       },
-      cacheVersion: 'query-1:2026-03-25T00:00:00.000Z:2026-03-25T01:00:00.000Z'
+      cacheVersion: 'query-1:2026-03-25T00:00:00.000Z:2026-03-25T01:00:00.000Z',
+      run: { organizationId: 'org-storage-1', queryId: 'query-1', source: 'embed' }
     })
   })
 
@@ -232,6 +235,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret',
       widget_query_id: 'query-1',
+      organization_id: 'org-storage-1',
       widget_updated_at: new Date('2026-03-25T00:00:00.000Z'),
       dashboard_updated_at: new Date('2026-03-25T01:00:00.000Z')
     })
@@ -264,6 +268,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret',
       widget_query_id: 'query-1',
+      organization_id: 'org-storage-1',
       widget_updated_at: new Date('2026-03-25T00:00:00.000Z'),
       dashboard_updated_at: new Date('2026-03-25T01:00:00.000Z')
     })
@@ -296,6 +301,7 @@ describe('executeEmbeddedDashboardWidgetQuery utility', () => {
       database_type: 'postgres',
       encrypted_secret: 'encrypted-secret',
       widget_query_id: 'query-1',
+      organization_id: 'org-storage-1',
       widget_updated_at: new Date('2026-03-25T00:00:00.000Z'),
       dashboard_updated_at: new Date('2026-03-25T01:00:00.000Z')
     })

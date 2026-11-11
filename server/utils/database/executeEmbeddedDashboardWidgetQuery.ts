@@ -26,6 +26,7 @@ const isPersistenceConfigurationError = (value: unknown) => {
 
 interface EmbeddedDashboardWidgetExecutionResourceRow extends QueryExecutionResourceRow {
   widget_query_id: string
+  organization_id: string
   widget_updated_at: Date
   dashboard_updated_at: Date
 }
@@ -33,6 +34,7 @@ interface EmbeddedDashboardWidgetExecutionResourceRow extends QueryExecutionReso
 export interface ResolvedEmbeddedDashboardWidgetExecutionContext {
   executionResource: QueryExecutionResourceRow
   cacheVersion: string
+  run?: { organizationId: string, queryId: string, source: 'embed' }
 }
 
 const buildEmbeddedDashboardWidgetCacheVersion = (
@@ -60,6 +62,7 @@ export const resolveEmbeddedDashboardWidgetExecutionContext = async (
       'connection.database_type as database_type',
       'connection.encrypted_secret as encrypted_secret',
       'widget.query_id as widget_query_id',
+      'query.organization_id as organization_id',
       'widget.updated_at as widget_updated_at',
       'dashboard.updated_at as dashboard_updated_at'
     ])
@@ -82,7 +85,12 @@ export const resolveEmbeddedDashboardWidgetExecutionContext = async (
       database_type: executionResource.database_type,
       encrypted_secret: executionResource.encrypted_secret
     },
-    cacheVersion: buildEmbeddedDashboardWidgetCacheVersion(executionResource)
+    cacheVersion: buildEmbeddedDashboardWidgetCacheVersion(executionResource),
+    run: {
+      organizationId: executionResource.organization_id,
+      queryId: executionResource.widget_query_id,
+      source: 'embed'
+    }
   }
 }
 
@@ -105,7 +113,8 @@ export const executeEmbeddedDashboardWidgetQuery = async (
     }
 
     const result: ResolvedSavedQueryExecutionResult = await executeResolvedSavedQuery(
-      resolvedExecutionContext.executionResource
+      resolvedExecutionContext.executionResource,
+      resolvedExecutionContext.run
     )
 
     return result
