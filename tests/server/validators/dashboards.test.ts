@@ -116,6 +116,32 @@ describe('dashboard validators', () => {
     })
   })
 
+  it('accepts widgets without a query, such as a text label', () => {
+    const save = (queryId: unknown) => validateSaveDashboardInput(DASHBOARD_ID, {
+      dashboardName: 'Executive overview',
+      embedEnabled: false,
+      widgets: [{
+        id: WIDGET_ID,
+        title: 'Heading',
+        queryId,
+        pluginId: 'label',
+        pluginConfig: { text: '  Sales this quarter\nUpdated hourly  ' },
+        layout: { w: 6, h: 2 },
+        refreshIntervalSeconds: 60
+      }]
+    })
+
+    for (const queryId of [null, '']) {
+      expect(save(queryId)).toMatchObject({
+        ok: true,
+        data: { widgets: [{ queryId: null, pluginConfig: { text: 'Sales this quarter\nUpdated hourly' } }] }
+      })
+    }
+
+    expect(save(undefined)).toMatchObject({ ok: false, issue: 'widget_query_id_invalid' })
+    expect(save(42)).toMatchObject({ ok: false, issue: 'widget_query_id_invalid' })
+  })
+
   it('validates dashboard and embed identifiers', () => {
     expect(validateDashboardId(` ${DASHBOARD_ID} `)).toEqual({
       ok: true,

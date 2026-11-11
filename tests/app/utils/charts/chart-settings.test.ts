@@ -235,3 +235,11 @@ describe('target line style', () => {
     expect(option.series[0]?.markLine?.lineStyle).toMatchObject({ color: '#00ff0080', type: 'solid' })
   })
 })
+
+describe('card shadow', () => {
+  it('drops the shadow only when the widget also draws its own border', () => {
+    expect(getCardStyle({ cardHideShadow: true, cardBorderWidth: 2 }).boxShadow).toBe('none !important')
+    expect(getCardStyle({ cardHideShadow: true }).boxShadow).toBeUndefined()
+    expect(getCardStyle({ cardBorderWidth: 2 }).boxShadow).toBeUndefined()
+  })
+})

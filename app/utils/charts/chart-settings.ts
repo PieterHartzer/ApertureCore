@@ -2,9 +2,9 @@ import type { ChartColors } from './chart-colors'
 import { BORDER_STYLES, isBorderStyle, outlineDeclarations } from '#shared/utils/border'
 import { isHexColor } from '#shared/utils/color'
 
-export type SettingControl = 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
+export type SettingControl = 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
 export type SettingSpan = 'full' | 'half' | 'third'
-export type SettingSection = 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
+export type SettingSection = 'content' | 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
 
 export interface ChartSetting {
   key: string
@@ -16,6 +16,8 @@ export interface ChartSetting {
   visibleWhen?: { key: string, values: string[] }
   min?: number
   max?: number
+  maxLength?: number
+  required?: boolean
 }
 
 export interface ValueFormatter {
@@ -108,6 +110,8 @@ for (const [id, settings] of Object.entries(TEXT_SETTINGS)) CHART_SETTINGS[id] =
 
 /** Every widget can override its own card, on top of the dashboard style. */
 export const CARD = [
+  setting('cardHideTitle', 'Hide title', 'card', 'switch', { span: 'half' }),
+  setting('cardHideShadow', 'Hide shadow', 'card', 'switch', { span: 'half' }),
   setting('cardBackground', 'Background colour', 'card', 'color'),
   setting('cardBorderColor', 'Border colour', 'card', 'color'),
   setting('cardBorderWidth', 'Border width', 'card', 'number', { min: 0, max: 8, span: 'third' }),
@@ -117,6 +121,12 @@ export const CARD = [
   }),
   setting('cardRadius', 'Corner radius', 'card', 'number', { min: 0, max: 40, span: 'third' })
 ]
+
+/** The title stays visible while the dashboard is being edited, so the widget can still be found. */
+export const isCardTitleHidden = (config: Config) => config.cardHideTitle === true
+
+/** Marks the card so the dashboard style can drop its shadow (see buildDashboardCss). */
+export const isCardShadowHidden = (config: Config) => config.cardHideShadow === true
 
 /**
  * Inline styles for a widget's card. They are !important so the widget's own
@@ -142,6 +152,9 @@ export const getCardStyle = (config: Config): Record<string, string> => {
 
     style.outline = important(outline.outline)
     style.outlineOffset = important(outline.outlineOffset)
+
+    // The widget's own border is the outline, so without a shadow nothing else is drawn.
+    if (isCardShadowHidden(config)) style.boxShadow = important('none')
   }
 
   if (radius !== null) style.borderRadius = important(`${Math.min(Math.max(radius, 0), 40)}px`)

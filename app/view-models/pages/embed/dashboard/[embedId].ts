@@ -5,7 +5,7 @@ import WidgetGrid from '~/components/dashboard/WidgetGrid.vue'
 import PluginRenderer from '~/components/dashboard/PluginRenderer.vue'
 import WidgetSkeleton from '~/components/dashboard/WidgetSkeleton.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
-import { getCardStyle } from '~/utils/charts/chart-settings'
+import { getCardStyle, isCardShadowHidden, isCardTitleHidden } from '~/utils/charts/chart-settings'
 import { useEmbeddedDashboard } from '~/composables/dashboard/useEmbeddedDashboard'
 import { useEmbeddedDashboardQueryResults } from '~/composables/dashboard/useEmbeddedDashboardQueryResults'
 import type { EmbeddedDashboardWidget } from '~/types/dashboards'
@@ -101,7 +101,7 @@ export default defineComponent({
         return []
       }
 
-      return dashboard.value.widgets.map((widget) => ({
+      return dashboard.value.widgets.filter(widget => widget.usesQuery !== false).map((widget) => ({
         embedId: dashboard.value?.embedId ?? '',
         widgetId: widget.id,
         refreshIntervalMs: widget.refreshIntervalSeconds * 1000
@@ -116,7 +116,7 @@ export default defineComponent({
       return dashboard.value.widgets.map((widget) => ({
         ...widget,
         dashboardId: dashboard.value?.embedId ?? '',
-        queryId: ''
+        queryId: widget.usesQuery === false ? null : ''
       }))
     })
 
@@ -128,6 +128,9 @@ export default defineComponent({
 
       return removeWidgetTypeFromTitle(widget.title, names) || t('pages.dashboard.widgets.card.fallbackTitle')
     }
+
+    /** Widgets without a query (a text label, a clock) render straight away. */
+    const isWidgetWithoutQuery = (widget: EmbeddedDashboardWidget) => widget.usesQuery === false
 
     const getWidgetState = (widget: EmbeddedDashboardWidget) => {
       if (!dashboard.value) {
@@ -202,11 +205,14 @@ export default defineComponent({
 
     return {
       getCardStyle,
+      isCardShadowHidden,
+      isCardTitleHidden,
       getWidgetTitle,
       dashboard,
       getWidgetErrorMessage,
       getWidgetInlineErrorMessage,
       getWidgetState,
+      isWidgetWithoutQuery,
       gridWidgets,
       isWidgetRefreshing,
       loadErrorMessage,

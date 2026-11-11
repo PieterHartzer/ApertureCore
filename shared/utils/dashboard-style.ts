@@ -74,6 +74,8 @@ export const buildDashboardCss = (input: unknown) => {
     cssRule('body::before', [style.pageBackground === undefined ? null : `background: ${style.pageBackground} !important;`]),
     cssRule(`${DASHBOARD_CANVAS} .grid-stack`, style.widgetGap === undefined ? [] : ['top', 'right', 'bottom', 'left'].map(side => `--gs-item-margin-${side}: ${Number(style.widgetGap) / 2}px !important;`)),
     cssRule(card, [declaration('background-color', style.cardBackground), declaration('box-shadow', boxShadow), declaration('outline', outline?.outline), declaration('outline-offset', outline?.outlineOffset), declaration('border-radius', style.borderRadius, 'px')]),
+    // A widget can opt out of the shadow. Without a dashboard border, the shadow had replaced the card's own thin ring, so it comes back.
+    shadow ? cssRule(`${card}[data-hide-shadow]`, [declaration('box-shadow', outline ? 'none' : 'inset 0 0 0 1px var(--ui-border)')]) : '',
     padding === undefined ? '' : cssRule(`${card} > :first-child`, [`padding: ${padding}px ${padding}px 0 !important;`]),
     padding === undefined ? '' : cssRule(`${card} > :last-child`, [`padding: 4px ${padding}px ${padding}px !important;`]),
     style.hideTitles ? cssRule(`${DASHBOARD_CANVAS}:not([data-editing]) [data-widget-title]`, ['visibility: hidden;']) : '',

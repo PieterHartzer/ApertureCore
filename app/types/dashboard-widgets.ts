@@ -46,7 +46,8 @@ export interface DashboardWidget {
   id: string
   dashboardId: string
   title: string
-  queryId: string
+  /** Null for widgets that show no query results, such as a text label. */
+  queryId: string | null
   pluginId: string
   pluginConfig: DashboardWidgetPluginConfig
   layout: DashboardWidgetLayout
@@ -214,7 +215,7 @@ export const createDashboardWidgetDraftFromWidget = (
 ): DashboardWidgetDraft => ({
   dashboardId: widget.dashboardId,
   title: widget.title,
-  queryId: widget.queryId,
+  queryId: widget.queryId ?? '',
   pluginId: widget.pluginId,
   pluginConfig: cloneDashboardWidgetPluginConfig(widget.pluginConfig),
   refreshIntervalSeconds: widget.refreshIntervalSeconds
@@ -290,7 +291,7 @@ export const createDashboardWidget = (
   id: createId(),
   dashboardId: draft.dashboardId.trim() || DEFAULT_DASHBOARD_ID,
   title: draft.title.trim(),
-  queryId: draft.queryId.trim(),
+  queryId: draft.queryId.trim() || null,
   pluginId: draft.pluginId.trim(),
   pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
   layout: normalizeDashboardWidgetLayout(),
@@ -304,7 +305,7 @@ export const updateDashboardWidget = (
   ...widget,
   dashboardId: draft.dashboardId.trim() || DEFAULT_DASHBOARD_ID,
   title: draft.title.trim(),
-  queryId: draft.queryId.trim(),
+  queryId: draft.queryId.trim() || null,
   pluginId: draft.pluginId.trim(),
   pluginConfig: cloneDashboardWidgetPluginConfig(draft.pluginConfig),
   layout: cloneDashboardWidgetLayout(widget.layout),

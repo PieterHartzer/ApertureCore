@@ -237,6 +237,7 @@
           "urlLabel": "Embed URL",
           "urlDescription": "Use this URL in an iframe to render the dashboard without the regular app chrome.",
           "enabledHint": "Embedding is enabled for this dashboard.",
+          "pendingHint": "The link works once you save.",
           "disabledHint": "Turn on embedding before copying or using the public iframe URL.",
           "copied": "Embed URL copied to the clipboard.",
           "actions": {
@@ -260,7 +261,8 @@
       "builder": {
         "groups": {
           "widget": "Widget",
-          "data": "Data"
+          "data": "Data",
+          "content": "Content"
         },
         "title": "Add widget",
         "description": "Pick a saved query, choose a plugin, and map query fields into widget inputs.",
@@ -614,6 +616,12 @@
                 "dotted": "Dotted"
               }
             },
+            "cardHideTitle": {
+              "label": "Hide title"
+            },
+            "cardHideShadow": {
+              "label": "Hide shadow"
+            },
             "cardBackground": {
               "label": "Background colour"
             },
@@ -634,6 +642,54 @@
             },
             "cardRadius": {
               "label": "Corner radius"
+            },
+            "text": {
+              "label": "Text"
+            },
+            "textSize": {
+              "label": "Text size",
+              "options": {
+                "small": "Small",
+                "body": "Normal",
+                "large": "Large",
+                "heading": "Heading",
+                "display": "Display"
+              }
+            },
+            "textWeight": {
+              "label": "Weight",
+              "options": {
+                "regular": "Regular",
+                "medium": "Medium",
+                "semibold": "Semibold",
+                "bold": "Bold"
+              }
+            },
+            "textColor": {
+              "label": "Text colour"
+            },
+            "timeZone": {
+              "label": "Time zone",
+              "options": {
+                "local": "Viewer’s own time zone"
+              }
+            },
+            "caption": {
+              "label": "Caption"
+            },
+            "hourCycle": {
+              "label": "Clock",
+              "options": {
+                "auto": "Viewer’s usual format",
+                "h23": "24-hour",
+                "h12": "12-hour"
+              }
+            },
+            "showSeconds": {
+              "label": "Show seconds"
+            },
+            "showDate": {
+              "label": "Show the date"
             }
           },
           "sections": {
@@ -792,6 +848,7 @@
           "distribution": "Spread of values",
           "flow": "Flows and stages",
           "table": "Tables",
+          "content": "Text and time",
           "other": "Other"
         }
       }

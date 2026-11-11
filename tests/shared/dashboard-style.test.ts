@@ -32,3 +32,19 @@ describe('dashboard border styles', () => {
     expect(buildDashboardCss({ borderStyle: 'groove; background: red' })).not.toContain('groove')
   })
 })
+
+describe('widgets that hide the shadow', () => {
+  const rule = (css: string) => css.split('\n').find(line => line.includes('[data-hide-shadow]')) ?? ''
+
+  it('brings back the thin ring when the shadow had replaced it', () => {
+    expect(rule(buildDashboardCss({ shadow: 'medium' }))).toContain('box-shadow: inset 0 0 0 1px var(--ui-border) !important')
+  })
+
+  it('draws nothing extra when the dashboard has its own border', () => {
+    expect(rule(buildDashboardCss({ shadow: 'medium', borderWidth: 2 }))).toContain('box-shadow: none !important')
+  })
+
+  it('adds no rule when the dashboard has no shadow', () => {
+    expect(rule(buildDashboardCss({}))).toBe('')
+  })
+})

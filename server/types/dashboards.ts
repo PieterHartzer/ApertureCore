@@ -34,7 +34,8 @@ export interface DashboardWidgetLayout {
 export interface DashboardWidgetInput {
   id: string
   title: string
-  queryId: string
+  /** Null for widgets that show no query results, such as a text label. */
+  queryId: string | null
   pluginId: string
   pluginConfig: DashboardWidgetPluginConfig
   layout: DashboardWidgetLayout
@@ -68,6 +69,8 @@ export interface EmbeddedDashboardWidget {
   pluginConfig: DashboardWidgetPluginConfig
   layout: DashboardWidgetLayout
   refreshIntervalSeconds: number
+  /** False for widgets that show no query results, such as a text label. */
+  usesQuery: boolean
 }
 
 export interface EmbeddedDashboardDetails {

@@ -46,9 +46,12 @@ export interface PluginInputDefinition {
   compatibleFieldTypes?: UIPluginFieldType[]
   options?: PluginInputOption[]
   // The remaining properties describe settings typed by the user (source: 'value').
-  control?: 'number' | 'text' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
+  control?: 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
   span?: 'full' | 'half' | 'third'
-  section?: 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
+  /** 'content' settings appear on the Data tab, for widgets that have no query fields to map. */
+  section?: 'content' | 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
+  /** Longest text a 'text' or 'textarea' setting accepts. */
+  maxLength?: number
   visibleWhen?: { key: string, values: string[] }
   min?: number
   max?: number
@@ -70,9 +73,18 @@ export interface UIPluginDefinition {
   // Passed to the component alongside its data, for one component serving many plugins.
   componentProps?: Record<string, unknown>
   group?: string
+  /**
+   * 'none' for widgets that show no query results, such as a text label or a
+   * clock. They are added without choosing a query. Defaults to 'query'.
+   */
+  dataSource?: 'query' | 'none'
   inputSchema: PluginInputDefinition[]
   sample?: UIPluginSample
 }
+
+export const pluginUsesQuery = (
+  plugin: Pick<UIPluginDefinition, 'dataSource'> | null | undefined
+) => plugin?.dataSource !== 'none'
 
 export interface UIPluginFieldOption {
   label: string

@@ -2,7 +2,7 @@ import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import ColorField from '~/components/ui/ColorField.vue'
 import { settingInput } from '~/components/plugins/index'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
-import { CARD, MAX_THRESHOLD_STEPS, getCardStyle, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
+import { CARD, MAX_THRESHOLD_STEPS, getCardStyle, isCardShadowHidden, isCardTitleHidden, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
@@ -56,6 +56,7 @@ import {
   filterUIPluginFieldOptions,
   getUIPluginInputSelectionMode,
   getUIPluginInputSource,
+  pluginUsesQuery,
   type PluginInputDefinition,
   type PluginInputOptionValue
 } from '~/types/uiPlugin'
@@ -267,6 +268,9 @@ export default defineComponent({
         : null
     })
 
+    // A text label or clock is added without a query.
+    const selectedPluginUsesQuery = computed(() => pluginUsesQuery(selectedPlugin.value))
+
     const editingWidget = computed(() => {
       if (!editingWidgetId.value) {
         return null
@@ -278,7 +282,7 @@ export default defineComponent({
     const isEditingWidget = computed(() => editingWidget.value !== null)
 
     const previewTarget = computed(() => {
-      if (!selectedQuery.value) {
+      if (!selectedQuery.value || !selectedPluginUsesQuery.value) {
         return null
       }
 
@@ -354,9 +358,8 @@ export default defineComponent({
       return (
         Boolean(widgetBlockReason.value) ||
         !hasSelectedDashboard.value ||
-        !selectedQuery.value ||
         !selectedPlugin.value ||
-        previewState.value?.status !== 'success' ||
+        (selectedPluginUsesQuery.value && (!selectedQuery.value || previewState.value?.status !== 'success')) ||
         !isDashboardWidgetPluginConfigComplete(
           selectedPlugin.value,
           draft.value.pluginConfig
@@ -403,9 +406,9 @@ export default defineComponent({
 
     const widgetTargets = computed(() => {
       return widgets.value.flatMap((widget) => {
-        const query = queryLookup.value.get(widget.queryId)
+        const query = widget.queryId ? queryLookup.value.get(widget.queryId) : undefined
 
-        if (!query) {
+        if (!query || !widget.queryId) {
           return []
         }
 
@@ -534,13 +537,16 @@ export default defineComponent({
     }
 
     const getWidgetQuery = (widget: DashboardWidget) => {
-      return queryLookup.value.get(widget.queryId) ?? null
+      return widget.queryId ? queryLookup.value.get(widget.queryId) ?? null : null
     }
+
+    /** Widgets saved without a query (a text label, a clock) render straight away. */
+    const isWidgetWithoutQuery = (widget: Pick<DashboardWidget, 'queryId'>) => widget.queryId === null
 
     const getWidgetState = (widget: DashboardWidget) => {
       const query = getWidgetQuery(widget)
 
-      if (!query) {
+      if (!query || !widget.queryId) {
         return null
       }
 
@@ -606,6 +612,10 @@ export default defineComponent({
 
     // Every widget gets the same card settings, after its own.
     const CARD_INPUTS = CARD.map(settingInput)
+    // Card settings belong to every widget, so saving must keep them alongside the plugin's own.
+    const withCardInputs = <T extends { inputSchema: PluginInputDefinition[] }>(plugin: T | null) => {
+      return plugin ? { ...plugin, inputSchema: [...plugin.inputSchema, ...CARD_INPUTS] } : null
+    }
     const STYLE_SECTIONS = new Set(['appearance', 'thresholds', 'card'])
     const SECTION_ORDER = {
       format: ['format', 'text', 'range', 'labels', 'advanced'],
@@ -642,6 +652,8 @@ export default defineComponent({
     const formatSections = computed(() => buildSections('format'))
     const styleSections = computed(() => buildSections('style'))
     const pluginSettingSections = computed(() => [...formatSections.value, ...styleSections.value])
+    // What a widget without a query shows (a label's text), edited on the Data tab.
+    const contentInputs = computed(() => visibleSettingInputs.value.filter(input => input.section === 'content'))
 
     const builderTab = ref<'data' | 'format' | 'style'>('data')
     const isWidgetGalleryOpen = ref(false)
@@ -834,7 +846,7 @@ export default defineComponent({
 
     const syncDraftPluginConfig = () => {
       const normalizedConfig = normalizeDashboardWidgetPluginConfig(
-        selectedPlugin.value,
+        withCardInputs(selectedPlugin.value),
         draft.value.pluginConfig
       )
 
@@ -1197,27 +1209,32 @@ export default defineComponent({
     }
 
     const onSubmitWidget = async () => {
+      const usesQuery = selectedPluginUsesQuery.value
+
       if (
         submitWidgetDisabled.value ||
         !selectedPlugin.value ||
-        !selectedQuery.value ||
+        (usesQuery && !selectedQuery.value) ||
         !selectedDashboard.value
       ) {
         return
       }
 
-      await loadPreviewQuery()
+      if (usesQuery) {
+        await loadPreviewQuery()
+      }
 
-      const defaultTitle = t('pages.dashboard.builder.defaultTitle', {
-        queryName: selectedQuery.value.queryName,
-        pluginName: getPluginLabel(selectedPlugin.value.id)
-      })
+      const pluginName = getPluginLabel(selectedPlugin.value.id)
+      const defaultTitle = usesQuery && selectedQuery.value
+        ? t('pages.dashboard.builder.defaultTitle', { queryName: selectedQuery.value.queryName, pluginName })
+        : pluginName
 
       const normalizedDraft: DashboardWidgetDraft = {
         ...draft.value,
+        queryId: usesQuery ? draft.value.queryId : '',
         dashboardId: selectedDashboard.value.id,
         pluginConfig: normalizeDashboardWidgetPluginConfig(
-          selectedPlugin.value,
+          withCardInputs(selectedPlugin.value),
           draft.value.pluginConfig
         ),
         title: draft.value.title.trim() || defaultTitle
@@ -1289,7 +1306,7 @@ export default defineComponent({
     const onRefreshWidget = async (widget: DashboardWidget) => {
       const query = getWidgetQuery(widget)
 
-      if (!query) {
+      if (!query || !widget.queryId) {
         return
       }
 
@@ -1541,7 +1558,8 @@ export default defineComponent({
     const onCopyEmbedUrl = async () => {
       if (
         !dashboardEmbedUrl.value ||
-        !selectedDashboard.value?.embedEnabled ||
+        // The switch, not the saved value, so the link can be copied before saving.
+        !dashboardSettingsInput.value.embedEnabled ||
         !import.meta.client ||
         !navigator.clipboard
       ) {
@@ -1641,6 +1659,8 @@ export default defineComponent({
       isWidgetGalleryOpen,
       builderTabs,
       getCardStyle,
+      isCardShadowHidden,
+      isCardTitleHidden,
       setNumberSetting,
       setSettingValue,
       appearanceOptions,
@@ -1724,6 +1744,9 @@ export default defineComponent({
       selectedDashboardId,
       selectedDashboardName,
       selectedPlugin,
+      selectedPluginUsesQuery,
+      contentInputs,
+      isWidgetWithoutQuery,
       selectedPluginDescription,
       selectedQuery,
       setDraftPluginConfigValue,

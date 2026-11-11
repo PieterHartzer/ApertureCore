@@ -204,9 +204,12 @@ const normalizeDashboardWidgetInput = (
     )
   }
 
-  const queryId = normalizeNonEmptyString(value.queryId)
+  // Widgets without a query (a text label, a clock) send null.
+  const queryId = value.queryId === null || value.queryId === ''
+    ? null
+    : normalizeNonEmptyString(value.queryId)
 
-  if (!isUuid(queryId)) {
+  if (queryId !== null && !isUuid(queryId)) {
     return createSaveDashboardValidationError(
       'widget_query_id_invalid',
       'widgets'

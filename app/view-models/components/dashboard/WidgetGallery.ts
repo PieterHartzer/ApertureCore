@@ -5,7 +5,7 @@ import { useUIPlugins } from '~/composables/useUIPlugins'
 import type { WidgetPickerItem } from '~/extensions'
 import { getUIPluginInputSource, type PluginInputDefinition, type UIPluginDefinition } from '~/types/uiPlugin'
 
-const GROUP_ORDER = ['kpi', 'trend', 'compare', 'parts', 'distribution', 'flow', 'table']
+const GROUP_ORDER = ['kpi', 'trend', 'compare', 'parts', 'distribution', 'flow', 'table', 'content']
 const EXAMPLE_ROWS = 5
 
 /**

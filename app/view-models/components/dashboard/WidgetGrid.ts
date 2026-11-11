@@ -67,12 +67,22 @@ export default defineComponent({
       }
     }
 
+    // A new widget goes below everything else, so it never fills a gap left on purpose.
     const buildGridStackWidget = (
       widget: DashboardWidget
     ): GridStackWidget => ({
       id: widget.id,
-      ...widget.layout
+      ...widget.layout,
+      ...(widget.layout.x === undefined && widget.layout.y === undefined && grid
+        ? { x: 0, y: grid.getRow() }
+        : {})
     })
+
+    // Widgets stay where they are put, so empty rows and columns can be used for
+    // spacing. On narrow screens they still close up into one column.
+    const syncGridFloat = () => {
+      grid?.float(grid.getColumn() === GRIDSTACK_COLUMN_COUNT)
+    }
 
     const extractWidgetLayout = (
       node: Pick<GridStackNode, 'x' | 'y' | 'w' | 'h' | 'minW' | 'maxW' | 'minH' | 'maxH'>
@@ -263,6 +273,7 @@ export default defineComponent({
         disableDrag: !props.editable,
         disableResize: !props.editable,
         margin: GRIDSTACK_MARGIN_PX,
+        float: true,
         handle: '[data-dashboard-widget-drag-handle]',
         alwaysShowResizeHandle: 'mobile',
         columnOpts: {
@@ -279,12 +290,17 @@ export default defineComponent({
         emitLayoutUpdates(nodes)
       })
 
+      syncGridFloat()
+      window.addEventListener('resize', syncGridFloat)
+
       syncGridEditingState()
       await syncGridWithWidgets()
       isGridReady.value = true
     })
 
     onBeforeUnmount(() => {
+      window.removeEventListener('resize', syncGridFloat)
+
       if (!grid) {
         return
       }

@@ -46,7 +46,7 @@ interface DashboardRow {
 interface DashboardWidgetRow {
   widget_id: string
   dashboard_id: string
-  query_id: string
+  query_id: string | null
   widget_title: string
   plugin_id: string
   plugin_config: unknown
@@ -284,7 +284,7 @@ const ensureDashboardQueriesBelongToOrganization = async (
   organizationId: string,
   widgets: DashboardWidgetInput[]
 ) => {
-  const uniqueQueryIds = [...new Set(widgets.map((widget) => widget.queryId))]
+  const uniqueQueryIds = [...new Set(widgets.flatMap((widget) => widget.queryId ? [widget.queryId] : []))]
 
   if (uniqueQueryIds.length === 0) {
     return true
@@ -785,7 +785,8 @@ export const getEmbeddedDashboard = async (
           refreshIntervalSeconds: normalizePositiveInteger(
             widget.refresh_interval_seconds,
             60
-          )
+          ),
+          usesQuery: widget.query_id !== null
         }))
       }
     }

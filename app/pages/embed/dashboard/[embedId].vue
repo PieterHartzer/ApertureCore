@@ -41,23 +41,34 @@ export default component
         <template #item="{ widget }">
           <UCard
             data-widget-card
+            :data-hide-shadow="isCardShadowHidden(widget.pluginConfig ?? {}) || undefined"
             class="h-full w-full"
             :style="getCardStyle(widget.pluginConfig ?? {})"
             :ui="{
               root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
               header: 'flex-none p-4 sm:px-6 sm:py-4',
-              body: 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
+              body: isCardTitleHidden(widget.pluginConfig ?? {})
+                ? 'flex min-h-0 flex-1 flex-col p-3 sm:p-4'
+                : 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
             }"
           >
-            <template #header>
+            <template v-if="!isCardTitleHidden(widget.pluginConfig ?? {})" #header>
               <h2 data-widget-title class="truncate text-[13px] font-normal text-muted">
                 {{ getWidgetTitle(widget) }}
               </h2>
             </template>
 
             <div class="flex h-full min-h-0 flex-col gap-4">
+              <PluginRenderer
+                v-if="isWidgetWithoutQuery(widget)"
+                class="h-full min-h-0"
+                :widget="widget"
+                :columns="[]"
+                :rows="[]"
+              />
+
               <WidgetSkeleton
-                v-if="!getWidgetState(widget) || ['idle', 'pending'].includes(getWidgetState(widget).status)"
+                v-else-if="!getWidgetState(widget) || ['idle', 'pending'].includes(getWidgetState(widget).status)"
                 :plugin-id="widget.pluginId"
               />
 

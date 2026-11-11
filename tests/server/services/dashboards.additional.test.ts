@@ -739,7 +739,8 @@ describe('dashboard persistence service additional coverage', () => {
             maxW: 6,
             maxH: 5
           },
-          refreshIntervalSeconds: 60
+          refreshIntervalSeconds: 60,
+          usesQuery: true
         }]
       }
     })

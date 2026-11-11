@@ -26,6 +26,8 @@ export interface EmbeddedDashboardWidget {
   pluginConfig: DashboardWidget['pluginConfig']
   layout: DashboardWidget['layout']
   refreshIntervalSeconds: number
+  /** False for widgets that show no query results, such as a text label. */
+  usesQuery?: boolean
 }
 
 export interface EmbeddedDashboardDetails {

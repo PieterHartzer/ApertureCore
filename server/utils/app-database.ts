@@ -70,7 +70,7 @@ export interface AppDatabase {
   app_dashboard_widgets: {
     widget_id: string
     dashboard_id: string
-    query_id: string
+    query_id: string | null
     widget_title: string
     plugin_id: string
     plugin_config: unknown

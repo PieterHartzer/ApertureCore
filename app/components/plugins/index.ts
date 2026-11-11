@@ -45,6 +45,8 @@ export const settingInput = (setting: ChartSetting): PluginInputDefinition => ({
   visibleWhen: setting.visibleWhen,
   min: setting.min,
   max: setting.max,
+  maxLength: setting.maxLength,
+  required: setting.required,
   options: setting.options?.map(option => ({
     value: option.value,
     label: option.label,

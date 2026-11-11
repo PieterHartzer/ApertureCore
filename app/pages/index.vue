@@ -206,16 +206,18 @@ export default component
                   variant="soft"
                   icon="i-lucide-copy"
                   :label="t('pages.dashboard.selector.embed.actions.copy')"
-                  :disabled="!selectedDashboard?.embedEnabled"
+                  :disabled="!dashboardSettingsInput.embedEnabled"
                   @click="onCopyEmbedUrl"
                 />
               </div>
 
               <p class="mt-2 text-xs text-muted">
                 {{
-                  selectedDashboard?.embedEnabled
-                    ? t('pages.dashboard.selector.embed.enabledHint')
-                    : t('pages.dashboard.selector.embed.disabledHint')
+                  !dashboardSettingsInput.embedEnabled
+                    ? t('pages.dashboard.selector.embed.disabledHint')
+                    : selectedDashboard?.embedEnabled
+                      ? t('pages.dashboard.selector.embed.enabledHint')
+                      : t('pages.dashboard.selector.embed.pendingHint')
                 }}
               </p>
             </UFormField>
@@ -305,7 +307,7 @@ export default component
               <section class="rounded-lg border border-default">
                 <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.widget') }}</h3>
                 <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
-                  <UFormField class="col-span-6 sm:col-span-3" name="queryId" :label="t('pages.dashboard.builder.fields.query.label')">
+                  <UFormField v-if="selectedPluginUsesQuery" class="col-span-6 sm:col-span-3" name="queryId" :label="t('pages.dashboard.builder.fields.query.label')">
                     <USelect v-model="draft.queryId" class="w-full" :items="queryOptions" :placeholder="t('pages.dashboard.builder.fields.query.placeholder')" />
                   </UFormField>
                   <UFormField class="col-span-6 sm:col-span-3" name="pluginId" :label="t('pages.dashboard.builder.fields.plugin.label')">
@@ -329,7 +331,7 @@ export default component
                   <UFormField class="col-span-6 sm:col-span-3" name="title" :label="t('pages.dashboard.builder.fields.title.label')">
                     <UInput v-model="draft.title" class="w-full" :placeholder="t('pages.dashboard.builder.fields.title.placeholder')" />
                   </UFormField>
-                  <UFormField class="col-span-6 sm:col-span-3" name="refreshIntervalSeconds" :label="t('pages.dashboard.builder.fields.refresh.label')">
+                  <UFormField v-if="selectedPluginUsesQuery" class="col-span-6 sm:col-span-3" name="refreshIntervalSeconds" :label="t('pages.dashboard.builder.fields.refresh.label')">
                     <USelect v-model="draft.refreshIntervalSeconds" class="w-full" :items="refreshIntervalOptions" />
                   </UFormField>
                   <p v-if="selectedPluginDescription" class="col-span-6 text-xs leading-5 text-muted">{{ selectedPluginDescription }}</p>
@@ -359,6 +361,51 @@ export default component
                   >
                     {{ t('pages.dashboard.builder.mapping.emptyDescription') }}
                   </AppAlert>
+
+                <section v-else-if="contentInputs.length" class="rounded-lg border border-default" data-widget-content>
+                  <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.content') }}</h3>
+                  <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
+                    <UFormField
+                      v-for="input in contentInputs"
+                      :key="input.key"
+                      :class="getSettingSpanClass(input)"
+                      :name="input.key"
+                      :label="getPluginInputLabel(input)"
+                      :description="getPluginInputDescription(input)"
+                      :required="input.required"
+                    >
+                      <UTextarea
+                        v-if="input.control === 'textarea'"
+                        class="w-full"
+                        autoresize
+                        :rows="4"
+                        :maxlength="input.maxLength"
+                        :model-value="getSettingValue(input.key) ?? ''"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <USelect
+                        v-else-if="input.control === 'select'"
+                        class="w-full"
+                        :items="getSettingOptions(input)"
+                        :model-value="getSettingValue(input.key)"
+                        :placeholder="t('pages.dashboard.builder.mapping.placeholder')"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <USwitch
+                        v-else-if="input.control === 'switch'"
+                        :model-value="getSettingValue(input.key) === true"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <UInput
+                        v-else
+                        class="w-full"
+                        :maxlength="input.maxLength"
+                        :model-value="getSettingValue(input.key) ?? ''"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                    </UFormField>
+                  </div>
+                </section>
 
                   <AppAlert
                     v-else-if="pluginFieldInputs.length === 0 && pluginSettingSections.length === 0"
@@ -436,6 +483,16 @@ export default component
                       <UInput
                         v-else-if="input.control === 'text'"
                         class="w-full"
+                        :maxlength="input.maxLength"
+                        :model-value="getSettingValue(input.key) ?? ''"
+                        @update:model-value="setSettingValue(input.key, $event)"
+                      />
+                      <UTextarea
+                        v-else-if="input.control === 'textarea'"
+                        class="w-full"
+                        autoresize
+                        :rows="3"
+                        :maxlength="input.maxLength"
                         :model-value="getSettingValue(input.key) ?? ''"
                         @update:model-value="setSettingValue(input.key, $event)"
                       />
@@ -578,14 +635,14 @@ export default component
             >
               <div class="min-w-0 space-y-4">
                 <div
-                  v-if="!selectedQuery"
+                  v-if="selectedPluginUsesQuery && !selectedQuery"
                   class="flex min-h-[320px] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
                 >
                   {{ t('pages.dashboard.preview.empty') }}
                 </div>
 
                 <div
-                  v-else-if="previewState?.status === 'pending' && previewStateKey === selectedQuery.id"
+                  v-else-if="selectedQuery && previewState?.status === 'pending' && previewStateKey === selectedQuery.id"
                   class="flex min-h-[320px] items-center justify-center rounded-[10px] border border-dashed border-default px-6 py-10 text-sm text-muted"
                 >
                   {{ t('pages.dashboard.builder.preview.loadingDescription') }}
@@ -613,6 +670,7 @@ export default component
           <div class="flex w-full flex-wrap items-center justify-end gap-3">
             <p v-if="widgetBlockReason" role="status" class="mr-auto text-xs leading-5 text-muted">{{ widgetBlockReason }}</p>
             <UButton
+              v-if="selectedPluginUsesQuery"
               color="neutral"
               variant="soft"
               icon="i-lucide-rotate-cw"
@@ -722,15 +780,18 @@ export default component
           <template #item="{ widget }">
             <UCard
               data-widget-card
+              :data-hide-shadow="isCardShadowHidden(widget.pluginConfig) || undefined"
               class="h-full w-full"
               :style="getCardStyle(widget.pluginConfig ?? {})"
               :ui="{
                 root: 'flex h-full min-h-0 w-full flex-col divide-y-0 overflow-hidden ring-inset',
                 header: 'flex-none px-4 pb-0 pt-3 sm:px-4 sm:pb-0 sm:pt-3',
-                body: 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
+                body: isDashboardEditing || !isCardTitleHidden(widget.pluginConfig)
+                  ? 'flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1 sm:px-4 sm:pb-3 sm:pt-1'
+                  : 'flex min-h-0 flex-1 flex-col p-3 sm:p-4'
               }"
             >
-              <template #header>
+              <template v-if="isDashboardEditing || !isCardTitleHidden(widget.pluginConfig)" #header>
                 <div class="flex min-w-0 items-start justify-between gap-3">
                   <h3 data-widget-title class="min-w-0 truncate text-[13px] font-normal text-muted">
                     {{ getWidgetTitle(widget) }}<span v-if="isDashboardEditing" class="text-dimmed"> · {{ getPluginLabel(widget.pluginId) }}</span>
@@ -789,8 +850,16 @@ export default component
               </template>
 
               <div class="flex h-full min-h-0 flex-col gap-4">
+                <PluginRenderer
+                  v-if="isWidgetWithoutQuery(widget)"
+                  class="h-full min-h-0"
+                  :widget="widget"
+                  :columns="[]"
+                  :rows="[]"
+                />
+
                 <AppAlert
-                  v-if="!getWidgetQuery(widget)"
+                  v-else-if="!getWidgetQuery(widget)"
                   kind="warning"
                   :title="t('pages.dashboard.widgets.card.queryMissingTitle')"
                 >

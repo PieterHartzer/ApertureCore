@@ -262,6 +262,81 @@ describe('dashboard persistence service', () => {
     })
   })
 
+  it('saves widgets without a query without looking any query up, and embeds them as such', async () => {
+    const dashboardRow = {
+      dashboard_id: 'dashboard-1',
+      dashboard_name: 'Executive overview',
+      embed_id: 'embed-1',
+      embed_enabled: true,
+      created_at: new Date('2026-03-24T00:00:00.000Z'),
+      updated_at: new Date('2026-03-24T01:00:00.000Z')
+    }
+    const labelRow = {
+      widget_id: '7c6d9425-55cf-4d8e-a446-638848de1942',
+      dashboard_id: 'dashboard-1',
+      query_id: null,
+      widget_title: 'Heading',
+      plugin_id: 'label',
+      plugin_config: { text: 'Sales this quarter' },
+      layout: { w: 6, h: 2 },
+      refresh_interval_seconds: 60
+    }
+    const insertValues = vi.fn().mockReturnThis()
+    const txMock = {
+      selectFrom: vi.fn().mockImplementation((table: string) => {
+        if (table === 'app_saved_sql_queries') throw new Error('no query lookup expected')
+
+        return createSelectBuilder(table === 'app_dashboards' ? dashboardRow : [labelRow])
+      }),
+      updateTable: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        executeTakeFirst: vi.fn().mockResolvedValue(undefined)
+      }),
+      deleteFrom: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnThis(),
+        execute: vi.fn().mockResolvedValue(undefined)
+      }),
+      insertInto: vi.fn().mockReturnValue({
+        values: insertValues,
+        execute: vi.fn().mockResolvedValue(undefined)
+      })
+    }
+
+    getAppDatabaseMock.mockReturnValue({
+      transaction: vi.fn().mockReturnValue({
+        execute: async (callback: (tx: typeof txMock) => Promise<unknown>) => await callback(txMock)
+      }),
+      selectFrom: txMock.selectFrom
+    })
+
+    const { getEmbeddedDashboard, saveDashboard } = await import('../../../server/services/dashboards')
+
+    await expect(saveDashboard(authContext, {
+      dashboardId: 'dashboard-1',
+      dashboardName: 'Executive overview',
+      embedEnabled: true,
+      widgets: [{
+        id: labelRow.widget_id,
+        title: 'Heading',
+        queryId: null,
+        pluginId: 'label',
+        pluginConfig: { text: 'Sales this quarter' },
+        layout: { w: 6, h: 2 },
+        refreshIntervalSeconds: 60
+      }]
+    })).resolves.toMatchObject({
+      ok: true,
+      dashboard: { widgets: [{ queryId: null, pluginId: 'label' }] }
+    })
+    expect(insertValues).toHaveBeenCalledWith([expect.objectContaining({ query_id: null, plugin_id: 'label' })])
+
+    await expect(getEmbeddedDashboard('embed-1')).resolves.toMatchObject({
+      ok: true,
+      dashboard: { widgets: [{ pluginId: 'label', usesQuery: false }] }
+    })
+  })
+
   it('loads embedded dashboards only when embedding is enabled', async () => {
     const dashboardSelectBuilder = createSelectBuilder({
       dashboard_id: 'dashboard-1',
@@ -321,7 +396,8 @@ describe('dashboard persistence service', () => {
             minW: 2,
             minH: 2
           },
-          refreshIntervalSeconds: 15
+          refreshIntervalSeconds: 15,
+          usesQuery: true
         }]
       }
     })
