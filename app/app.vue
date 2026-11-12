@@ -29,7 +29,7 @@ useHead(() => ({
 <template>
   <UApp
     :locale="uiLocale"
-    :toaster="{ position: 'top-right', duration: 5000 }"
+    :toaster="{ position: 'bottom-right', duration: 5000 }"
   >
     <NuxtRouteAnnouncer />
     <div v-if="showNavigation" class="flex min-h-dvh flex-col lg:flex-row">

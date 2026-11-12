@@ -1,8 +1,11 @@
 import type { Component, ComputedRef, Ref } from 'vue'
 
 export interface NavigationGroup {
+  /** Groups with the same key are shown as one, so a layer can add to 'data' or 'settings'. */
   key: string
   label?: string
+  /** 'bottom' pins the group above the account menu, away from the everyday pages. */
+  placement?: 'top' | 'bottom'
   items: Array<{ to: string, label: string, icon: string }>
 }
 

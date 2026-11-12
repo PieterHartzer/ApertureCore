@@ -22,27 +22,44 @@ const userDetails = computed(() => {
   }
 })
 
-const groups = computed<NavigationGroup[]>(() => [
-  {
-    key: 'main',
-    items: [
-      { to: '/', label: t('navigation.dashboard'), icon: 'i-lucide-layout-dashboard' },
-      { to: '/queries', label: t('navigation.queries'), icon: 'i-lucide-file-code-2' },
-      { to: '/sql-workspace', label: t('navigation.workspace'), icon: 'i-lucide-square-terminal' }
-    ]
-  },
-  {
-    key: 'data',
-    label: t('navigation.data'),
-    items: [{ to: '/connections', label: t('navigation.connections'), icon: 'i-lucide-database' }]
-  },
-  {
-    key: 'settings',
-    label: t('navigation.settings'),
-    items: [{ to: '/settings/ai-models', label: t('navigation.aiModels'), icon: 'i-lucide-sparkles' }]
-  },
-  ...(extraGroups?.value ?? [])
-])
+// The two main features lead; supporting pages sit under Data; settings stay at the bottom.
+const groups = computed<NavigationGroup[]>(() => {
+  const merged: NavigationGroup[] = []
+
+  for (const group of [
+    {
+      key: 'main',
+      items: [
+        { to: '/', label: t('navigation.dashboard'), icon: 'i-lucide-layout-dashboard' },
+        { to: '/sql-workspace', label: t('navigation.workspace'), icon: 'i-lucide-square-terminal' }
+      ]
+    },
+    {
+      key: 'data',
+      label: t('navigation.data'),
+      items: [
+        { to: '/queries', label: t('navigation.queries'), icon: 'i-lucide-file-code-2' },
+        { to: '/connections', label: t('navigation.connections'), icon: 'i-lucide-database' }
+      ]
+    },
+    {
+      key: 'settings',
+      label: t('navigation.settings'),
+      placement: 'bottom' as const,
+      items: [{ to: '/settings/ai-models', label: t('navigation.aiModels'), icon: 'i-lucide-sparkles' }]
+    },
+    ...(extraGroups?.value ?? [])
+  ]) {
+    const existing = merged.find(item => item.key === group.key)
+
+    if (existing) existing.items = [...existing.items, ...group.items]
+    else merged.push({ ...group, items: [...group.items] })
+  }
+
+  return merged.filter(group => group.items.length > 0)
+})
+const topGroups = computed(() => groups.value.filter(group => group.placement !== 'bottom'))
+const bottomGroups = computed(() => groups.value.filter(group => group.placement === 'bottom'))
 const allItems = computed(() => groups.value.flatMap((group) => group.items))
 const active = (path: string) => isNavigationSectionActive(route.path, path)
 const linkClass = (path: string) => active(path)
@@ -80,17 +97,52 @@ const linkClass = (path: string) => active(path)
       {{ brandName }}
     </NuxtLink>
 
-    <nav :aria-label="t('navigation.label')" class="flex-1 space-y-5 overflow-y-auto px-2 py-2">
-      <div v-for="group in groups" :key="group.key">
+    <nav :aria-label="t('navigation.label')" class="flex flex-1 flex-col gap-5 overflow-y-auto px-2 py-2">
+      <div
+        v-for="group in topGroups"
+        :key="group.key"
+        :data-nav-group="group.key"
+      >
         <p v-if="group.label" class="mb-1 px-2 text-xs text-dimmed">{{ group.label }}</p>
-        <ul class="space-y-0.5">
+        <ul :class="group.key === 'main' ? 'space-y-1' : 'space-y-0.5'">
           <li v-for="item in group.items" :key="item.to">
-            <NuxtLink :to="item.to" :aria-current="active(item.to) ? 'page' : undefined" class="flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors" :class="linkClass(item.to)">
+            <!-- The main features get larger rows with a tinted icon. -->
+            <NuxtLink
+              v-if="group.key === 'main'"
+              :to="item.to"
+              :aria-current="active(item.to) ? 'page' : undefined"
+              class="flex h-10 items-center gap-2.5 rounded-md px-2 text-sm font-semibold transition-colors"
+              :class="linkClass(item.to)"
+            >
+              <span class="grid size-7 shrink-0 place-items-center rounded-md bg-primary/12 text-primary">
+                <UIcon :name="item.icon" class="size-4" aria-hidden="true" />
+              </span>
+              {{ item.label }}
+            </NuxtLink>
+            <NuxtLink v-else :to="item.to" :aria-current="active(item.to) ? 'page' : undefined" class="flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors" :class="linkClass(item.to)">
               <UIcon :name="item.icon" class="size-4 shrink-0" aria-hidden="true" />
               {{ item.label }}
             </NuxtLink>
           </li>
         </ul>
+      </div>
+
+      <div v-if="bottomGroups.length" class="mt-auto space-y-5">
+        <div
+          v-for="group in bottomGroups"
+          :key="group.key"
+          :data-nav-group="group.key"
+        >
+          <p v-if="group.label" class="mb-1 px-2 text-xs text-dimmed">{{ group.label }}</p>
+          <ul class="space-y-0.5">
+            <li v-for="item in group.items" :key="item.to">
+              <NuxtLink :to="item.to" :aria-current="active(item.to) ? 'page' : undefined" class="flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors" :class="linkClass(item.to)">
+                <UIcon :name="item.icon" class="size-4 shrink-0" aria-hidden="true" />
+                {{ item.label }}
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
 
