@@ -53,6 +53,7 @@ const createInsertBuilder = (result: unknown) => ({
 const createUpdateBuilder = () => ({
   set: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
+  execute: vi.fn().mockResolvedValue(undefined),
   executeTakeFirst: vi.fn().mockResolvedValue(undefined)
 })
 
@@ -178,6 +179,7 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: true,
+        isDefault: false,
         appearance: 'default',
         style: {},
         widgetCount: 2,
@@ -398,6 +400,7 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: false,
+        isDefault: false,
         appearance: 'default',
         style: {},
         widgetCount: 0,
@@ -580,6 +583,7 @@ describe('dashboard persistence service additional coverage', () => {
         dashboardName: 'Executive overview',
         embedId: 'embed-1',
         embedEnabled: false,
+        isDefault: false,
         appearance: 'default',
         style: {},
         widgetCount: 0,
@@ -590,6 +594,78 @@ describe('dashboard persistence service additional coverage', () => {
     })
     expect(txMock.deleteFrom).toHaveBeenCalledWith('app_dashboard_widgets')
     expect(txMock.insertInto).not.toHaveBeenCalled()
+  })
+
+  it('makes a dashboard the default, stepping the old default down first', async () => {
+    const dashboardSelectBuilder = createSelectBuilder({ ...dashboardRow, is_default: true })
+    const widgetSelectBuilder = createSelectBuilder([])
+    const updateBuilder = createUpdateBuilder()
+    const txMock = {
+      selectFrom: vi.fn().mockImplementation((table: string) => {
+        return table === 'app_dashboards'
+          ? dashboardSelectBuilder
+          : widgetSelectBuilder
+      }),
+      updateTable: vi.fn().mockReturnValue(updateBuilder),
+      deleteFrom: vi.fn().mockReturnValue(createDeleteBuilder()),
+      insertInto: vi.fn()
+    }
+
+    getAppDatabaseMock.mockReturnValue({
+      transaction: vi.fn().mockReturnValue({
+        execute: async (callback: (tx: typeof txMock) => Promise<unknown>) => {
+          return await callback(txMock)
+        }
+      })
+    })
+
+    const { saveDashboard } = await import('../../../server/services/dashboards')
+    const result = await saveDashboard(authContext, {
+      dashboardId: 'dashboard-1',
+      dashboardName: 'Executive overview',
+      embedEnabled: false,
+      isDefault: true,
+      widgets: []
+    })
+
+    expect(result).toMatchObject({ ok: true, dashboard: { isDefault: true } })
+    expect(updateBuilder.set).toHaveBeenNthCalledWith(1, { is_default: false })
+    expect(updateBuilder.where).toHaveBeenCalledWith('dashboard_id', '!=', 'dashboard-1')
+    expect(updateBuilder.set).toHaveBeenNthCalledWith(2, expect.objectContaining({ is_default: true }))
+  })
+
+  it('leaves the default alone when a save does not mention it', async () => {
+    const updateBuilder = createUpdateBuilder()
+    const txMock = {
+      selectFrom: vi.fn().mockImplementation((table: string) => {
+        return table === 'app_dashboards'
+          ? createSelectBuilder(dashboardRow)
+          : createSelectBuilder([])
+      }),
+      updateTable: vi.fn().mockReturnValue(updateBuilder),
+      deleteFrom: vi.fn().mockReturnValue(createDeleteBuilder()),
+      insertInto: vi.fn()
+    }
+
+    getAppDatabaseMock.mockReturnValue({
+      transaction: vi.fn().mockReturnValue({
+        execute: async (callback: (tx: typeof txMock) => Promise<unknown>) => {
+          return await callback(txMock)
+        }
+      })
+    })
+
+    const { saveDashboard } = await import('../../../server/services/dashboards')
+
+    await saveDashboard(authContext, {
+      dashboardId: 'dashboard-1',
+      dashboardName: 'Executive overview',
+      embedEnabled: false,
+      widgets: []
+    })
+
+    expect(updateBuilder.set).toHaveBeenCalledTimes(1)
+    expect(updateBuilder.set.mock.calls[0]![0]).not.toHaveProperty('is_default')
   })
 
   it('maps duplicate dashboard names during save to duplicate_dashboard_name', async () => {

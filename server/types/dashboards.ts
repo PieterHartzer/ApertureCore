@@ -51,6 +51,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  /** Opens first for everyone in the organisation. */
+  isDefault: boolean
   appearance: DashboardAppearance
   style: DashboardStyle
   widgetCount: number
@@ -91,6 +93,8 @@ export interface CreateDashboardInput {
 export interface SaveDashboardInput extends CreateDashboardInput {
   dashboardId: string
   embedEnabled: boolean
+  /** Sent only when someone changes it, so a background save never takes it back. */
+  isDefault?: boolean
   appearance?: DashboardAppearance
   style?: DashboardStyle
   widgets: DashboardWidgetInput[]

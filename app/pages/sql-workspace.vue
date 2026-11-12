@@ -5,6 +5,7 @@ import PanelResizer from '~/components/ui/PanelResizer.vue'
 import SqlEditor from '~/components/ui/SqlEditor.vue'
 import { clampPanelRatio, useWorkspaceLayout } from '~/composables/useWorkspaceLayout'
 import AppAlert from '~/components/ui/AppAlert.vue'
+import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import { useSavedDatabaseConnections } from '~/composables/database/useSavedDatabaseConnections'
 import { useSavedSqlQueryTest } from '~/composables/database/useSavedSqlQueryTest'
 import { useSavedSqlQuery } from '~/composables/database/useSavedSqlQuery'
@@ -400,6 +401,7 @@ const save = async () => {
         <div class="sql-slot" :data-fixed="layout.collapsed.sql ? 'true' : 'false'" :style="{ '--grow': layout.collapsed.results ? 1 : 1 - layout.resultsRatio }">
           <WorkspacePanel :title="$t('workspace.panels.sql')" icon="i-lucide-code" :collapsed="layout.collapsed.sql" :can-collapse="canCollapse('sql')" :stacked="stackRight" @toggle="togglePanel('sql')">
             <template #actions>
+              <ExtensionSlot name="sqlWorkspace.actions" :slot-props="{ connectionId, sql, disabled: busy || !connectionId || !sql.trim() }" />
               <UButton size="xs" icon="i-lucide-play" :label="$t('interface.testSQL')" :loading="testing" :disabled="busy || !connectionId || !sql.trim()" @click="runTest" />
             </template>
             <SqlEditor

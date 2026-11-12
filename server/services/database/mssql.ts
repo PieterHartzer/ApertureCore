@@ -4,6 +4,8 @@ import sql from 'mssql'
 import type {
   ExecuteDatabaseReadOnlyQueryInput,
   ExecuteDatabaseReadOnlyQueryResult,
+  ExplainDatabaseQueryInput,
+  ExplainDatabaseQueryResult,
   TestDatabaseConnectionInput,
   TestDatabaseConnectionResult
 } from '../../types/database'
@@ -20,6 +22,7 @@ import {
   isTlsVerificationError,
   sanitizeResultRow
 } from './shared'
+import { normalizeSqlServerPlan, readSqlServerMissingIndexes, truncateRawPlan } from './query-plan'
 import type { DatabaseConnectionTester, DatabaseQueryExecutor } from './types'
 
 type SqlServerError = Error & { code?: string, number?: number, originalError?: Error }
@@ -28,6 +31,11 @@ type QueryFailure = Exclude<ExecuteDatabaseReadOnlyQueryResult, { ok: true }>
 const LOGIN_FAILED_ERROR = 18456
 const CANNOT_OPEN_DATABASE_ERROR = 4060
 const LOCK_TIMEOUT_ERROR = 1222
+const SHOWPLAN_COLUMN = /showplan/i
+// The driver returns bigint as text; decimals may come as text too.
+const NUMERIC_TYPES: unknown[] = [sql.BigInt, sql.Decimal, sql.Numeric, sql.Money, sql.SmallMoney]
+const SHOWPLAN_PERMISSION_DETAILS =
+  'Showing a plan needs the SHOWPLAN permission. Grant it to this read-only login: GRANT SHOWPLAN TO [login user].'
 
 const isAllowedPermission = (permission: string) => {
   return (
@@ -75,6 +83,13 @@ const openPool = (
   }).connect()
 }
 
+/** A login without SHOWPLAN gets a clear answer about the one permission it needs. */
+const showplanPermissionFailure = (failure: QueryFailure): ExplainDatabaseQueryResult => {
+  return /SHOWPLAN permission denied/i.test(failure.details ?? '')
+    ? { ok: false, code: 'permission_denied', message: 'permission_denied', details: SHOWPLAN_PERMISSION_DETAILS }
+    : failure
+}
+
 const mapSqlServerError = (error: unknown): QueryFailure => {
   const fail = (code: QueryFailure['code'], details?: string): QueryFailure => ({ ok: false, code, message: code, details })
 
@@ -113,13 +128,48 @@ export const hasPrivilegedPermissions = async (request: () => sql.Request) => {
   return (writable.recordset[0]?.writable_objects ?? 0) > 0
 }
 
+/**
+ * Runs a batch and keeps only the showplan XML it returns. With STATISTICS XML
+ * the query's own rows come first; they are read and dropped, never kept.
+ */
+const readPlanXml = (
+  transaction: sql.Transaction,
+  text: string
+) => new Promise<string>((resolve, reject) => {
+  const request = new sql.Request(transaction)
+  let isPlanResult = false
+  let plan = ''
+  let failure: Error | null = null
+
+  request.stream = true
+  request.on('recordset', (recordset: Record<string, { name: string }>) => {
+    isPlanResult = Object.values(recordset).some(column => SHOWPLAN_COLUMN.test(column.name))
+  })
+  request.on('row', (row: Record<string, unknown>) => {
+    if (!isPlanResult || plan) return
+
+    plan = String(Object.values(row)[0] ?? '')
+  })
+  request.on('error', (error: Error) => {
+    failure = error
+  })
+  request.on('done', () => {
+    if (failure) reject(failure)
+    else resolve(plan)
+  })
+  // SHOWPLAN answers plain batches only, not sp_executesql. The text has
+  // already passed the single-SELECT check in inReadOnlySession.
+  request.batch(text)
+})
+
 const readRows = (
   transaction: sql.Transaction,
   text: string,
   rowLimit: number
-) => new Promise<{ columns: string[], rows: Record<string, unknown>[] }>((resolve, reject) => {
+) => new Promise<{ columns: string[], rows: Record<string, unknown>[], numericColumns: Set<string> }>((resolve, reject) => {
   const request = new sql.Request(transaction)
   const rows: Record<string, unknown>[] = []
+  const numericColumns = new Set<string>()
   const fits = createResultSizeBudget()
   let columns: string[] | null = null
   let stopped = false
@@ -133,7 +183,7 @@ const readRows = (
   }
 
   request.stream = true
-  request.on('recordset', (recordset: Record<string, { index: number, name: string }>) => {
+  request.on('recordset', (recordset: Record<string, { index: number, name: string, type?: unknown }>) => {
     if (columns) {
       // A batch can return several result sets; only the first is the answer.
       stop()
@@ -141,6 +191,10 @@ const readRows = (
     }
 
     columns = Object.values(recordset).sort((a, b) => a.index - b.index).map((column) => column.name)
+
+    for (const column of Object.values(recordset)) {
+      if (NUMERIC_TYPES.includes(column.type)) numericColumns.add(column.name)
+    }
   })
   request.on('row', (row: Record<string, unknown>) => {
     if (stopped) return
@@ -160,7 +214,7 @@ const readRows = (
   // Resolving on 'done' guarantees the request is idle before rollback.
   request.on('done', () => {
     if (failure) reject(failure)
-    else resolve({ columns: columns ?? [], rows })
+    else resolve({ columns: columns ?? [], rows, numericColumns })
   })
   request.query(text)
 })
@@ -197,9 +251,15 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     }
   }
 
-  async executeReadOnlyQuery(
-    input: ExecuteDatabaseReadOnlyQueryInput
-  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+  /**
+   * Runs work inside a transaction that is always rolled back, after refusing
+   * anything but a single SELECT and refusing privileged logins. Explaining a
+   * query uses exactly the same session as running it.
+   */
+  private async inReadOnlySession<Success> (
+    input: ExecuteDatabaseReadOnlyQueryInput,
+    work: (transaction: sql.Transaction, text: string) => Promise<Success>
+  ): Promise<Success | QueryFailure> {
     const normalizedQuery = normalizeReadOnlySql(input.sql)
 
     if (!normalizedQuery.ok) {
@@ -218,7 +278,6 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     }
 
     const timeoutMs = resolvePositiveInteger(input.timeoutMs, DEFAULT_QUERY_TIMEOUT_MS)
-    const rowLimit = resolvePositiveInteger(input.maxRows, DEFAULT_QUERY_RESULT_ROW_LIMIT)
     let pool: sql.ConnectionPool | null = null
 
     try {
@@ -235,16 +294,7 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
           return { ok: false, code: 'query_rejected', message: 'query_rejected', details: PRIVILEGED_ROLE_DETAILS }
         }
 
-        const { columns, rows } = await readRows(transaction, normalizedQuery.sql, rowLimit)
-
-        return {
-          ok: true,
-          code: 'success',
-          message: 'success',
-          columns,
-          rows: rows.map((row) => sanitizeResultRow(row, columns)),
-          rowLimit
-        }
+        return await work(transaction, normalizedQuery.sql)
       } finally {
         await transaction.rollback().catch(() => undefined)
       }
@@ -253,5 +303,60 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     } finally {
       await pool?.close().catch(() => undefined)
     }
+  }
+
+  async executeReadOnlyQuery(
+    input: ExecuteDatabaseReadOnlyQueryInput
+  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+    const rowLimit = resolvePositiveInteger(input.maxRows, DEFAULT_QUERY_RESULT_ROW_LIMIT)
+
+    return this.inReadOnlySession(input, async (transaction, text) => {
+      const { columns, rows, numericColumns } = await readRows(transaction, text, rowLimit)
+
+      return {
+        ok: true as const,
+        code: 'success' as const,
+        message: 'success' as const,
+        columns,
+        rows: rows.map((row) => sanitizeResultRow(row, columns, numericColumns)),
+        rowLimit
+      }
+    })
+  }
+
+  /**
+   * Asks SQL Server for its plan. SHOWPLAN_XML only compiles the query; with
+   * analyze, STATISTICS XML runs it inside the rolled-back transaction.
+   */
+  async explainQuery(
+    input: ExplainDatabaseQueryInput
+  ): Promise<ExplainDatabaseQueryResult> {
+    const option = input.analyze ? 'statistics xml' : 'showplan_xml'
+
+    const result = await this.inReadOnlySession(input, async (transaction, text) => {
+        // Each SET must be alone in its batch.
+        await new sql.Request(transaction).batch(`set ${option} on`)
+
+        try {
+          const xml = await readPlanXml(transaction, text)
+
+          return {
+            ok: true as const,
+            code: 'success' as const,
+            message: 'success' as const,
+            plan: {
+              engine: 'mssql' as const,
+              analyzed: input.analyze,
+              root: normalizeSqlServerPlan(xml, input.analyze),
+              raw: truncateRawPlan(xml),
+              missingIndexes: readSqlServerMissingIndexes(xml)
+            }
+          }
+        } finally {
+          await new sql.Request(transaction).batch(`set ${option} off`).catch(() => undefined)
+        }
+      })
+
+    return result.ok ? result : showplanPermissionFailure(result)
   }
 }

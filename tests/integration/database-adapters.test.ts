@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { createDatabaseConnectionTester, createDatabaseQueryExecutor } from '../../server/services/database/factory'
 import { SCHEMA_SQL } from '../../server/services/database-schema'
-import type { DatabaseType } from '../../server/types/database'
+import type { DatabaseType, QueryPlanNode } from '../../server/types/database'
 
 // Only the SQL constants are needed; the service pulls in Nuxt runtime imports.
 vi.mock('../../server/services/saved-sql-queries', () => ({}))
@@ -128,6 +128,15 @@ go
   }
 ]
 
+// Each engine is seeded once, whichever describe block runs first.
+const seeded = new Set<string>()
+const seed = (engine: Engine) => {
+  if (seeded.has(engine.name)) return
+
+  engine.setup()
+  seeded.add(engine.name)
+}
+
 const input = (engine: Engine, username: string, password = READER_PASSWORD) => ({
   connectionName: 'integration',
   databaseType: engine.type,
@@ -144,7 +153,7 @@ describe.runIf(process.env.RUN_DB_INTEGRATION === '1').each(engines)('$name adap
   const execute = (sql: string, maxRows = 3, timeoutMs = 3000) =>
     createDatabaseQueryExecutor(engine.type).executeReadOnlyQuery({ ...reader, sql, maxRows, timeoutMs })
 
-  beforeAll(() => engine.setup(), 60_000)
+  beforeAll(() => seed(engine), 60_000)
 
   it('accepts a read-only login', async () => {
     await expect(createDatabaseConnectionTester(engine.type).testConnection(reader)).resolves.toMatchObject({ ok: true })
@@ -193,6 +202,13 @@ describe.runIf(process.env.RUN_DB_INTEGRATION === '1').each(engines)('$name adap
     expect(count.ok && Number(count.rows[0]?.total)).toBe(5)
   })
 
+  it('returns counts and decimals as numbers, keeping integers too big to be exact as text', async () => {
+    const castBig = engine.type === 'mysql' ? 'cast(123456789012345678 as signed)' : 'cast(123456789012345678 as bigint)'
+    const result = await execute(`select count(*) as total, cast(12.50 as decimal(10,2)) as price, ${castBig} as huge from orders`)
+
+    expect(result).toMatchObject({ ok: true, rows: [{ total: 5, price: 12.5, huge: '123456789012345678' }] })
+  })
+
   it('stops a slow query at the timeout', async () => {
     const slow = {
       postgres: 'select pg_sleep(30)',
@@ -216,6 +232,69 @@ describe.runIf(process.env.RUN_DB_INTEGRATION === '1').each(engines)('$name adap
 
     expect(rows.find((row) => row.table_name === 'orders' && row.column_name === 'id')?.constraints).toMatch(/PRIMARY KEY/)
     expect(rows.find((row) => row.column_name === 'order_id')?.constraints).toMatch(/orders/i)
+  })
+})
+
+const planNodes = (node: QueryPlanNode): QueryPlanNode[] => [node, ...node.children.flatMap(planNodes)]
+
+describe.runIf(process.env.RUN_DB_INTEGRATION === '1').each(engines)('$name query plans', (engine) => {
+  const reader = input(engine, 'reader')
+  const explain = (sql: string, analyze: boolean) =>
+    createDatabaseQueryExecutor(engine.type).explainQuery({ ...reader, sql, analyze, timeoutMs: 5000 })
+  const query = 'select o.label, count(c.id) as children from orders o left join orders_child c on c.order_id = o.id group by o.label order by o.label'
+
+  beforeAll(() => {
+    seed(engine)
+
+    // SHOWPLAN is the one permission a SQL Server login needs to show plans.
+    if (engine.type === 'mssql') mssqlSetup('use autodash_test\nrevoke showplan to reader\ngo\n')
+  }, 60_000)
+
+  if (engine.type === 'mssql') {
+    it('says which permission is missing, then works once it is granted', async () => {
+      await expect(explain(query, false)).resolves.toMatchObject({ ok: false, code: 'permission_denied', details: expect.stringContaining('GRANT SHOWPLAN') })
+
+      mssqlSetup('use autodash_test\ngrant showplan to reader\ngo\n')
+
+      await expect(explain(query, false)).resolves.toMatchObject({ ok: true })
+    })
+  }
+
+  it('estimates a plan without running the query', async () => {
+    if (engine.type === 'mssql') mssqlSetup('use autodash_test\ngrant showplan to reader\ngo\n')
+
+    const result = await explain(query, false)
+
+    expect(result).toMatchObject({ ok: true, plan: { analyzed: false } })
+
+    const nodes = result.ok ? planNodes(result.plan.root) : []
+
+    // MySQL and MariaDB name a table by its alias in the query.
+    expect(nodes.some(node => /^(orders|o)\b/.test(node.object ?? ''))).toBe(true)
+    expect(nodes.every(node => node.actualRows === undefined)).toBe(true)
+    expect(result.ok && result.plan.raw.length).toBeGreaterThan(0)
+  })
+
+  it('measures real rows when asked to run the query', async () => {
+    const result = await explain(query, true)
+
+    expect(result).toMatchObject({ ok: true, plan: { analyzed: true } })
+    expect(result.ok && planNodes(result.plan.root).some(node => node.actualRows !== undefined)).toBe(true)
+  })
+
+  it('keeps every read-only rule when explaining', async () => {
+    for (const sql of engine.writeAttempts) {
+      await expect(explain(sql, true)).resolves.toMatchObject({ ok: false })
+    }
+
+    const password = engine.privileged === 'filer' ? READER_PASSWORD : ADMIN_PASSWORD
+
+    await expect(createDatabaseQueryExecutor(engine.type).explainQuery({ ...input(engine, engine.privileged, password), sql: query, analyze: true }))
+      .resolves.toMatchObject({ code: 'query_rejected' })
+
+    const count = await createDatabaseQueryExecutor(engine.type).executeReadOnlyQuery({ ...reader, sql: 'select count(*) as total from orders' })
+
+    expect(count.ok && Number(count.rows[0]?.total)).toBe(5)
   })
 })
 

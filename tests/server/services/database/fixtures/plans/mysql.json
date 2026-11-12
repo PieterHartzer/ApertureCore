@@ -1,0 +1,34 @@
+{
+  "query_block": {
+    "select_id": 1,
+    "cost_info": {
+      "query_cost": "502.00"
+    },
+    "ordering_operation": {
+      "using_filesort": true,
+      "grouping_operation": {
+        "using_temporary_table": true,
+        "using_filesort": false,
+        "table": {
+          "table_name": "big",
+          "access_type": "ALL",
+          "rows_examined_per_scan": 4965,
+          "rows_produced_per_join": 551,
+          "filtered": "11.11",
+          "cost_info": {
+            "read_cost": "446.84",
+            "eval_cost": "55.16",
+            "prefix_cost": "502.00",
+            "data_read_per_join": "94K"
+          },
+          "used_columns": [
+            "id",
+            "grp",
+            "label"
+          ],
+          "attached_condition": "(`autodash_test`.`big`.`label` like 'a%')"
+        }
+      }
+    }
+  }
+}

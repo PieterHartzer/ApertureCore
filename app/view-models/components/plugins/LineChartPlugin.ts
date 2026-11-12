@@ -5,7 +5,8 @@ import PluginChart from '~/components/plugins/PluginChart.vue'
 import { useChartTheme } from '~/composables/useChartTheme'
 import { useObservedElementSize } from '~/composables/useObservedElementSize'
 import { getChartColors } from '~/utils/charts/chart-colors'
-import { applyAdvancedOptions, applyCartesianSettings, applyLabelOverridesToOption, colorSetting, createValueFormatter } from '~/utils/charts/chart-settings'
+import { applyAdvancedOptions, applyCartesianSettings, applyLabelOverridesToOption, colorSetting } from '~/utils/charts/chart-settings'
+import { numberFormatterFor } from '~/utils/charts/column-formats'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 
 export default defineComponent({
@@ -83,7 +84,7 @@ export default defineComponent({
       return chartWidth.value < 320 || chartHeight.value < 200
     })
 
-    const valueFormat = computed(() => createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value))
+    const valueFormat = computed(() => numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, typeof props.config.yField === 'string' ? props.config.yField : undefined))
     const seriesColor = computed(() => colorSetting(props.config, 'color') ?? chartTheme.value.line)
 
     const baseOption = computed<EChartsOption>(() => ({

@@ -183,6 +183,10 @@
                 "plain": "[Plåîñ]"
               }
             },
+            "isDefault": {
+              "label": "[Ôpëñ ţhîš dåšhbôård fîršţ]",
+              "description": "[Ëvërýôñë îñ ýôûr ôrgåñîšåţîôñ šëëš ţhîš dåšhbôård whëñ ţhëý šîgñ îñ. Ţûrñîñg îţ ôñ hërë ţûrñš îţ ôff fôr åñý ôţhër dåšhbôård.]"
+            },
             "embedEnabled": {
               "label": "[Ĕñåƀļë ëḿƀëððîñĝ]",
               "description": "[Åļļôŵ ţĥîš ðåšĥƀôåřð ţô ƀë řëñðëřëð þûƀļîçļý ţĥřôûĝĥ îţš ëḿƀëð ĜÛÎÐ.]"
@@ -665,6 +669,9 @@
             },
             "showDate": {
               "label": "[Šĥôŵ ţĥë ðåţë]"
+            },
+            "columnFormats": {
+              "label": "[Çôļûḿñ ƒôŕḿåţš]"
             }
           },
           "sections": {
@@ -723,7 +730,53 @@
           },
           "opacity": "[Ôpåcîţy]",
           "opacityFor": "[{name} ôpåcîţy]",
-          "opacityNeedsColor": "[Pîck å côlôûr fîršţ ţô šëţ îţš ôpåcîţy.]"
+          "opacityNeedsColor": "[Pîck å côlôûr fîršţ ţô šëţ îţš ôpåcîţy.]",
+          "columnFormats": {
+            "column": "[Çôļûḿñ]",
+            "format": "[Ƒôŕḿåţ]",
+            "currency": "[Çûŕŕëñçý]",
+            "decimals": "[Ðëçîḿåļš]",
+            "style": "[Šţýļë]",
+            "add": "[Åðð å çôļûḿñ]",
+            "remove": "[Ŕëḿôṽë ţĥîš çôļûḿñ ƒôŕḿåţ]",
+            "help": "[Ëåçh çôlûmñ lîšţëd hërë îš šhôwñ îţš ôwñ wåý, åhëåd ôf ţhë ñûmbër fôrmåţ åbôvë. Dåţëš îñ å vîëwër'š ôwñ šţýlë fôllôw ţhåţ vîëwër'š låñgûågë; pîçk å fîxëd påţţërñ ţô šhôw ëvërýôñë ţhë šåmë låýôûţ.]",
+            "kinds": {
+              "number": "[Ñûḿƀëŕ]",
+              "compact": "[Çôḿþåçţ (1.2Ķ)]",
+              "currency": "[Çûŕŕëñçý]",
+              "percent": "[Þëŕçëñţåĝë]",
+              "fraction": "[Þëŕçëñţåĝë ƒŕôḿ ƒŕåçţîôñ]",
+              "date": "[Ðåţë]",
+              "datetime": "[Ðåţë åñð ţîḿë]",
+              "time": "[Ţîḿë]",
+              "month": "[Ḿôñţĥ]",
+              "year": "[Ýëåŕ]",
+              "relative": "[Ţîḿë åĝô (3 ðåýš åĝô)]",
+              "text": "[Ţëxţ]"
+            },
+            "dateStyles": {
+              "short": "[Šhôrţ (8/15/26)]",
+              "medium": "[Mëdîûm (Åûg 15, 2026)]",
+              "long": "[Lôñg (Åûgûšţ 15, 2026)]",
+              "iso": "[ÎŠÔ (2026-08-15)]",
+              "pattern": "[Fîxëd påţţërñ]"
+            },
+            "textCase": "[Lëţţër çåšë]",
+            "pattern": "[Påţţërñ, šûçh åš DD/MM/YYYY]",
+            "patternPresets": "[Çômmôñ påţţërñš]",
+            "patternHelp": "[Ëvërýôñë šëëš ţhîš šåmë låýôûţ. YYYY ýëår · MM môñţh · MMM môñţh ñåmë · DD dåý · ddd wëëkdåý · HH:mm 24-hôûr ţîmë · h:mm Å 12-hôûr ţîmë · [ţëxţ] këpţ åš ţýpëd.]",
+            "preview": "[Prëvîëw:]",
+            "textCases": {
+              "none": "[Åš rëţûrñëd]",
+              "upper": "[ÛPPËRÇÅŠË]",
+              "lower": "[lôwërçåšë]",
+              "title": "[Ţîţlë Çåšë]"
+            },
+            "dateStyleGroups": {
+              "viewer": "[Îñ ëåçh vîëwër'š šţýlë]",
+              "everyone": "[Šåmë fôr ëvërýôñë]"
+            }
+          }
         },
         "shared": {
           "loading": "[Ļôåðîñĝ çĥåřţ...]"
@@ -1259,7 +1312,8 @@
         "actions": {
           "edit": "[Ĕðîţ]",
           "delete": "[Ðëļëţë]"
-        }
+        },
+        "sortBy": "[Šôŕţ ƀý {column}]"
       },
       "empty": {
         "title": "[Ñô šåṽëð ŠQĻ qüëřîëš ýëţ]",

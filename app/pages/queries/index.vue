@@ -41,6 +41,9 @@ export default component
         class="overflow-hidden rounded-lg border border-default bg-elevated"
       >
         <UTable
+          v-model:sorting="sorting"
+          v-model:pagination="pagination"
+          :pagination-options="paginationOptions"
           :data="queries"
           :columns="columns"
           :loading="isLoading"
@@ -61,6 +64,15 @@ export default component
             </div>
           </template>
         </UTable>
+
+        <div v-if="queries.length > PAGE_SIZE" class="flex justify-end border-t border-default px-4 py-3">
+          <UPagination
+            :page="pagination.pageIndex + 1"
+            :items-per-page="PAGE_SIZE"
+            :total="queries.length"
+            @update:page="onPageChange"
+          />
+        </div>
       </div>
 
       <AppEmptyState

@@ -98,14 +98,40 @@ const sanitizeResultValue = (value: unknown): DatabaseQueryResultValue => {
   }
 }
 
+// A double holds 15 significant digits exactly; beyond that the text is kept.
+const MAX_EXACT_DIGITS = 15
+
+/**
+ * Drivers return big integers and decimals as text so nothing is lost. A
+ * number is far more useful to charts, so convert when that is exact and keep
+ * the text when it isn't.
+ */
+export const toExactNumber = (value: unknown) => {
+  if (typeof value !== 'string') return value
+
+  const text = value.trim()
+
+  if (!/^-?\d+(\.\d+)?$/.test(text)) return value
+
+  const number = Number(text)
+
+  if (!text.includes('.')) return Number.isSafeInteger(number) ? number : value
+
+  const digits = text.replace('-', '').replace('.', '').replace(/^0+/, '').replace(/0+$/, '')
+
+  return digits.length <= MAX_EXACT_DIGITS ? number : value
+}
+
+/** numericColumns: columns the database typed as numbers (bigint, decimal) that the driver may return as text. */
 export const sanitizeResultRow = (
   row: Record<string, unknown>,
-  columns: string[]
+  columns: string[],
+  numericColumns?: ReadonlySet<string>
 ): DatabaseQueryResultRow => {
   const sanitizedRow: DatabaseQueryResultRow = {}
 
   for (const column of columns) {
-    sanitizedRow[column] = sanitizeResultValue(row[column])
+    sanitizedRow[column] = sanitizeResultValue(numericColumns?.has(column) ? toExactNumber(row[column]) : row[column])
   }
 
   return sanitizedRow

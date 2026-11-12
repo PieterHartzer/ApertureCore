@@ -1,3 +1,4 @@
+import type { QueryPlan } from './database'
 import type { GuardRejection } from '../utils/extensions'
 import type { AuthenticatedOrganizationContext } from './database-connections'
 
@@ -431,3 +432,19 @@ export interface ListSavedSqlQueriesApiResponse {
   messageKey?: string
   queries?: SavedSqlQuerySummary[]
 }
+
+export interface ExplainSavedSqlQueryInput {
+  connectionId: string
+  sql: string
+  /** Run the query to measure it, instead of only estimating. */
+  analyze: boolean
+}
+
+export type ExplainSavedSqlQueryResult =
+  | { ok: true, code: 'success', plan: QueryPlan }
+  | {
+      ok: false
+      code: Exclude<TestSavedSqlQueryResultCode, 'success'> | 'permission_denied'
+      message: string
+      details?: string
+    }

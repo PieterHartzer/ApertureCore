@@ -8,6 +8,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  /** Opens first for everyone in the organisation. */
+  isDefault: boolean
   appearance: DashboardAppearance
   style: DashboardStyle
   widgetCount: number
@@ -50,6 +52,8 @@ export type DashboardSaveWidgetInput = Omit<DashboardWidget, 'dashboardId'>
 export interface DashboardSaveInput {
   dashboardName: string
   embedEnabled: boolean
+  /** Sent only when someone changes it, so a background save never takes it back. */
+  isDefault?: boolean
   appearance?: DashboardAppearance
   style?: DashboardStyle
   widgets: DashboardSaveWidgetInput[]
@@ -205,10 +209,12 @@ export const createEmptyDashboardCreateInput = (): DashboardCreateInput => ({
 })
 
 export const toDashboardSaveInput = (
-  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'>
+  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'>,
+  changes: { isDefault?: boolean } = {}
 ): DashboardSaveInput => ({
   dashboardName: dashboard.dashboardName,
   embedEnabled: dashboard.embedEnabled,
+  ...(changes.isDefault === undefined ? {} : { isDefault: changes.isDefault }),
   appearance: dashboard.appearance,
   style: dashboard.style,
   widgets: dashboard.widgets.map((widget) => ({

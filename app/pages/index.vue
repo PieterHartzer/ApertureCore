@@ -170,6 +170,14 @@ export default component
             </UFormField>
 
             <UFormField
+              name="isDefault"
+              :label="t('pages.dashboard.selector.settings.fields.isDefault.label')"
+              :description="t('pages.dashboard.selector.settings.fields.isDefault.description')"
+            >
+              <USwitch v-model="dashboardSettingsInput.isDefault" />
+            </UFormField>
+
+            <UFormField
               name="embedEnabled"
               :label="t('pages.dashboard.selector.settings.fields.embedEnabled.label')"
               :description="t('pages.dashboard.selector.settings.fields.embedEnabled.description')"
@@ -583,6 +591,130 @@ export default component
                           <UButton color="neutral" variant="outline" size="xs" icon="i-lucide-wand-sparkles" :label="t('pages.dashboard.plugins.catalog.addLabelsFromData')" @click="addLabelsFromData" />
                           <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-plus" :label="t('pages.dashboard.plugins.catalog.addLabel')" @click="addLabelOverride" />
                         </div>
+                      </div>
+                      <div
+                        v-else-if="input.control === 'columnFormats'"
+                        class="space-y-2"
+                        data-column-formats
+                      >
+                        <div
+                          v-for="(item, index) in columnFormats"
+                          :key="index"
+                          class="space-y-1.5"
+                          data-column-format
+                        >
+                        <div class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_2rem] items-start gap-2">
+                          <USelect
+                            class="w-full"
+                            :items="columnFormatColumnOptions"
+                            :model-value="item.column"
+                            :placeholder="t('pages.dashboard.plugins.catalog.columnFormats.column')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.column')"
+                            @update:model-value="setColumnFormat(index, 'column', $event)"
+                          />
+                          <USelect
+                            class="w-full"
+                            :items="columnFormatKindOptions"
+                            :model-value="item.kind"
+                            :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.format')"
+                            @update:model-value="setColumnFormat(index, 'kind', $event)"
+                          />
+                          <div class="flex gap-2">
+                            <USelect
+                              v-if="item.kind === 'currency'"
+                              class="w-24 shrink-0"
+                              :items="currencyOptions"
+                              :model-value="item.currency ?? 'USD'"
+                              :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.currency')"
+                              @update:model-value="setColumnFormat(index, 'currency', $event)"
+                            />
+                            <UInput
+                              v-if="isNumberKind(item.kind)"
+                              type="number"
+                              class="w-full min-w-0"
+                              :min="0"
+                              :max="6"
+                              :placeholder="t('pages.dashboard.plugins.catalog.columnFormats.decimals')"
+                              :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.decimals')"
+                              :model-value="item.decimals ?? ''"
+                              @update:model-value="setColumnFormat(index, 'decimals', $event)"
+                            />
+                            <USelect
+                              v-else-if="isDateKind(item.kind) && item.kind !== 'relative'"
+                              class="w-full"
+                              :items="dateStyleOptions"
+                              :ui="{ content: 'min-w-fit' }"
+                              :model-value="item.dateStyle ?? 'medium'"
+                              :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.style')"
+                              @update:model-value="setColumnFormat(index, 'dateStyle', $event)"
+                            />
+                            <USelect
+                              v-else-if="item.kind === 'text'"
+                              class="w-full"
+                              :items="textCaseOptions"
+                              :ui="{ content: 'min-w-fit' }"
+                              :model-value="item.textCase ?? 'none'"
+                              :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.textCase')"
+                              @update:model-value="setColumnFormat(index, 'textCase', $event)"
+                            />
+                          </div>
+                          <UButton
+                            color="neutral"
+                            variant="ghost"
+                            size="xs"
+                            square
+                            icon="i-lucide-x"
+                            :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.remove')"
+                            @click="removeColumnFormat(index)"
+                          />
+                        </div>
+                        <div
+                          v-if="item.dateStyle === 'pattern' && isDateKind(item.kind) && item.kind !== 'relative'"
+                          class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2rem] gap-2"
+                        >
+                          <UInput
+                            class="w-full font-mono"
+                            :maxlength="maxDatePatternLength"
+                            :model-value="item.pattern ?? ''"
+                            :placeholder="t('pages.dashboard.plugins.catalog.columnFormats.pattern')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.pattern')"
+                            @update:model-value="setColumnFormat(index, 'pattern', $event)"
+                          />
+                          <USelect
+                            class="w-full"
+                            :items="datePatternOptions"
+                            :ui="{ content: 'min-w-fit' }"
+                            :model-value="datePatternOptions.some(option => option.value === item.pattern) ? item.pattern : undefined"
+                            :placeholder="t('pages.dashboard.plugins.catalog.columnFormats.patternPresets')"
+                            :aria-label="t('pages.dashboard.plugins.catalog.columnFormats.patternPresets')"
+                            @update:model-value="setColumnFormat(index, 'pattern', $event)"
+                          />
+                        </div>
+                        <p
+                          v-if="item.column"
+                          class="truncate text-xs text-muted"
+                          data-column-format-preview
+                        >
+                          {{ t('pages.dashboard.plugins.catalog.columnFormats.preview') }}
+                          <span class="font-medium text-highlighted">{{ columnFormatPreview(item) }}</span>
+                        </p>
+                        <p
+                          v-if="item.dateStyle === 'pattern' && isDateKind(item.kind) && item.kind !== 'relative'"
+                          class="text-xs leading-5 text-muted"
+                        >
+                          {{ t('pages.dashboard.plugins.catalog.columnFormats.patternHelp') }}
+                        </p>
+                        </div>
+                        <UButton
+                          color="neutral"
+                          variant="outline"
+                          size="xs"
+                          icon="i-lucide-plus"
+                          :label="t('pages.dashboard.plugins.catalog.columnFormats.add')"
+                          :disabled="columnFormats.length >= columnFormatColumnOptions.length && columnFormatColumnOptions.length > 0"
+                          @click="addColumnFormat"
+                        />
+                        <p class="text-xs leading-5 text-muted">{{ t('pages.dashboard.plugins.catalog.columnFormats.help') }}</p>
                       </div>
                       <div
                         v-else-if="input.control === 'json'"

@@ -1,0 +1,43 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.044634254
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.8628766,
+    "r_loops": 1,
+    "r_total_time_ms": 0.84279974,
+    "filesort": {
+      "sort_key": "count(0) desc",
+      "r_loops": 1,
+      "r_total_time_ms": 0.028839313,
+      "r_used_priority_queue": false,
+      "r_output_rows": 50,
+      "r_buffer_size": "1KiB",
+      "r_sort_mode": "sort_key,rowid",
+      "temporary_table": {
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "big",
+              "access_type": "ALL",
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 5117,
+              "r_rows": 5000,
+              "cost": 0.8628766,
+              "r_table_time_ms": 0.264346475,
+              "r_other_time_ms": 0.534819219,
+              "r_engine_stats": {
+                "pages_accessed": 22
+              },
+              "filtered": 100,
+              "r_filtered": 6.44,
+              "attached_condition": "big.label like 'a%'"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

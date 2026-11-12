@@ -1,0 +1,24 @@
+{
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.8628766,
+    "filesort": {
+      "sort_key": "count(0) desc",
+      "temporary_table": {
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "big",
+              "access_type": "ALL",
+              "loops": 1,
+              "rows": 5117,
+              "cost": 0.8628766,
+              "filtered": 100,
+              "attached_condition": "big.label like 'a%'"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

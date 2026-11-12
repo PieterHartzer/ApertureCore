@@ -2,7 +2,7 @@ import type { ChartColors } from './chart-colors'
 import { BORDER_STYLES, isBorderStyle, outlineDeclarations } from '#shared/utils/border'
 import { isHexColor } from '#shared/utils/color'
 
-export type SettingControl = 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
+export type SettingControl = 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels' | 'columnFormats'
 export type SettingSpan = 'full' | 'half' | 'third'
 export type SettingSection = 'content' | 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'
 
@@ -27,7 +27,7 @@ export interface ValueFormatter {
 
 type Config = Record<string, unknown>
 
-const CURRENCIES = ['AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'INR', 'JPY', 'KES', 'MXN', 'NGN', 'NOK', 'NZD', 'SEK', 'SGD', 'USD', 'ZAR']
+export const CURRENCIES = ['AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'DKK', 'EUR', 'GBP', 'INR', 'JPY', 'KES', 'MXN', 'NGN', 'NOK', 'NZD', 'SEK', 'SGD', 'USD', 'ZAR']
 
 export const setting = (key: string, label: string, section: SettingSection, control: SettingControl, extra: Partial<ChartSetting> = {}): ChartSetting => ({ key, label, section, control, ...extra })
 
@@ -107,6 +107,9 @@ const TEXT_SETTINGS: Record<string, ChartSetting[]> = {
 }
 
 for (const [id, settings] of Object.entries(TEXT_SETTINGS)) CHART_SETTINGS[id] = [...settings, ...CHART_SETTINGS[id]!]
+
+/** Every widget that shows query results can format each column its own way. */
+export const COLUMN_FORMATS = setting('columnFormats', 'Column formats', 'format', 'columnFormats', { span: 'full' })
 
 /** Every widget can override its own card, on top of the dashboard style. */
 export const CARD = [

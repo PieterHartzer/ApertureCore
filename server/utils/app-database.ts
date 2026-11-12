@@ -59,6 +59,7 @@ export interface AppDatabase {
     dashboard_name: string
     embed_id: Generated<string>
     embed_enabled: Generated<boolean>
+    is_default: Generated<boolean>
     appearance: Generated<string>
     style: Generated<unknown>
     created_by_user_id: string

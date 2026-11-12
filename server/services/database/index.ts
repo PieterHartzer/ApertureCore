@@ -1,11 +1,15 @@
 import type {
   ExecuteDatabaseReadOnlyQueryInput,
   ExecuteDatabaseReadOnlyQueryResult,
+  ExplainDatabaseQueryInput,
+  ExplainDatabaseQueryResult,
   TestDatabaseConnectionInput,
   TestDatabaseConnectionResult,
 } from '../../types/database'
 
 import { resolveDatabaseTarget, type DatabaseTarget } from '../../utils/database-host-guard'
+
+import { adviseQueryPlan } from './query-advice'
 
 import {
   createDatabaseConnectionTester,
@@ -64,6 +68,31 @@ export const executeDatabaseReadOnlyQuery = async (
         code: 'unsupported_database_type',
         message: 'unsupported_database_type'
       }
+    }
+
+    throw error
+  }
+}
+
+/** The database's plan for a query, checked against the same host rules as running it. */
+export const explainDatabaseQuery = async (
+  input: ExplainDatabaseQueryInput
+): Promise<ExplainDatabaseQueryResult> => {
+  const target = await resolveDatabaseTarget(input.host, input.port)
+
+  if (!target.allowed) {
+    return refusedTarget(target)
+  }
+
+  try {
+    const executor = createDatabaseQueryExecutor(input.databaseType)
+
+    const result = await executor.explainQuery({ ...input, connectAddress: target.connectAddress })
+
+    return result.ok ? { ...result, plan: { ...result.plan, advice: adviseQueryPlan(result.plan, input.sql) } } : result
+  } catch (error) {
+    if (error instanceof Error && error.message === `unsupported_database_type:${input.databaseType}`) {
+      return { ok: false, code: 'unsupported_database_type', message: 'unsupported_database_type' }
     }
 
     throw error

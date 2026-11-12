@@ -72,7 +72,7 @@ interface SavedSqlQueryConnectionRow {
   connection_name: string
 }
 
-interface SavedSqlQueryExecutionConnectionRow {
+export interface SavedSqlQueryExecutionConnectionRow {
   connection_id: string
   database_type: DatabaseType
   encrypted_secret: string
@@ -126,7 +126,7 @@ const isPostgresError = (
   return typeof value === 'object' && value !== null && 'code' in value
 }
 
-const isPersistenceConfigurationError = (value: unknown) => {
+export const isPersistenceConfigurationError = (value: unknown) => {
   return (
     value instanceof AppDatabaseConfigurationError ||
     value instanceof DatabaseConnectionEncryptionConfigurationError ||
@@ -150,7 +150,7 @@ const isDuplicateQueryNameError = (value: unknown) => {
   )
 }
 
-const toClientVisibleQueryTestDetails = (
+export const toClientVisibleQueryTestDetails = (
   code: Exclude<TestSavedSqlQueryResult['code'], 'success'>,
   details?: string
 ) => {

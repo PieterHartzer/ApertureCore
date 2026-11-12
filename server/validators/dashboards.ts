@@ -455,6 +455,13 @@ export const validateSaveDashboardInput = (
     )
   }
 
+  if (value.isDefault !== undefined && typeof value.isDefault !== 'boolean') {
+    return createSaveDashboardValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
   if (value.appearance !== undefined && !isDashboardAppearance(value.appearance)) {
     return createSaveDashboardValidationError(
       'body_invalid',
@@ -503,6 +510,7 @@ export const validateSaveDashboardInput = (
     dashboardId: dashboardIdValidation.data.dashboardId,
     dashboardName,
     embedEnabled: value.embedEnabled,
+    ...(value.isDefault === undefined ? {} : { isDefault: value.isDefault }),
     ...(value.appearance === undefined ? {} : { appearance: value.appearance }),
     ...(style ? { style: style.style } : {}),
     widgets

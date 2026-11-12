@@ -132,3 +132,94 @@ export type ExecuteDatabaseReadOnlyQueryResult =
       message: Exclude<ExecuteDatabaseReadOnlyQueryResultCode, 'success'>
       details?: string
     }
+
+/** Something in a plan step worth a closer look. */
+export type QueryPlanWarning =
+  /** Every row of a table is read. */
+  | 'full_scan'
+  /** Rows are sorted rather than read in order from an index. */
+  | 'sort'
+  /** The database built a temporary table. */
+  | 'temporary_table'
+  /** The real row count was far from the estimate, so the plan may be a poor one. */
+  | 'misestimate'
+
+/** One step of a query plan, the same shape for every database. */
+export interface QueryPlanNode {
+  operation: string
+  /** The table or index the step reads, when it reads one. */
+  object?: string
+  estimatedRows?: number
+  actualRows?: number
+  /** The database's own cost figure for this step and everything below it. */
+  cost?: number
+  /** Time for this step and everything below it, when the query was run. */
+  timeMs?: number
+  loops?: number
+  /** The real table name (not an alias), when the database says. */
+  table?: string
+  /** The condition this step applies to rows, as the database printed it. */
+  condition?: string
+  /** What this step sorts or groups by. */
+  sortKeys?: string[]
+  warnings: QueryPlanWarning[]
+  children: QueryPlanNode[]
+}
+
+/** An index the database itself says would help (SQL Server reports these). */
+export interface QueryPlanMissingIndex {
+  schema?: string
+  table: string
+  equality: string[]
+  inequality: string[]
+  include: string[]
+  /** The database's estimate of the improvement, in percent. */
+  impact?: number
+}
+
+export type QueryAdviceKind =
+  | 'add_index'
+  | 'index_for_sort'
+  | 'leading_wildcard'
+  | 'function_on_column'
+  | 'update_statistics'
+  | 'reduce_rows'
+
+/** One concrete way to make the query faster. */
+export interface QueryAdvice {
+  kind: QueryAdviceKind
+  table?: string
+  columns?: string[]
+  /** Statement for a database administrator to run; this app only reads. */
+  sql?: string
+  impact?: number
+  rows?: number
+  /** Whether the database itself suggested this. */
+  fromDatabase?: boolean
+}
+
+export interface QueryPlan {
+  engine: 'postgres' | 'mysql' | 'mariadb' | 'mssql'
+  /** True when the query was run to measure it, not only estimated. */
+  analyzed: boolean
+  root: QueryPlanNode
+  /** The database's own output (JSON, XML or text), for anyone who wants every detail. */
+  raw: string
+  missingIndexes?: QueryPlanMissingIndex[]
+  /** Concrete suggestions, slowest steps first. */
+  advice?: QueryAdvice[]
+}
+
+export interface ExplainDatabaseQueryInput extends ExecuteDatabaseReadOnlyQueryInput {
+  /** Run the query to measure real times and row counts. Read-only rules still apply. */
+  analyze: boolean
+}
+
+export type ExplainDatabaseQueryResult =
+  | { ok: true, code: 'success', message: 'success', plan: QueryPlan }
+  | {
+      ok: false
+      code: Exclude<ExecuteDatabaseReadOnlyQueryResultCode, 'success'> | 'permission_denied'
+      message: Exclude<ExecuteDatabaseReadOnlyQueryResultCode, 'success'> | 'permission_denied'
+      details?: string
+    }

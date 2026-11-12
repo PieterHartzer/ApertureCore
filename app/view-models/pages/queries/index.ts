@@ -1,6 +1,11 @@
 import ExtensionSlot from '~/components/ui/ExtensionSlot.vue'
 import AppEmptyState from '~/components/ui/AppEmptyState.vue'
-import { computed, defineComponent, ref } from 'vue'
+import { computed, defineComponent, h, ref } from 'vue'
+import { getPaginationRowModel, type Column, type SortingState } from '@tanstack/vue-table'
+
+import { UButton } from '#components'
+
+import { appExtensions } from '~/extensions'
 
 import DeleteSavedSqlQueryDialog from '~/components/database/DeleteSavedSqlQueryDialog.vue'
 import AppAlert from '~/components/ui/AppAlert.vue'
@@ -28,6 +33,8 @@ export default defineComponent({
   },
   async setup() {
     const { t } = useI18n()
+    // Needs the component's setup context, so it runs before the first await.
+    const extraColumns = appExtensions.useQueryListColumns?.()
     const { success } = useNotifications()
     const { deleteQuery } = useSavedSqlQueryDelete()
     const requestFetch = import.meta.server
@@ -43,20 +50,57 @@ export default defineComponent({
     const isDeleting = ref(false)
     const deleteDialogErrorMessage = ref('')
 
+    // A header that sorts its column: ascending, descending, then back to unsorted.
+    const sortableHeader = (label: string, numeric = false) => ({ column }: { column: Column<SavedSqlQueryListItem> }) => {
+      const sorted = column.getIsSorted()
+
+      return h(UButton, {
+        'color': 'neutral',
+        'variant': 'ghost',
+        'size': 'xs',
+        'label': label,
+        'class': numeric ? '-mr-2.5 ml-auto flex' : '-ml-2.5',
+        'trailingIcon': sorted === 'asc' ? 'i-lucide-arrow-up' : sorted === 'desc' ? 'i-lucide-arrow-down' : 'i-lucide-arrow-up-down',
+        'aria-label': t('queries.index.table.sortBy', { column: label }),
+        'onClick': () => column.toggleSorting(sorted === 'asc')
+      })
+    }
+
+    const toneClass = { warning: 'text-warning', error: 'text-error' } as const
+
     const columns = computed(() => [
       {
         accessorKey: 'queryName',
-        header: t('queries.index.table.columns.queryName')
+        header: sortableHeader(t('queries.index.table.columns.queryName'))
       },
       {
         accessorKey: 'connectionName',
-        header: t('queries.index.table.columns.connectionName')
+        header: sortableHeader(t('queries.index.table.columns.connectionName'))
       },
+      ...(extraColumns?.value ?? []).map(extra => ({
+        id: extra.id,
+        accessorFn: (row: SavedSqlQueryListItem) => extra.value(row.id),
+        header: sortableHeader(extra.header, extra.numeric),
+        sortUndefined: 'last' as const,
+        cell: ({ row }: { row: { original: SavedSqlQueryListItem } }) => {
+          const tone = extra.tone?.(row.original.id)
+
+          return h('span', { class: [extra.numeric ? 'block text-right tabular-nums' : '', tone ? toneClass[tone] : ''] }, extra.display(row.original.id))
+        }
+      })),
       {
         id: 'actions',
         header: t('queries.index.table.columns.actions')
       }
     ])
+
+    const PAGE_SIZE = 25
+    const sorting = ref<SortingState>([])
+    const pagination = ref({ pageIndex: 0, pageSize: PAGE_SIZE })
+    const paginationOptions = { getPaginationRowModel: getPaginationRowModel() }
+    const onPageChange = (page: number) => {
+      pagination.value = { ...pagination.value, pageIndex: page - 1 }
+    }
 
     const queries = computed<SavedSqlQueryListItem[]>(() => {
       return listResponse.value?.ok
@@ -128,6 +172,11 @@ export default defineComponent({
 
     return {
       columns,
+      onPageChange,
+      PAGE_SIZE,
+      pagination,
+      paginationOptions,
+      sorting,
       deleteDialogErrorMessage,
       isDeleteDialogOpen,
       isDeleting,

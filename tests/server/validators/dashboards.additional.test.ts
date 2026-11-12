@@ -361,6 +361,17 @@ describe('dashboard validators additional coverage', () => {
     }))).toEqual(expected)
   })
 
+  it('accepts a default flag only as true or false', () => {
+    const accepted = validateSaveDashboardInput(DASHBOARD_ID, createValidSaveInput({ isDefault: true }))
+
+    expect(accepted.ok && accepted.data.isDefault).toBe(true)
+    expect(validateSaveDashboardInput(DASHBOARD_ID, createValidSaveInput({ isDefault: 'yes' }))).toMatchObject({ ok: false, issue: 'body_invalid' })
+
+    const omitted = validateSaveDashboardInput(DASHBOARD_ID, createValidSaveInput())
+
+    expect(omitted.ok && 'isDefault' in omitted.data).toBe(false)
+  })
+
   it('rejects duplicate widget ids when saving dashboards', () => {
     expect(validateSaveDashboardInput(DASHBOARD_ID, createValidSaveInput({
       widgets: [

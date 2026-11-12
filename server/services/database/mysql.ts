@@ -5,10 +5,13 @@ import { createConnection, type Connection, type ConnectionOptions, type FieldPa
 import type {
   ExecuteDatabaseReadOnlyQueryInput,
   ExecuteDatabaseReadOnlyQueryResult,
+  ExplainDatabaseQueryInput,
+  ExplainDatabaseQueryResult,
   TestDatabaseConnectionInput,
   TestDatabaseConnectionResult
 } from '../../types/database'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
+import { normalizeMySqlAnalyzeTree, normalizeMySqlPlan, truncateRawPlan } from './query-plan'
 import { normalizeReadOnlySql } from '../../utils/read-only-sql'
 
 import {
@@ -23,7 +26,11 @@ import {
 import type { DatabaseConnectionTester, DatabaseQueryExecutor } from './types'
 
 type MySqlError = Error & { code?: string, errno?: number, sqlMessage?: string }
-type QueryFailureCode = Exclude<ExecuteDatabaseReadOnlyQueryResult, { ok: true }>['code']
+// DECIMAL, BIGINT and NEWDECIMAL, which the driver returns as text so nothing is lost.
+const NUMERIC_COLUMN_TYPES = new Set([0, 8, 246])
+
+type QueryFailure = Exclude<ExecuteDatabaseReadOnlyQueryResult, { ok: true }>
+type QueryFailureCode = QueryFailure['code']
 
 // Global privileges a read-only login may hold. Everything else, including
 // FILE (SELECT ... INTO OUTFILE, LOAD_FILE) and SUPER, is refused.
@@ -142,8 +149,9 @@ const readRows = (
   sql: string,
   rowLimit: number,
   timeoutMs: number
-) => new Promise<{ columns: string[], rows: Record<string, unknown>[] }>((resolve, reject) => {
+) => new Promise<{ columns: string[], rows: Record<string, unknown>[], numericColumns: Set<string> }>((resolve, reject) => {
   const columns: string[] = []
+  const numericColumns = new Set<string>()
   const rows: Record<string, unknown>[] = []
   const fits = createResultSizeBudget()
   let settled = false
@@ -171,6 +179,10 @@ const readRows = (
   coreConnection.query(sql)
     .on('fields', (fields: FieldPacket[]) => {
       columns.push(...fields.map((field) => field.name))
+
+      for (const field of fields) {
+        if (NUMERIC_COLUMN_TYPES.has((field as { columnType?: number }).columnType ?? -1)) numericColumns.add(field.name)
+      }
     })
     .on('result', (row: unknown) => {
       if (settled) return
@@ -182,12 +194,12 @@ const readRows = (
       if (full || rows.length >= rowLimit) {
         settle(() => {
           connection.destroy()
-          resolve({ columns, rows })
+          resolve({ columns, rows, numericColumns })
         })
       }
     })
     .on('error', (error: Error) => settle(() => reject(error)))
-    .on('end', () => settle(() => resolve({ columns, rows })))
+    .on('end', () => settle(() => resolve({ columns, rows, numericColumns })))
 })
 
 export class MySqlConnectionTester
@@ -220,9 +232,15 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     }
   }
 
-  async executeReadOnlyQuery(
-    input: ExecuteDatabaseReadOnlyQueryInput
-  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+  /**
+   * Runs work inside a read-only transaction with the query's time limits,
+   * after refusing privileged logins. Explaining a query uses exactly the same
+   * session as running it.
+   */
+  private async inReadOnlySession<Success> (
+    input: ExecuteDatabaseReadOnlyQueryInput,
+    work: (connection: Connection, sql: string, mariaDb: boolean, timeoutMs: number) => Promise<Success>
+  ): Promise<Success | QueryFailure> {
     const normalizedQuery = normalizeReadOnlySql(input.sql)
 
     if (!normalizedQuery.ok) {
@@ -230,7 +248,6 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     }
 
     const timeoutMs = resolvePositiveInteger(input.timeoutMs, DEFAULT_QUERY_TIMEOUT_MS)
-    const rowLimit = resolvePositiveInteger(input.maxRows, DEFAULT_QUERY_RESULT_ROW_LIMIT)
     let connection: Connection | null = null
 
     try {
@@ -250,21 +267,61 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
       await connection.query('set session lock_wait_timeout = 1')
       await connection.query('start transaction read only')
 
-      const { columns, rows } = await readRows(connection, normalizedQuery.sql, rowLimit, timeoutMs)
-
-      return {
-        ok: true,
-        code: 'success',
-        message: 'success',
-        columns,
-        rows: rows.map((row) => sanitizeResultRow(row, columns)),
-        rowLimit
-      }
+      return await work(connection, normalizedQuery.sql, mariaDb, timeoutMs)
     } catch (error) {
       return mapMySqlError(error)
     } finally {
       // Closing the session discards the read-only transaction.
       connection?.destroy()
     }
+  }
+
+  async executeReadOnlyQuery(
+    input: ExecuteDatabaseReadOnlyQueryInput
+  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+    const rowLimit = resolvePositiveInteger(input.maxRows, DEFAULT_QUERY_RESULT_ROW_LIMIT)
+
+    return this.inReadOnlySession(input, async (connection, sql, _mariaDb, timeoutMs) => {
+      const { columns, rows, numericColumns } = await readRows(connection, sql, rowLimit, timeoutMs)
+
+      return {
+        ok: true as const,
+        code: 'success' as const,
+        message: 'success' as const,
+        columns,
+        rows: rows.map((row) => sanitizeResultRow(row, columns, numericColumns)),
+        rowLimit
+      }
+    })
+  }
+
+  /**
+   * Asks MySQL or MariaDB for its plan. With analyze, the query runs (still
+   * read only, still inside the time limit): MariaDB answers in JSON, MySQL
+   * as an indented text tree.
+   */
+  async explainQuery(
+    input: ExplainDatabaseQueryInput
+  ): Promise<ExplainDatabaseQueryResult> {
+    return this.inReadOnlySession(input, async (connection, sql, mariaDb, timeoutMs) => {
+      const statement = !input.analyze
+        ? `explain format=json ${sql}`
+        : mariaDb ? `analyze format=json ${sql}` : `explain analyze ${sql}`
+      const { columns, rows } = await readRows(connection, statement, 1, timeoutMs)
+      const output = String(rows[0]?.[columns[0] ?? ''] ?? '')
+      const tree = input.analyze && !mariaDb
+
+      return {
+        ok: true as const,
+        code: 'success' as const,
+        message: 'success' as const,
+        plan: {
+          engine: mariaDb ? 'mariadb' as const : 'mysql' as const,
+          analyzed: input.analyze,
+          root: tree ? normalizeMySqlAnalyzeTree(output) : normalizeMySqlPlan(output),
+          raw: truncateRawPlan(output)
+        }
+      }
+    })
   }
 }

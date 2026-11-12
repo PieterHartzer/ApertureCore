@@ -46,7 +46,7 @@ export interface PluginInputDefinition {
   compatibleFieldTypes?: UIPluginFieldType[]
   options?: PluginInputOption[]
   // The remaining properties describe settings typed by the user (source: 'value').
-  control?: 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels'
+  control?: 'number' | 'text' | 'textarea' | 'color' | 'select' | 'switch' | 'thresholds' | 'json' | 'labels' | 'columnFormats'
   span?: 'full' | 'half' | 'third'
   /** 'content' settings appear on the Data tab, for widgets that have no query fields to map. */
   section?: 'content' | 'format' | 'text' | 'thresholds' | 'range' | 'appearance' | 'card' | 'labels' | 'advanced'

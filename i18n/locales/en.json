@@ -205,6 +205,10 @@
                 "plain": "Plain"
               }
             },
+            "isDefault": {
+              "label": "Open this dashboard first",
+              "description": "Everyone in your organisation sees this dashboard when they sign in. Turning it on here turns it off for any other dashboard."
+            },
             "embedEnabled": {
               "label": "Enable embedding",
               "description": "Allow this dashboard to be rendered publicly through its embed GUID."
@@ -687,6 +691,9 @@
             },
             "showDate": {
               "label": "Show the date"
+            },
+            "columnFormats": {
+              "label": "Column formats"
             }
           },
           "sections": {
@@ -745,7 +752,53 @@
           },
           "opacity": "Opacity",
           "opacityFor": "{name} opacity",
-          "opacityNeedsColor": "Pick a colour first to set its opacity."
+          "opacityNeedsColor": "Pick a colour first to set its opacity.",
+          "columnFormats": {
+            "column": "Column",
+            "format": "Format",
+            "currency": "Currency",
+            "decimals": "Decimals",
+            "style": "Style",
+            "add": "Add a column",
+            "remove": "Remove this column format",
+            "help": "Each column listed here is shown its own way, ahead of the number format above. Dates in a viewer's own style follow that viewer's language; pick a fixed pattern to show everyone the same layout.",
+            "kinds": {
+              "number": "Number",
+              "compact": "Compact (1.2K)",
+              "currency": "Currency",
+              "percent": "Percentage",
+              "fraction": "Percentage from fraction",
+              "date": "Date",
+              "datetime": "Date and time",
+              "time": "Time",
+              "month": "Month",
+              "year": "Year",
+              "relative": "Time ago (3 days ago)",
+              "text": "Text"
+            },
+            "dateStyles": {
+              "short": "Short (8/15/26)",
+              "medium": "Medium (Aug 15, 2026)",
+              "long": "Long (August 15, 2026)",
+              "iso": "ISO (2026-08-15)",
+              "pattern": "Fixed pattern"
+            },
+            "textCase": "Letter case",
+            "pattern": "Pattern, such as DD/MM/YYYY",
+            "patternPresets": "Common patterns",
+            "patternHelp": "Everyone sees this same layout. YYYY year · MM month · MMM month name · DD day · ddd weekday · HH:mm 24-hour time · h:mm A 12-hour time · [text] kept as typed.",
+            "preview": "Preview:",
+            "textCases": {
+              "none": "As returned",
+              "upper": "UPPERCASE",
+              "lower": "lowercase",
+              "title": "Title Case"
+            },
+            "dateStyleGroups": {
+              "viewer": "In each viewer's style",
+              "everyone": "Same for everyone"
+            }
+          }
         },
         "shared": {
           "loading": "Loading chart..."
@@ -1259,7 +1312,8 @@
         "actions": {
           "edit": "Edit",
           "delete": "Delete"
-        }
+        },
+        "sortBy": "Sort by {column}"
       },
       "empty": {
         "title": "No queries yet",

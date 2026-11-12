@@ -2,7 +2,8 @@ import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import ColorField from '~/components/ui/ColorField.vue'
 import { settingInput } from '~/components/plugins/index'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
-import { CARD, MAX_THRESHOLD_STEPS, getCardStyle, isCardShadowHidden, isCardTitleHidden, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
+import { CARD, COLUMN_FORMATS, CURRENCIES, MAX_THRESHOLD_STEPS, getCardStyle, isCardShadowHidden, isCardTitleHidden, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
+import { COLUMN_FORMAT_KINDS, DATE_PATTERN_PRESETS, DATE_STYLES, MAX_DATE_PATTERN_LENGTH, TEXT_CASES, defaultDatePattern, isDateKind, isNumberKind, parseColumnFormats, previewColumnFormat, type ColumnFormat, type ColumnFormatKind } from '~/utils/charts/column-formats'
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
@@ -137,6 +138,7 @@ export default defineComponent({
     const dashboardSettingsInput = ref({
       dashboardName: '',
       embedEnabled: false,
+      isDefault: false,
       appearance: DEFAULT_DASHBOARD_APPEARANCE as DashboardAppearance
     })
 
@@ -225,7 +227,8 @@ export default defineComponent({
           dashboardName: dashboard.dashboardName,
           widgetCount: dashboard.widgetCount
         }),
-        value: dashboard.id
+        value: dashboard.id,
+        ...(dashboard.isDefault ? { icon: 'i-lucide-house' } : {})
       }))
     })
 
@@ -615,9 +618,12 @@ export default defineComponent({
 
     // Every widget gets the same card settings, after its own.
     const CARD_INPUTS = CARD.map(settingInput)
-    // Card settings belong to every widget, so saving must keep them alongside the plugin's own.
-    const withCardInputs = <T extends { inputSchema: PluginInputDefinition[] }>(plugin: T | null) => {
-      return plugin ? { ...plugin, inputSchema: [...plugin.inputSchema, ...CARD_INPUTS] } : null
+    const COLUMN_FORMAT_INPUT = settingInput(COLUMN_FORMATS)
+    // Settings every widget shares: card looks, and column formats for widgets that show query results.
+    const sharedInputs = (plugin: { dataSource?: 'query' | 'none' } | null) => pluginUsesQuery(plugin) ? [COLUMN_FORMAT_INPUT, ...CARD_INPUTS] : CARD_INPUTS
+    // Saving must keep the shared settings alongside the plugin's own.
+    const withCardInputs = <T extends { inputSchema: PluginInputDefinition[], dataSource?: 'query' | 'none' }>(plugin: T | null) => {
+      return plugin ? { ...plugin, inputSchema: [...plugin.inputSchema, ...sharedInputs(plugin)] } : null
     }
     const STYLE_SECTIONS = new Set(['appearance', 'thresholds', 'card'])
     const SECTION_ORDER = {
@@ -628,7 +634,7 @@ export default defineComponent({
     const visibleSettingInputs = computed(() => {
       if (!selectedPlugin.value) return []
 
-      return [...selectedPlugin.value.inputSchema, ...CARD_INPUTS].filter((input) => {
+      return [...selectedPlugin.value.inputSchema, ...sharedInputs(selectedPlugin.value)].filter((input) => {
         if (getUIPluginInputSource(input) !== 'value') return false
 
         const condition = input.visibleWhen
@@ -759,6 +765,90 @@ export default defineComponent({
       } finally {
         isSavingStyle.value = false
       }
+    }
+
+    const columnFormats = computed(() => parseColumnFormats(draft.value.pluginConfig))
+    const saveColumnFormats = (items: ColumnFormat[]) => {
+      draft.value.pluginConfig.columnFormats = items.length ? JSON.stringify(items) : null
+    }
+    const columnFormatColumnOptions = computed(() => previewFieldOptions.value.map(field => ({ label: field.label, value: field.value })))
+    const columnFormatKindOptions = computed(() => COLUMN_FORMAT_KINDS.map(kind => ({ label: t(`pages.dashboard.plugins.catalog.columnFormats.kinds.${kind}`), value: kind })))
+    // Grouped so the short names make sense: styles that follow each viewer's language, then ones everyone sees the same.
+    const dateStyleOption = (style: typeof DATE_STYLES[number]) => ({ label: t(`pages.dashboard.plugins.catalog.columnFormats.dateStyles.${style}`), value: style })
+    const dateStyleOptions = computed(() => [
+      [{ type: 'label' as const, label: t('pages.dashboard.plugins.catalog.columnFormats.dateStyleGroups.viewer') }, ...(['short', 'medium', 'long'] as const).map(dateStyleOption)],
+      [{ type: 'label' as const, label: t('pages.dashboard.plugins.catalog.columnFormats.dateStyleGroups.everyone') }, ...(['iso', 'pattern'] as const).map(dateStyleOption)]
+    ])
+    const currencyOptions = CURRENCIES.map(code => ({ label: code, value: code }))
+    const textCaseOptions = computed(() => [
+      { label: t('pages.dashboard.plugins.catalog.columnFormats.textCases.none'), value: 'none' },
+      ...TEXT_CASES.map(textCase => ({ label: t(`pages.dashboard.plugins.catalog.columnFormats.textCases.${textCase}`), value: textCase }))
+    ])
+    const maxDatePatternLength = MAX_DATE_PATTERN_LENGTH
+    const formatLocale = computed(() => locale.value === 'pseudo' ? 'en' : locale.value)
+    // Each preset is shown with today's date laid out by it.
+    const datePatternOptions = computed(() => {
+      const sample = new Date()
+
+      return DATE_PATTERN_PRESETS.map(pattern => ({
+        label: `${previewColumnFormat(sample.toISOString(), { column: '', kind: 'datetime', dateStyle: 'pattern', pattern }, formatLocale.value, sample)}   ${pattern}`,
+        value: pattern
+      }))
+    })
+    // The first value the query returned for the column, shown with its format.
+    const columnFormatPreview = (item: ColumnFormat) => {
+      const rows = previewState.value?.rows ?? []
+      const sample = rows.map(row => row[item.column]).find(value => value !== null && value !== undefined && value !== '')
+
+      return previewColumnFormat(sample, item, formatLocale.value)
+    }
+
+    // A new row picks the next column without a format, and a format that suits its data.
+    const addColumnFormat = () => {
+      const used = new Set(columnFormats.value.map(item => item.column))
+      const field = previewFieldOptions.value.find(option => !used.has(option.value))
+      const kind: ColumnFormatKind = field?.fieldType === 'date' ? 'date' : field?.fieldType === 'number' ? 'number' : 'text'
+
+      saveColumnFormats([...columnFormats.value, { column: field?.value ?? '', kind }])
+    }
+    const removeColumnFormat = (index: number) => saveColumnFormats(columnFormats.value.filter((_, position) => position !== index))
+    const setColumnFormat = (index: number, key: 'column' | 'kind' | 'decimals' | 'currency' | 'dateStyle' | 'pattern' | 'textCase', value: unknown) => {
+      saveColumnFormats(columnFormats.value.map((item, position) => {
+        if (position !== index) return item
+
+        if (key === 'kind') {
+          // Options for the old kind make no sense for the new one.
+          return { column: item.column, kind: value as ColumnFormatKind }
+        }
+
+        if (key === 'decimals') {
+          const number = value === '' || value === null || value === undefined ? Number.NaN : Number(value)
+          const { decimals: _, ...rest } = item
+
+          return Number.isFinite(number) ? { ...rest, decimals: number } : rest
+        }
+
+        if (key === 'textCase') {
+          const { textCase: _, ...rest } = item
+
+          return value === 'none' || !value ? rest : { ...rest, textCase: value as ColumnFormat['textCase'] }
+        }
+
+        if (key === 'dateStyle') {
+          const { pattern, ...rest } = item
+
+          // A fixed pattern starts from one that suits the kind of date.
+          return value === 'pattern'
+            ? { ...rest, dateStyle: 'pattern', pattern: pattern || defaultDatePattern(item.kind) }
+            : { ...rest, dateStyle: value as ColumnFormat['dateStyle'] }
+        }
+
+        if (key === 'pattern') {
+          return { ...item, pattern: String(value ?? '').slice(0, MAX_DATE_PATTERN_LENGTH) }
+        }
+
+        return { ...item, [key]: String(value ?? '') }
+      }))
     }
 
     const labelOverrides = computed(() => parseLabelOverrides(draft.value.pluginConfig))
@@ -944,6 +1034,7 @@ export default defineComponent({
       dashboardName: dashboard.dashboardName,
       embedId: dashboard.embedId,
       embedEnabled: dashboard.embedEnabled,
+      isDefault: dashboard.isDefault,
       appearance: dashboard.appearance,
       style: dashboard.style,
       widgetCount: dashboard.widgets.length,
@@ -954,15 +1045,19 @@ export default defineComponent({
     const upsertDashboardSummary = (dashboard: DashboardDetails) => {
       const nextSummary = mapDashboardSummary(dashboard)
       const existingIndex = dashboards.value.findIndex((item) => item.id === dashboard.id)
+      // A new default replaces the old one.
+      const others = dashboard.isDefault
+        ? dashboards.value.map(item => item.isDefault && item.id !== dashboard.id ? { ...item, isDefault: false } : item)
+        : dashboards.value
 
       dashboards.value = sortDashboards(
         existingIndex >= 0
-          ? dashboards.value.map((item, index) => {
+          ? others.map((item, index) => {
               return index === existingIndex
                 ? nextSummary
                 : item
             })
-          : [...dashboards.value, nextSummary]
+          : [...others, nextSummary]
       )
     }
 
@@ -1046,7 +1141,8 @@ export default defineComponent({
         return
       }
 
-      const firstDashboard = dashboards.value[0]
+      // The organisation's default opens first, otherwise the first by name.
+      const firstDashboard = dashboards.value.find(dashboard => dashboard.isDefault) ?? dashboards.value[0]
 
       if (!firstDashboard) {
         return
@@ -1059,6 +1155,7 @@ export default defineComponent({
       dashboardSnapshot: DashboardDetails,
       options: {
         notifyError?: boolean
+        isDefault?: boolean
       } = {}
     ) => {
       if (scheduledDashboardSave) {
@@ -1077,7 +1174,7 @@ export default defineComponent({
       dashboardSavePromise = (async () => {
         const response = await saveDashboardRequest(
           dashboardSnapshot.id,
-          toDashboardSaveInput(dashboardSnapshot)
+          toDashboardSaveInput(dashboardSnapshot, { isDefault: options.isDefault })
         )
 
         if (response.ok && response.dashboard) {
@@ -1413,6 +1510,7 @@ export default defineComponent({
       dashboardSettingsInput.value = {
         dashboardName: selectedDashboard.value.dashboardName,
         embedEnabled: selectedDashboard.value.embedEnabled,
+        isDefault: selectedDashboard.value.isDefault,
         appearance: selectedDashboard.value.appearance
       }
       dashboardSettingsErrorMessage.value = ''
@@ -1477,8 +1575,16 @@ export default defineComponent({
           appearance: dashboardSettingsInput.value.appearance
         }
 
+        const defaultChanged = dashboardSettingsInput.value.isDefault !== selectedDashboard.value.isDefault
+
+        // A background save in progress would otherwise swallow the default change.
+        if (defaultChanged && dashboardSavePromise) {
+          await dashboardSavePromise
+        }
+
         const saved = await persistDashboard(nextDashboard, {
-          notifyError: false
+          notifyError: false,
+          ...(defaultChanged ? { isDefault: dashboardSettingsInput.value.isDefault } : {})
         })
 
         if (saved) {
@@ -1509,7 +1615,7 @@ export default defineComponent({
       const remainingDashboards = dashboards.value.filter((dashboard) => {
         return dashboard.id !== dashboardId
       })
-      const nextDashboardId = remainingDashboards[0]?.id ?? ''
+      const nextDashboardId = (remainingDashboards.find(dashboard => dashboard.isDefault) ?? remainingDashboards[0])?.id ?? ''
 
       isDeletingDashboard.value = true
       deleteDashboardErrorMessage.value = ''
@@ -1634,6 +1740,20 @@ export default defineComponent({
 
 
     return {
+      addColumnFormat,
+      columnFormatColumnOptions,
+      columnFormatKindOptions,
+      columnFormatPreview,
+      columnFormats,
+      datePatternOptions,
+      maxDatePatternLength,
+      textCaseOptions,
+      currencyOptions,
+      dateStyleOptions,
+      isDateKind,
+      isNumberKind,
+      removeColumnFormat,
+      setColumnFormat,
       addLabelOverride,
       addLabelsFromData,
       labelOverrides,

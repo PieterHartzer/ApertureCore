@@ -2,7 +2,8 @@ import { computed, defineComponent, type PropType } from 'vue'
 
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 
-import { createValueFormatter, getTextStyles, hasValueFormat, overrideLabel } from '~/utils/charts/chart-settings'
+import { getTextStyles, hasValueFormat, overrideLabel } from '~/utils/charts/chart-settings'
+import { findColumnFormat, isNumberKind, numberFormatterFor } from '~/utils/charts/column-formats'
 
 export default defineComponent({
   props: {
@@ -36,10 +37,20 @@ export default defineComponent({
         ? availableColumns.filter((columnName) => selectedColumnSet.has(columnName))
         : availableColumns
 
-      const formatter = createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value)
+      const numberLocale = locale.value === 'pseudo' ? 'en' : locale.value
       const formatColumns = Array.isArray(props.config.formatColumns) ? props.config.formatColumns : []
       const isFormatted = (columnName: string) => formatColumns.length === 0 || formatColumns.includes(columnName)
-      const formatCell = (value: unknown) => value === null || value === undefined ? '' : formatter.full(Number(value))
+      const formatCell = (columnName: string) => {
+        const formatter = numberFormatterFor(props.config, numberLocale, columnName)
+
+        return (value: unknown) => value === null || value === undefined ? '' : formatter.full(Number(value))
+      }
+      // A column's own rule wins; otherwise the widget's general number format applies, as before.
+      const formatsColumn = (columnName: string) => {
+        const rule = findColumnFormat(props.config, columnName)
+
+        return rule ? isNumberKind(rule.kind) : hasValueFormat(props.config) && isFormatted(columnName)
+      }
 
       return columnNames.map((columnName) => {
         const values = props.data.map((row) => row[columnName]).filter((value) => value !== null)
@@ -51,8 +62,8 @@ export default defineComponent({
           accessorKey: columnName,
           header: overrideLabel(props.config, columnName),
           ...(numeric ? { meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } } } : {}),
-          ...(numeric && hasValueFormat(props.config) && isFormatted(columnName)
-            ? { cell: ({ getValue }: { getValue: () => unknown }) => formatCell(getValue()) }
+          ...(numeric && formatsColumn(columnName)
+            ? { cell: ({ getValue }: { getValue: () => unknown }) => formatCell(columnName)(getValue()) }
             : {})
         }
       })

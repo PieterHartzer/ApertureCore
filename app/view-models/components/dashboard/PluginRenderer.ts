@@ -6,6 +6,7 @@ import type { DashboardWidget } from '~/types/dashboard-widgets'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 import { getUIPluginInputSelectionMode } from '~/types/uiPlugin'
 import { applyLabelOverridesToRows } from '~/utils/charts/chart-settings'
+import { applyColumnFormatsToRows } from '~/utils/charts/column-formats'
 
 export default defineComponent({
   components: {
@@ -27,7 +28,7 @@ export default defineComponent({
     }
   },
   setup(props) {
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const attrs = useAttrs()
     const { getPlugin } = useUIPlugins()
 
@@ -35,7 +36,21 @@ export default defineComponent({
       return getPlugin(props.widget.pluginId)
     })
 
-    const displayRows = computed(() => applyLabelOverridesToRows(props.rows, props.widget.pluginConfig))
+    // Columns a chart reads as real dates (a time axis, a calendar) keep their raw value.
+    const keepAsDates = computed(() => new Set((plugin.value?.inputSchema ?? [])
+      .filter(input => input.compatibleFieldTypes?.length === 1 && input.compatibleFieldTypes[0] === 'date')
+      .flatMap((input) => {
+        const value = props.widget.pluginConfig[input.key]
+
+        return Array.isArray(value) ? value.map(String) : typeof value === 'string' && value ? [value] : []
+      })))
+
+    const displayRows = computed(() => applyColumnFormatsToRows(
+      applyLabelOverridesToRows(props.rows, props.widget.pluginConfig),
+      props.widget.pluginConfig,
+      locale.value === 'pseudo' ? 'en' : locale.value,
+      keepAsDates.value
+    ))
 
     const missingRequiredInputs = computed(() => {
       if (!plugin.value) {

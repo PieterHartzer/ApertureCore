@@ -37,6 +37,7 @@ interface DashboardRow {
   dashboard_name: string
   embed_id: string
   embed_enabled: boolean
+  is_default?: boolean
   appearance: string
   style: unknown
   created_at: Date
@@ -184,6 +185,7 @@ const mapDashboardSummary = (
   dashboardName: row.dashboard_name,
   embedId: row.embed_id,
   embedEnabled: row.embed_enabled,
+  isDefault: row.is_default === true,
   appearance: normalizeDashboardAppearance(row.appearance),
   style: normalizeDashboardStyle(row.style).style,
   widgetCount,
@@ -249,6 +251,7 @@ const loadDashboardRow = async (
       'dashboard_name',
       'embed_id',
       'embed_enabled',
+      'is_default',
       'appearance',
       'style',
       'created_at',
@@ -345,6 +348,7 @@ export const listDashboards = async (
         'dashboard_name',
         'embed_id',
         'embed_enabled',
+        'is_default',
         'appearance',
         'style',
         'created_at',
@@ -592,11 +596,23 @@ export const saveDashboard = async (
 
       const widgetsToSave = (decision?.widgets ?? input.widgets) as DashboardWidgetInput[]
 
+      // Only one dashboard per organisation opens first, so the old default steps down.
+      if (input.isDefault === true) {
+        await trx
+          .updateTable('app_dashboards')
+          .set({ is_default: false })
+          .where('organization_id', '=', organizationId)
+          .where('dashboard_id', '!=', input.dashboardId)
+          .where('is_default', '=', true)
+          .execute()
+      }
+
       await trx
         .updateTable('app_dashboards')
         .set({
           dashboard_name: input.dashboardName,
           embed_enabled: input.embedEnabled,
+          ...(input.isDefault === undefined ? {} : { is_default: input.isDefault }),
           ...(input.appearance ? { appearance: input.appearance } : {}),
           ...(input.style ? { style: input.style } : {}),
           updated_by_user_id: authContext.userId

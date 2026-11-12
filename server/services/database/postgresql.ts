@@ -10,6 +10,8 @@ import Cursor from 'pg-cursor'
 import type {
   ExecuteDatabaseReadOnlyQueryInput,
   ExecuteDatabaseReadOnlyQueryResult,
+  ExplainDatabaseQueryInput,
+  ExplainDatabaseQueryResult,
   TestDatabaseConnectionInput,
   TestDatabaseConnectionResult
 } from '../../types/database'
@@ -19,6 +21,7 @@ import type {
   DatabaseQueryExecutor
 } from './types'
 import { normalizeReadOnlySql } from '../../utils/read-only-sql'
+import { normalizePostgresPlan, truncateRawPlan } from './query-plan'
 import { resolvePositiveInteger } from '../../utils/positive-integer'
 import {
   CONNECT_TIMEOUT_SECONDS,
@@ -30,6 +33,8 @@ import {
   isTlsVerificationError,
   sanitizeResultRow
 } from './shared'
+
+type QueryFailure = Extract<ExecuteDatabaseReadOnlyQueryResult, { ok: false }>
 
 // A read-only transaction stops writes, but not these server-level powers.
 const PRIVILEGED_ROLE_SQL = `select (
@@ -122,6 +127,8 @@ const isPrivilegedRole = async (runner: Pick<PoolClient, 'query'>) => {
 }
 
 const READ_BATCH_SIZE = 100
+// bigint and numeric, which node-postgres returns as text.
+const NUMERIC_TYPE_IDS = new Set([20, 1700])
 
 // Reading through a cursor enforces the limit without rewriting the SQL, so no
 // comment or stray parenthesis in the query text can change it. The extended
@@ -135,7 +142,7 @@ const readRows = (client: PoolClient, sql: string, rowLimit: number) => {
   const rows: QueryResultRow[] = []
 
   // Read in batches, so the size budget can stop a result of very wide rows early.
-  return new Promise<{ columns: string[], rows: QueryResultRow[] }>((resolve, reject) => {
+  return new Promise<{ columns: string[], rows: QueryResultRow[], numericColumns: Set<string> }>((resolve, reject) => {
     const readBatch = () => {
       const wanted = Math.min(READ_BATCH_SIZE, rowLimit - rows.length)
 
@@ -158,8 +165,9 @@ const readRows = (client: PoolClient, sql: string, rowLimit: number) => {
 
         if (full || batch.length < wanted || rows.length >= rowLimit) {
           const columns = result.fields.map((field: FieldDef) => field.name)
+          const numericColumns = new Set(result.fields.filter((field: FieldDef) => NUMERIC_TYPE_IDS.has(field.dataTypeID)).map((field: FieldDef) => field.name))
 
-          cursor.close(() => resolve({ columns, rows }))
+          cursor.close(() => resolve({ columns, rows, numericColumns }))
           return
         }
 
@@ -343,17 +351,19 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
     return result
   }
 
-  async executeReadOnlyQuery(
-    input: ExecuteDatabaseReadOnlyQueryInput
-  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+  /**
+   * Runs work inside a read-only transaction with the query's time limits,
+   * after refusing privileged logins. Explaining a query uses exactly the same
+   * session as running it.
+   */
+  private async inReadOnlySession<Success> (
+    input: ExecuteDatabaseReadOnlyQueryInput,
+    work: (client: PoolClient, sql: string) => Promise<Success>
+  ): Promise<Success | QueryFailure> {
     const normalizedQuery = normalizeReadOnlySql(input.sql)
     const queryTimeoutMs = resolvePositiveInteger(
       input.timeoutMs,
       DEFAULT_QUERY_TIMEOUT_MS
-    )
-    const rowLimit = resolvePositiveInteger(
-      input.maxRows,
-      DEFAULT_QUERY_RESULT_ROW_LIMIT
     )
 
     if (!normalizedQuery.ok) {
@@ -393,18 +403,11 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
         }
       }
 
-      const { columns, rows } = await readRows(client, normalizedQuery.sql, rowLimit)
+      const result = await work(client, normalizedQuery.sql)
 
       await client.query('rollback')
 
-      return {
-        ok: true,
-        code: 'success',
-        message: 'success',
-        columns,
-        rows: rows.map((row: QueryResultRow) => sanitizeResultRow(row, columns)),
-        rowLimit
-      }
+      return result
     } catch (error) {
       if (client) {
         try {
@@ -414,10 +417,59 @@ implements DatabaseConnectionTester, DatabaseQueryExecutor {
         }
       }
 
-      return mapPostgreSqlQueryError(error)
+      return mapPostgreSqlQueryError(error) as QueryFailure
     } finally {
       client?.release()
       await pool.end()
     }
+  }
+
+  async executeReadOnlyQuery(
+    input: ExecuteDatabaseReadOnlyQueryInput
+  ): Promise<ExecuteDatabaseReadOnlyQueryResult> {
+    const rowLimit = resolvePositiveInteger(
+      input.maxRows,
+      DEFAULT_QUERY_RESULT_ROW_LIMIT
+    )
+
+    return this.inReadOnlySession(input, async (client, sql) => {
+      const { columns, rows, numericColumns } = await readRows(client, sql, rowLimit)
+
+      return {
+        ok: true as const,
+        code: 'success' as const,
+        message: 'success' as const,
+        columns,
+        rows: rows.map((row: QueryResultRow) => sanitizeResultRow(row, columns, numericColumns)),
+        rowLimit
+      }
+    })
+  }
+
+  /**
+   * Asks PostgreSQL for its plan. With analyze, the query runs (still read
+   * only, still inside the time limit) so real row counts and times are known.
+   */
+  async explainQuery(
+    input: ExplainDatabaseQueryInput
+  ): Promise<ExplainDatabaseQueryResult> {
+    const options = input.analyze ? 'analyze, buffers, format json' : 'format json'
+
+    return this.inReadOnlySession(input, async (client, sql) => {
+      const { rows } = await readRows(client, `explain (${options}) ${sql}`, 1)
+      const output: unknown = rows[0]?.['QUERY PLAN']
+
+      return {
+        ok: true as const,
+        code: 'success' as const,
+        message: 'success' as const,
+        plan: {
+          engine: 'postgres' as const,
+          analyzed: input.analyze,
+          root: normalizePostgresPlan(output),
+          raw: truncateRawPlan(typeof output === 'string' ? output : JSON.stringify(output, null, 2))
+        }
+      }
+    })
   }
 }

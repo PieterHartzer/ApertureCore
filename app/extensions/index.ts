@@ -29,6 +29,18 @@ export interface DashboardBuilderExtension {
   refresh: () => Promise<void>
 }
 
+/** An extra column in the saved queries table, filled in by a layer. */
+export interface QueryListColumn {
+  id: string
+  header: string
+  /** Used for sorting. Null sorts last whichever way the column is sorted. */
+  value: (queryId: string) => number | string | null
+  display: (queryId: string) => string
+  tone?: (queryId: string) => 'warning' | 'error' | undefined
+  /** Right-aligned, for numbers. */
+  numeric?: boolean
+}
+
 /**
  * Places where a layer built on top of this app can add to the interface. Core
  * runs unchanged when none are set. The use* hooks are called during setup, so
@@ -38,6 +50,7 @@ export interface AppExtensions {
   slots: Record<string, Component[]>
   useNavigationGroups?: () => ComputedRef<NavigationGroup[]> | Ref<NavigationGroup[]>
   useDashboardBuilder?: () => DashboardBuilderExtension
+  useQueryListColumns?: () => ComputedRef<QueryListColumn[]>
   useConnectionCreationBlocked?: () => ComputedRef<boolean>
   canSaveDashboardStyle?: (style: Record<string, unknown>) => boolean
 }

@@ -7,7 +7,8 @@ import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
 import { buildChartOption, CHART_CATALOG } from '~/utils/charts/chart-catalog'
 import { applyDashboardChartColors, getChartColors } from '~/utils/charts/chart-colors'
 import { useDashboardChartStyle } from '~/composables/useDashboardChartStyle'
-import { applyColorSettings, createValueFormatter } from '~/utils/charts/chart-settings'
+import { applyColorSettings } from '~/utils/charts/chart-settings'
+import { numberFormatterFor, valueColumnOf } from '~/utils/charts/column-formats'
 
 export default defineComponent({
   components: {
@@ -48,7 +49,7 @@ export default defineComponent({
         colors: applyColorSettings(applyDashboardChartColors(getChartColors(colorMode.value === 'dark'), dashboardStyle.value), props.config),
         compact: width.value < 420 || height.value < 260,
         dense: width.value < 260 || height.value < 160,
-        format: createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value),
+        format: numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, valueColumnOf(chart.inputs, props.config)),
         labels: {
           other: t('pages.dashboard.plugins.catalog.other'),
           total: t('pages.dashboard.plugins.catalog.total'),

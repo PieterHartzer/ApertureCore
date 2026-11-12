@@ -2,7 +2,8 @@ import { computed, defineComponent, type PropType } from 'vue'
 
 import type { SavedSqlQueryResultValue } from '~/types/saved-sql-queries'
 
-import { bandFor, createValueFormatter, getTextStyles, hasValueFormat, resolveBands } from '~/utils/charts/chart-settings'
+import { bandFor, getTextStyles, hasValueFormat, resolveBands } from '~/utils/charts/chart-settings'
+import { findColumnFormat, isNumberKind, numberFormatterFor } from '~/utils/charts/column-formats'
 
 export default defineComponent({
   props: {
@@ -47,9 +48,15 @@ export default defineComponent({
     })
 
     // Formats apply to numbers the database returned as text as well.
+    const columnFormat = computed(() => findColumnFormat(props.config, valueField.value))
     const numericValue = computed(() => {
+      // A column set to show as text is shown exactly as the database returned it.
+      if (columnFormat.value?.kind === 'text') return null
       if (typeof rawValue.value === 'number') return rawValue.value
-      if (typeof rawValue.value === 'string' && hasValueFormat(props.config) && rawValue.value.trim() !== '' && Number.isFinite(Number(rawValue.value))) return Number(rawValue.value)
+
+      const formatted = hasValueFormat(props.config) || (columnFormat.value && isNumberKind(columnFormat.value.kind))
+
+      if (typeof rawValue.value === 'string' && formatted && rawValue.value.trim() !== '' && Number.isFinite(Number(rawValue.value))) return Number(rawValue.value)
       return null
     })
 
@@ -59,7 +66,7 @@ export default defineComponent({
 
     const formattedValue = computed(() => {
       if (numericValue.value !== null) {
-        return createValueFormatter(props.config, locale.value === 'pseudo' ? 'en' : locale.value).full(numericValue.value)
+        return numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, valueField.value).full(numericValue.value)
       }
 
       if (typeof rawValue.value === 'boolean') {

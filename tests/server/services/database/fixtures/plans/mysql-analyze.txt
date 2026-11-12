@@ -1,0 +1,6 @@
+-> Sort: `count(*)` DESC  (actual time=2.26..2.26 rows=50 loops=1)
+    -> Table scan on <temporary>  (actual time=1.93..1.93 rows=50 loops=1)
+        -> Aggregate using temporary table  (actual time=1.92..1.92 rows=50 loops=1)
+            -> Filter: (big.label like 'a%')  (cost=502 rows=552) (actual time=0.584..1.12 rows=322 loops=1)
+                -> Table scan on big  (cost=502 rows=4965) (actual time=0.0408..0.967 rows=5000 loops=1)
+
