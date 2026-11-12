@@ -108,7 +108,8 @@
   "errors": {
     "auth": {
       "organizationRequired": "Your organisation context is missing from the current session.",
-      "unauthorized": "You must be signed in to access this resource."
+      "unauthorized": "You must be signed in to access this resource.",
+      "crossOrigin": "This request came from another site, so it was refused. Reload the page and try again."
     }
   },
   "pages": {

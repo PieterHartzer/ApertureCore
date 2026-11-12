@@ -132,7 +132,7 @@ describe('consumeAuthenticatedFixedWindowRateLimit', () => {
   it('falls back to a hashed network fingerprint when no stable identity is available', async () => {
     const { consumeAuthenticatedFixedWindowRateLimit } = await loadUtility()
     const expectedFingerprint = createHash('sha256')
-      .update('203.0.113.10|ApertureCore Test Agent')
+      .update('198.51.100.5|ApertureCore Test Agent')
       .digest('hex')
       .slice(0, 16)
     const event = {

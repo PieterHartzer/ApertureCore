@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 
 import { pickString } from './pick-string'
+import { getClientAddress } from './client-address'
 import {
   type FixedWindowRateLimitResult,
   consumeFixedWindowRateLimit
@@ -44,17 +45,11 @@ const buildFingerprint = (...parts: Array<string | undefined>) => {
 }
 
 const resolveNetworkFingerprint = (event: H3Event) => {
-  const forwardedFor = pickRequestHeader(event, 'x-forwarded-for')
-    ?.split(',')[0]
-    ?.trim()
-  const realIp = pickRequestHeader(event, 'x-real-ip')
-  const remoteAddress = event.node.req.socket?.remoteAddress
+  // The first X-Forwarded-For entry is chosen by the client, so it can't be trusted.
   const userAgent = pickRequestHeader(event, 'user-agent')
 
   return buildFingerprint(
-    forwardedFor,
-    realIp,
-    remoteAddress,
+    getClientAddress(event) ?? undefined,
     userAgent
   )
 }
