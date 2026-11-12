@@ -1,4 +1,7 @@
+import { sql } from 'kysely'
+
 import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
+import { readStoredEmbedOrigins } from '../../shared/utils/embed-origins'
 import {
   normalizeDashboardAppearance
 } from '../../shared/utils/dashboard-appearance'
@@ -37,6 +40,7 @@ interface DashboardRow {
   dashboard_name: string
   embed_id: string
   embed_enabled: boolean
+  embed_allowed_origins?: unknown
   is_default?: boolean
   appearance: string
   style: unknown
@@ -185,6 +189,7 @@ const mapDashboardSummary = (
   dashboardName: row.dashboard_name,
   embedId: row.embed_id,
   embedEnabled: row.embed_enabled,
+  embedAllowedOrigins: readStoredEmbedOrigins(row.embed_allowed_origins),
   isDefault: row.is_default === true,
   appearance: normalizeDashboardAppearance(row.appearance),
   style: normalizeDashboardStyle(row.style).style,
@@ -251,6 +256,7 @@ const loadDashboardRow = async (
       'dashboard_name',
       'embed_id',
       'embed_enabled',
+      'embed_allowed_origins',
       'is_default',
       'appearance',
       'style',
@@ -348,6 +354,7 @@ export const listDashboards = async (
         'dashboard_name',
         'embed_id',
         'embed_enabled',
+        'embed_allowed_origins',
         'is_default',
         'appearance',
         'style',
@@ -613,6 +620,7 @@ export const saveDashboard = async (
           dashboard_name: input.dashboardName,
           embed_enabled: input.embedEnabled,
           ...(input.isDefault === undefined ? {} : { is_default: input.isDefault }),
+          ...(input.embedAllowedOrigins ? { embed_allowed_origins: JSON.stringify(input.embedAllowedOrigins) } : {}),
           ...(input.appearance ? { appearance: input.appearance } : {}),
           ...(input.style ? { style: input.style } : {}),
           updated_by_user_id: authContext.userId
@@ -680,6 +688,34 @@ export const saveDashboard = async (
       code: 'unexpected_error',
       message: 'unexpected_error'
     }
+  }
+}
+
+/**
+ * Gives a dashboard a new embed address. The old link stops working at once,
+ * for anyone who had it.
+ */
+export const regenerateDashboardEmbedId = async (
+  authContext: AuthenticatedOrganizationContext,
+  dashboardId: string
+): Promise<{ ok: true, embedId: string } | { ok: false, code: 'not_found' | 'persistence_unavailable' | 'unexpected_error' }> => {
+  try {
+    const row = await getAppDatabase()
+      .updateTable('app_dashboards')
+      .set({ embed_id: sql<string>`gen_random_uuid()`, updated_by_user_id: authContext.userId })
+      .where('organization_id', '=', mapOrganizationIdToStorage(authContext.organizationId))
+      .where('dashboard_id', '=', dashboardId)
+      .where('deleted_at', 'is', null)
+      .returning(['embed_id'])
+      .executeTakeFirst()
+
+    return row ? { ok: true, embedId: row.embed_id } : { ok: false, code: 'not_found' }
+  } catch (error) {
+    if (error instanceof AppDatabaseConfigurationError) return { ok: false, code: 'persistence_unavailable' }
+
+    console.error(error)
+
+    return { ok: false, code: 'unexpected_error' }
   }
 }
 

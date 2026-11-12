@@ -51,6 +51,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  /** Websites the embed may appear on; empty means anywhere. */
+  embedAllowedOrigins: string[]
   /** Opens first for everyone in the organisation. */
   isDefault: boolean
   appearance: DashboardAppearance
@@ -95,6 +97,7 @@ export interface SaveDashboardInput extends CreateDashboardInput {
   embedEnabled: boolean
   /** Sent only when someone changes it, so a background save never takes it back. */
   isDefault?: boolean
+  embedAllowedOrigins?: string[]
   appearance?: DashboardAppearance
   style?: DashboardStyle
   widgets: DashboardWidgetInput[]
@@ -141,6 +144,7 @@ export type SaveDashboardValidationIssue =
   | 'dashboard_name_invalid'
   | 'dashboard_name_required'
   | 'embed_enabled_invalid'
+  | 'embed_origins_invalid'
   | 'widgets_invalid'
   | 'widget_id_invalid'
   | 'widget_title_invalid'
@@ -157,7 +161,7 @@ export interface SaveDashboardValidationError {
   code: 'invalid_input'
   issue: SaveDashboardValidationIssue
   message: string
-  field?: 'dashboardId' | 'dashboardName' | 'embedEnabled' | 'widgets' | 'body'
+  field?: 'dashboardId' | 'dashboardName' | 'embedEnabled' | 'embedAllowedOrigins' | 'widgets' | 'body'
 }
 
 export type SaveDashboardValidationResult =

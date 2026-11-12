@@ -2,6 +2,7 @@ import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import ColorField from '~/components/ui/ColorField.vue'
 import { settingInput } from '~/components/plugins/index'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
+import { MAX_EMBED_ORIGINS, normalizeEmbedOrigins } from '#shared/utils/embed-origins'
 import { CARD, COLUMN_FORMATS, CURRENCIES, MAX_THRESHOLD_STEPS, getCardStyle, isCardShadowHidden, isCardTitleHidden, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
 import { COLUMN_FORMAT_KINDS, DATE_PATTERN_PRESETS, DATE_STYLES, MAX_DATE_PATTERN_LENGTH, TEXT_CASES, defaultDatePattern, isDateKind, isNumberKind, parseColumnFormats, previewColumnFormat, type ColumnFormat, type ColumnFormatKind } from '~/utils/charts/column-formats'
 import GettingStarted from '~/components/dashboard/GettingStarted.vue'
@@ -109,7 +110,8 @@ export default defineComponent({
       deleteDashboard: deleteDashboardRequest,
       getDashboard,
       listDashboards,
-      saveDashboard: saveDashboardRequest
+      saveDashboard: saveDashboardRequest,
+      regenerateEmbedLink
     } = useDashboards(requestFetch)
     const { getPlugin, getPlugins } = useUIPlugins()
     const builderExtension = appExtensions.useDashboardBuilder?.()
@@ -143,6 +145,8 @@ export default defineComponent({
       dashboardName: '',
       embedEnabled: false,
       isDefault: false,
+      // One website per line; empty means the embed may appear anywhere.
+      embedAllowedOrigins: '',
       appearance: DEFAULT_DASHBOARD_APPEARANCE as DashboardAppearance
     })
 
@@ -1060,6 +1064,7 @@ export default defineComponent({
       dashboardName: dashboard.dashboardName,
       embedId: dashboard.embedId,
       embedEnabled: dashboard.embedEnabled,
+      embedAllowedOrigins: dashboard.embedAllowedOrigins,
       isDefault: dashboard.isDefault,
       appearance: dashboard.appearance,
       style: dashboard.style,
@@ -1183,6 +1188,7 @@ export default defineComponent({
       options: {
         notifyError?: boolean
         isDefault?: boolean
+        embedAllowedOrigins?: string[]
       } = {}
     ) => {
       if (scheduledDashboardSave) {
@@ -1201,7 +1207,7 @@ export default defineComponent({
       dashboardSavePromise = (async () => {
         const response = await saveDashboardRequest(
           dashboardSnapshot.id,
-          toDashboardSaveInput(dashboardSnapshot, { isDefault: options.isDefault })
+          toDashboardSaveInput(dashboardSnapshot, { isDefault: options.isDefault, embedAllowedOrigins: options.embedAllowedOrigins })
         )
 
         if (response.ok && response.dashboard) {
@@ -1538,9 +1544,11 @@ export default defineComponent({
         dashboardName: selectedDashboard.value.dashboardName,
         embedEnabled: selectedDashboard.value.embedEnabled,
         isDefault: selectedDashboard.value.isDefault,
+        embedAllowedOrigins: selectedDashboard.value.embedAllowedOrigins.join('\n'),
         appearance: selectedDashboard.value.appearance
       }
       dashboardSettingsErrorMessage.value = ''
+      isConfirmingNewEmbedLink.value = false
       isDashboardSettingsOpen.value = true
     }
 
@@ -1577,6 +1585,36 @@ export default defineComponent({
       }
     }
 
+    // "New link" asks once before cutting off everyone who has the current link.
+    const isConfirmingNewEmbedLink = ref(false)
+    const isRegeneratingEmbedLink = ref(false)
+
+    const onNewEmbedLink = async () => {
+      if (!selectedDashboard.value) return
+
+      if (!isConfirmingNewEmbedLink.value) {
+        isConfirmingNewEmbedLink.value = true
+        return
+      }
+
+      isRegeneratingEmbedLink.value = true
+
+      try {
+        const response = await regenerateEmbedLink(selectedDashboard.value.id)
+
+        if (response.ok && response.embedId) {
+          selectedDashboard.value = { ...selectedDashboard.value, embedId: response.embedId }
+          upsertDashboardSummary(selectedDashboard.value)
+          success(t('pages.dashboard.selector.embed.newLink.done'), t('pages.dashboard.selector.embed.newLink.doneTitle'))
+        } else {
+          dashboardSettingsErrorMessage.value = translateMessage(t, response.messageKey, 'dashboards.embed.regenerate.errors.unexpected')
+        }
+      } finally {
+        isRegeneratingEmbedLink.value = false
+        isConfirmingNewEmbedLink.value = false
+      }
+    }
+
     const onSaveDashboardSettings = async () => {
       if (!selectedDashboard.value) {
         return
@@ -1588,6 +1626,15 @@ export default defineComponent({
         dashboardSettingsErrorMessage.value = t(
           'dashboards.save.errors.dashboardNameRequired'
         )
+        return
+      }
+
+      const embedAllowedOrigins = normalizeEmbedOrigins(
+        dashboardSettingsInput.value.embedAllowedOrigins.split(/[\n,]+/).map(line => line.trim()).filter(Boolean)
+      )
+
+      if (!embedAllowedOrigins) {
+        dashboardSettingsErrorMessage.value = t('pages.dashboard.selector.embed.allowedOrigins.invalid', { max: MAX_EMBED_ORIGINS })
         return
       }
 
@@ -1603,15 +1650,17 @@ export default defineComponent({
         }
 
         const defaultChanged = dashboardSettingsInput.value.isDefault !== selectedDashboard.value.isDefault
+        const originsChanged = embedAllowedOrigins.join('\n') !== selectedDashboard.value.embedAllowedOrigins.join('\n')
 
-        // A background save in progress would otherwise swallow the default change.
-        if (defaultChanged && dashboardSavePromise) {
+        // A background save in progress would otherwise swallow these changes.
+        if ((defaultChanged || originsChanged) && dashboardSavePromise) {
           await dashboardSavePromise
         }
 
         const saved = await persistDashboard(nextDashboard, {
           notifyError: false,
-          ...(defaultChanged ? { isDefault: dashboardSettingsInput.value.isDefault } : {})
+          ...(defaultChanged ? { isDefault: dashboardSettingsInput.value.isDefault } : {}),
+          ...(originsChanged ? { embedAllowedOrigins } : {})
         })
 
         if (saved) {
@@ -1776,6 +1825,9 @@ export default defineComponent({
 
 
     return {
+      isConfirmingNewEmbedLink,
+      isRegeneratingEmbedLink,
+      onNewEmbedLink,
       choosePlugin,
       suggestedPluginIds,
       suggestedPlugins,

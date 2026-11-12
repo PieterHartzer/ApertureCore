@@ -1,5 +1,6 @@
 import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
 import { isDashboardAppearance } from '../../shared/utils/dashboard-appearance'
+import { normalizeEmbedOrigins } from '../../shared/utils/embed-origins'
 import type {
   CreateDashboardInput,
   CreateDashboardValidationError,
@@ -455,6 +456,15 @@ export const validateSaveDashboardInput = (
     )
   }
 
+  const embedAllowedOrigins = value.embedAllowedOrigins === undefined ? undefined : normalizeEmbedOrigins(value.embedAllowedOrigins)
+
+  if (embedAllowedOrigins === null) {
+    return createSaveDashboardValidationError(
+      'embed_origins_invalid',
+      'embedAllowedOrigins'
+    )
+  }
+
   if (value.isDefault !== undefined && typeof value.isDefault !== 'boolean') {
     return createSaveDashboardValidationError(
       'body_invalid',
@@ -511,6 +521,7 @@ export const validateSaveDashboardInput = (
     dashboardName,
     embedEnabled: value.embedEnabled,
     ...(value.isDefault === undefined ? {} : { isDefault: value.isDefault }),
+    ...(embedAllowedOrigins === undefined ? {} : { embedAllowedOrigins }),
     ...(value.appearance === undefined ? {} : { appearance: value.appearance }),
     ...(style ? { style: style.style } : {}),
     widgets

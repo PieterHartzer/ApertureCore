@@ -234,6 +234,43 @@ export default component
                 }}
               </p>
             </UFormField>
+
+            <UFormField
+              v-if="selectedDashboard?.embedEnabled"
+              name="embedNewLink"
+              :label="t('pages.dashboard.selector.embed.newLink.label')"
+              :description="t('pages.dashboard.selector.embed.newLink.description')"
+            >
+              <div class="flex flex-wrap items-center gap-3">
+                <UButton
+                  :color="isConfirmingNewEmbedLink ? 'error' : 'neutral'"
+                  variant="soft"
+                  icon="i-lucide-refresh-cw"
+                  :loading="isRegeneratingEmbedLink"
+                  :label="isConfirmingNewEmbedLink ? t('pages.dashboard.selector.embed.newLink.confirm') : t('pages.dashboard.selector.embed.newLink.action')"
+                  data-new-embed-link
+                  @click="onNewEmbedLink"
+                />
+                <span v-if="isConfirmingNewEmbedLink" class="text-xs text-error">{{ t('pages.dashboard.selector.embed.newLink.warning') }}</span>
+              </div>
+            </UFormField>
+
+            <UFormField
+              name="embedAllowedOrigins"
+              :label="t('pages.dashboard.selector.embed.allowedOrigins.label')"
+              :description="t('pages.dashboard.selector.embed.allowedOrigins.description')"
+            >
+              <UTextarea
+                v-model="dashboardSettingsInput.embedAllowedOrigins"
+                class="w-full font-mono text-xs"
+                :rows="3"
+                autoresize
+                :placeholder="t('pages.dashboard.selector.embed.allowedOrigins.placeholder')"
+                data-embed-allowed-origins
+              />
+            </UFormField>
+
+            <ExtensionSlot v-if="selectedDashboard" name="dashboard.embedSecurity" :slot-props="{ dashboardId: selectedDashboard.id, embedEnabled: dashboardSettingsInput.embedEnabled, embedUrl: dashboardEmbedUrl }" />
           </div>
         </template>
 

@@ -11,7 +11,7 @@ export const isEmbedPath = (path: string) => path === '/embed' || path.startsWit
  * run. Embeds render customers' query results for anyone, so they also may not
  * send data anywhere but here.
  */
-export const buildContentSecurityPolicy = (nonce: string, embed: boolean) => [
+export const buildContentSecurityPolicy = (nonce: string, embed: boolean, frameAncestors = '*') => [
   "default-src 'self'",
   // WebAssembly runs the optional in-browser SQL model.
   `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval'`,
@@ -24,7 +24,8 @@ export const buildContentSecurityPolicy = (nonce: string, embed: boolean) => [
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
-  embed ? 'frame-ancestors *' : "frame-ancestors 'none'"
+  // An embed may be limited to the websites its owner allowed (see middleware/embed-access).
+  embed ? `frame-ancestors ${frameAncestors}` : "frame-ancestors 'none'"
 ].join('; ')
 
 /** Adds the nonce to every script tag the page renders. */
@@ -65,7 +66,11 @@ export default defineNitroPlugin((nitroApp) => {
     setResponseHeader(
       event,
       'Content-Security-Policy',
-      buildContentSecurityPolicy(nonce, isEmbedPath(getRequestURL(event).pathname))
+      buildContentSecurityPolicy(
+        nonce,
+        isEmbedPath(getRequestURL(event).pathname),
+        typeof event.context.embedFrameAncestors === 'string' ? event.context.embedFrameAncestors : '*'
+      )
     )
   })
 })

@@ -8,6 +8,8 @@ export interface DashboardSummary {
   dashboardName: string
   embedId: string
   embedEnabled: boolean
+  /** Websites the embed may appear on; empty means anywhere. */
+  embedAllowedOrigins: string[]
   /** Opens first for everyone in the organisation. */
   isDefault: boolean
   appearance: DashboardAppearance
@@ -54,6 +56,7 @@ export interface DashboardSaveInput {
   embedEnabled: boolean
   /** Sent only when someone changes it, so a background save never takes it back. */
   isDefault?: boolean
+  embedAllowedOrigins?: string[]
   appearance?: DashboardAppearance
   style?: DashboardStyle
   widgets: DashboardSaveWidgetInput[]
@@ -122,7 +125,7 @@ export interface DashboardSaveResponse {
     | 'unexpected_error'
   message: string
   messageKey?: string
-  field?: 'dashboardId' | 'dashboardName' | 'embedEnabled' | 'widgets' | 'body'
+  field?: 'dashboardId' | 'dashboardName' | 'embedEnabled' | 'embedAllowedOrigins' | 'widgets' | 'body'
   issue?: string
   dashboard?: DashboardDetails
 }
@@ -210,11 +213,12 @@ export const createEmptyDashboardCreateInput = (): DashboardCreateInput => ({
 
 export const toDashboardSaveInput = (
   dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'>,
-  changes: { isDefault?: boolean } = {}
+  changes: { isDefault?: boolean, embedAllowedOrigins?: string[] } = {}
 ): DashboardSaveInput => ({
   dashboardName: dashboard.dashboardName,
   embedEnabled: dashboard.embedEnabled,
   ...(changes.isDefault === undefined ? {} : { isDefault: changes.isDefault }),
+  ...(changes.embedAllowedOrigins === undefined ? {} : { embedAllowedOrigins: changes.embedAllowedOrigins }),
   appearance: dashboard.appearance,
   style: dashboard.style,
   widgets: dashboard.widgets.map((widget) => ({

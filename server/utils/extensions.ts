@@ -37,6 +37,17 @@ export interface QueryRunPolicy {
   allowForcedRun?: boolean
 }
 
+export interface EmbedAccessRequest {
+  event: H3Event
+  embedId: string
+  dashboardId: string
+  /** As stored in the app database. */
+  organizationId: string
+  /** 'page' for the embed page itself, 'data' for its API calls. */
+  kind: 'page' | 'data'
+  token: string
+}
+
 /**
  * Hooks that let a layer built on top of this app add behaviour. Core runs
  * unchanged when none are set. Assign them from a Nitro plugin.
@@ -63,6 +74,12 @@ export interface ServerExtensions {
     widgetId: string
   ) => Promise<Pick<QueryRunPolicy, 'cacheVersion' | 'minimumTtlSeconds'>>
   embeddedDashboardDetails?: (organizationId: string) => Promise<Record<string, unknown>>
+  /**
+   * Decides whether a request may see an embedded dashboard, beyond the
+   * allowed websites Core checks itself (for example a signed link). The token
+   * is the page's ?token= or the data request's x-embed-token header.
+   */
+  embedAccess?: (request: EmbedAccessRequest) => Promise<{ ok: true } | { ok: false, reason: string }>
   /** Told about every query run. Never awaited, and its errors are ignored. */
   queryExecuted?: (run: QueryRunRecord) => Promise<void> | void
 }

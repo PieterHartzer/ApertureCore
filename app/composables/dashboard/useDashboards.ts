@@ -177,11 +177,23 @@ export const useDashboards = (
     }
   }
 
+  /** A new embed address; the old link stops working at once. */
+  const regenerateEmbedLink = async (dashboardId: string): Promise<{ ok: boolean, embedId?: string, messageKey?: string }> => {
+    try {
+      return await requestFetch<{ ok: boolean, embedId?: string }>(`/api/dashboards/${dashboardId}/embed-link`, { method: 'POST' })
+    } catch (error) {
+      const data = (error as { data?: { messageKey?: string } }).data
+
+      return { ok: false, messageKey: data?.messageKey ?? 'dashboards.embed.regenerate.errors.unexpected' }
+    }
+  }
+
   return {
     listDashboards,
     getDashboard,
     createDashboard,
     saveDashboard,
-    deleteDashboard
+    deleteDashboard,
+    regenerateEmbedLink
   }
 }

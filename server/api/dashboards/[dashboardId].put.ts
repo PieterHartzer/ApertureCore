@@ -18,6 +18,7 @@ const VALIDATION_MESSAGE_KEYS: Record<
   dashboard_name_invalid: 'dashboards.save.errors.dashboardNameInvalid',
   dashboard_name_required: 'dashboards.save.errors.dashboardNameRequired',
   embed_enabled_invalid: 'dashboards.save.errors.embedEnabledInvalid',
+  embed_origins_invalid: 'dashboards.save.errors.embedOriginsInvalid',
   widgets_invalid: 'dashboards.save.errors.widgetsInvalid',
   widget_id_invalid: 'dashboards.save.errors.widgetInvalid',
   widget_title_invalid: 'dashboards.save.errors.widgetInvalid',

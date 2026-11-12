@@ -224,6 +224,21 @@
           "copied": "[Ĕḿƀëð ÛŘĻ çôþîëð ţô ţĥë çļîþƀôåřð.]",
           "actions": {
             "copy": "[Çôþý ÛŘĻ]"
+          },
+          "newLink": {
+            "label": "[Nëw lîñk]",
+            "description": "[Gîvëš ţhîš dåšhbôård å ñëw ëmbëd åddrëšš. Ûšë îţ îf ţhë lîñk rëåçhëd šômëôñë îţ šhôûldñ’ţ håvë.]",
+            "action": "[Crëåţë å ñëw lîñk]",
+            "confirm": "[Yëš, rëplåçë ţhë lîñk]",
+            "warning": "[Thë çûrrëñţ lîñk šţôpš wôrkîñg šţråîghţ åwåy, ôñ ëvëry šîţë ţhåţ ûšëš îţ.]",
+            "done": "[Ûpdåţë ţhë ëmbëd çôdë ôñ yôûr wëbšîţëš wîţh ţhë ñëw lîñk.]",
+            "doneTitle": "[Nëw lîñk çrëåţëd]"
+          },
+          "allowedOrigins": {
+            "label": "[Ållôwëd wëbšîţëš]",
+            "description": "[Thë dåšhbôård ôñly šhôwš îñšîdë ţhëšë wëbšîţëš, ôñë për lîñë. Ôpëñîñg ţhë lîñk dîrëçţly wôñ’ţ šhôw îţ. Lëåvë ëmpţy ţô ållôw åñy wëbšîţë.]",
+            "placeholder": "https://portal.example.com\n*.example.com",
+            "invalid": "[Chëçk ţhë ållôwëd wëbšîţëš: ûšë åddrëššëš lîkë hţţpš://ëxåmplë.çôm, ôñë për lîñë, åţ môšţ {måx}.]"
           }
         }
       },
@@ -1029,7 +1044,8 @@
         "notFound": "[Ţĥë řëqüëšţëð ðåšĥƀôåřð çôûļð ñôţ ƀë ƒôûñð.]",
         "duplicateDashboardName": "[Å ðåšĥƀôåřð ŵîţĥ ţĥîš ñåḿë åļřëåðý ëxîšţš.]",
         "persistenceUnavailable": "[Ðåšĥƀôåřð šţôřåĝë îš çûřřëñţļý ûñåṽåîļåƀļë.]",
-        "unexpected": "[Çôûļð ñôţ šåṽë ţĥë ðåšĥƀôåřð.]"
+        "unexpected": "[Çôûļð ñôţ šåṽë ţĥë ðåšĥƀôåřð.]",
+        "embedOriginsInvalid": "[Çhëçk ţhë ållôwëd wëbšîţëš]"
       }
     },
     "delete": {
@@ -1072,6 +1088,15 @@
           "persistenceUnavailable": "[Ðåšĥƀôåřð šţôřåĝë îš çûřřëñţļý ûñåṽåîļåƀļë.]",
           "unexpected": "[Çôûļð ñôţ řûñ ţĥë ëḿƀëððëð ŵîðĝëţ qüëřý.]"
         }
+      },
+      "regenerate": {
+        "errors": {
+          "notFound": "[Thîš dåšhbôård ñô lôñgër ëxîšţš.]",
+          "unexpected": "[Thë ñëw lîñk wåšñ’ţ çrëåţëd. Plëåšë ţry ågåîñ.]"
+        }
+      },
+      "access": {
+        "denied": "[Thîš lîñk håš ëxpîrëd. Rëlôåd ţhë pågë yôû çåmë frôm.]"
       }
     }
   },

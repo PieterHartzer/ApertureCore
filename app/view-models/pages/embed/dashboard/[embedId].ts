@@ -14,6 +14,7 @@ import { provideDashboardChartStyle } from '~/composables/useDashboardChartStyle
 import { buildDashboardCss, getDashboardChartStyle } from '#shared/utils/dashboard-style'
 import { removeWidgetTypeFromTitle } from '~/types/dashboard-widgets'
 import { translateMessage } from '~/utils/translateMessage'
+import { withEmbedToken } from '~/utils/embed-token-fetch'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
 
@@ -39,11 +40,13 @@ export default defineComponent({
 
     const { t } = useI18n()
     const route = useRoute()
-    const requestFetch = import.meta.server
+    // A signed link (?token=) must accompany every request the page makes.
+    const embedToken = typeof route.query.token === 'string' ? route.query.token : ''
+    const requestFetch = withEmbedToken(import.meta.server
       ? useRequestFetch()
-      : $fetch
+      : $fetch, embedToken)
     const { getDashboard } = useEmbeddedDashboard(requestFetch)
-    const queryResults = useEmbeddedDashboardQueryResults()
+    const queryResults = useEmbeddedDashboardQueryResults(withEmbedToken($fetch, embedToken))
     const embedId = computed(() => {
       return typeof route.params.embedId === 'string'
         ? route.params.embedId

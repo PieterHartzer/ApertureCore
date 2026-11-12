@@ -246,6 +246,21 @@
           "copied": "Embed URL copied to the clipboard.",
           "actions": {
             "copy": "Copy URL"
+          },
+          "newLink": {
+            "label": "New link",
+            "description": "Gives this dashboard a new embed address. Use it if the link reached someone it shouldn’t have.",
+            "action": "Create a new link",
+            "confirm": "Yes, replace the link",
+            "warning": "The current link stops working straight away, on every site that uses it.",
+            "done": "Update the embed code on your websites with the new link.",
+            "doneTitle": "New link created"
+          },
+          "allowedOrigins": {
+            "label": "Allowed websites",
+            "description": "The dashboard only shows inside these websites, one per line. Opening the link directly won’t show it. Leave empty to allow any website.",
+            "placeholder": "https://portal.example.com\n*.example.com",
+            "invalid": "Check the allowed websites: use addresses like https://example.com, one per line, at most {max}."
           }
         }
       },
@@ -1029,7 +1044,8 @@
         "notFound": "The requested dashboard could not be found.",
         "duplicateDashboardName": "A dashboard with this name already exists.",
         "persistenceUnavailable": "Dashboard storage is currently unavailable.",
-        "unexpected": "Could not save the dashboard."
+        "unexpected": "Could not save the dashboard.",
+        "embedOriginsInvalid": "Check the allowed websites: use addresses like https://example.com, one per line."
       }
     },
     "delete": {
@@ -1072,6 +1088,15 @@
           "persistenceUnavailable": "Dashboard storage is currently unavailable.",
           "unexpected": "Could not run the embedded widget query."
         }
+      },
+      "regenerate": {
+        "errors": {
+          "notFound": "This dashboard no longer exists.",
+          "unexpected": "The new link wasn’t created. Please try again."
+        }
+      },
+      "access": {
+        "denied": "This link has expired. Reload the page you came from."
       }
     }
   },
