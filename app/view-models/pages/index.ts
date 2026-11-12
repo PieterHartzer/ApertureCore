@@ -62,6 +62,7 @@ import {
   type PluginInputOptionValue
 } from '~/types/uiPlugin'
 import { translateMessage } from '~/utils/translateMessage'
+import { useAppPermissions } from '~/composables/useAppPermissions'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
 const WIDGET_REFRESH_INTERVALS = [60, 300, 900, 3600]
@@ -94,6 +95,8 @@ export default defineComponent({
   },
   async setup() {
     const { locale, t, te } = useI18n()
+    // Hides controls the person can't use; the server checks every request.
+    const permissions = useAppPermissions()
     const { success, error } = useNotifications()
     const requestFetch = import.meta.server
       ? useRequestFetch()
@@ -1740,6 +1743,7 @@ export default defineComponent({
 
 
     return {
+      permissions,
       addColumnFormat,
       columnFormatColumnOptions,
       columnFormatKindOptions,

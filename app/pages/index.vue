@@ -25,7 +25,7 @@ export default component
           />
 
           <UButton
-            v-if="hasSelectedDashboard"
+            v-if="hasSelectedDashboard && permissions.editDashboards"
             :color="isDashboardEditing ? 'primary' : 'neutral'"
             :variant="isDashboardEditing ? 'solid' : 'outline'"
             :icon="isDashboardEditing ? 'i-lucide-check' : 'i-lucide-pencil'"
@@ -34,7 +34,7 @@ export default component
           />
 
           <UDropdownMenu
-            v-if="dashboards.length > 0"
+            v-if="dashboards.length > 0 && permissions.editDashboards"
             :items="[
               [
                 { label: t('pages.dashboard.selector.actions.new'), icon: 'i-lucide-plus', onSelect: openCreateDashboardDialog },
@@ -871,8 +871,15 @@ export default component
         />
 
         <GettingStarted
-          v-else-if="dashboards.length === 0"
+          v-else-if="dashboards.length === 0 && permissions.editDashboards"
           @create="openCreateDashboardDialog"
+        />
+
+        <AppEmptyState
+          v-else-if="dashboards.length === 0"
+          icon="i-lucide-layout-dashboard"
+          :title="t('pages.dashboard.states.noSharedDashboardsTitle')"
+          :description="t('pages.dashboard.states.noSharedDashboardsDescription')"
         />
 
         <AppAlert
@@ -897,6 +904,7 @@ export default component
           :description="t('pages.dashboard.widgets.empty.description')"
         >
           <UButton
+            v-if="permissions.editDashboards"
             icon="i-lucide-plus"
             :label="t('pages.dashboard.builder.actions.add')"
             @click="() => { if (!isDashboardEditing) onToggleDashboardEditing(); openWidgetBuilder() }"

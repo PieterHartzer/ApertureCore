@@ -16,6 +16,7 @@ export default component
         <div class="flex items-center gap-3 sm:gap-4">
 
           <UButton
+            v-if="permissions.manageConnections"
             to="/connections/new"
             icon="i-lucide-plus"
             :disabled="isCreationBlocked"
@@ -73,7 +74,7 @@ export default component
         :title="t('connections.index.empty.title')"
         :description="t('connections.index.empty.description')"
       >
-        <UButton to="/connections/new" icon="i-lucide-plus" :label="t('connections.index.actions.addFirst')" />
+        <UButton v-if="permissions.manageConnections" to="/connections/new" icon="i-lucide-plus" :label="t('connections.index.actions.addFirst')" />
       </AppEmptyState>
 
       <DeleteConnectionDialog

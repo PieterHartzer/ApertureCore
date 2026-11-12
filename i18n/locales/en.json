@@ -125,7 +125,9 @@
         "loadingDashboardsTitle": "Loading dashboards",
         "loadingDashboardsDescription": "Fetching the dashboards available to your organisation.",
         "loadingDashboardTitle": "Loading dashboard",
-        "loadingDashboardDescription": "Fetching widgets and layout for the selected dashboard."
+        "loadingDashboardDescription": "Fetching widgets and layout for the selected dashboard.",
+        "noSharedDashboardsTitle": "No dashboards yet",
+        "noSharedDashboardsDescription": "Dashboards appear here once someone in your organisation creates one."
       },
       "status": {
         "ready": "Changes save automatically while you edit.",

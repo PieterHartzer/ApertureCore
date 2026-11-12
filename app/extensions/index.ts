@@ -6,7 +6,18 @@ export interface NavigationGroup {
   label?: string
   /** 'bottom' pins the group above the account menu, away from the everyday pages. */
   placement?: 'top' | 'bottom'
-  items: Array<{ to: string, label: string, icon: string }>
+  /** An item with a permission is shown only to people who have it. */
+  items: Array<{ to: string, label: string, icon: string, permission?: keyof AppPermissions }>
+}
+
+/** What the signed-in person may change. Core allows everything. */
+export interface AppPermissions {
+  editDashboards: boolean
+  /** Saved queries, the SQL editor and AI models. */
+  editQueries: boolean
+  viewConnections: boolean
+  /** Adding, changing and deleting connections. */
+  manageConnections: boolean
 }
 
 export interface WidgetOption {
@@ -56,6 +67,8 @@ export interface AppExtensions {
   useQueryListColumns?: () => ComputedRef<QueryListColumn[]>
   useConnectionCreationBlocked?: () => ComputedRef<boolean>
   canSaveDashboardStyle?: (style: Record<string, unknown>) => boolean
+  /** Hides controls the person can't use; the server still checks every request. */
+  usePermissions?: () => ComputedRef<Partial<AppPermissions>>
 }
 
 export const appExtensions: AppExtensions = {

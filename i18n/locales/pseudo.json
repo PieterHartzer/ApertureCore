@@ -125,7 +125,9 @@
         "loadingDashboardsTitle": "[Ļôåðîñĝ ðåšĥƀôåřðš]",
         "loadingDashboardsDescription": "[Ƒëţçĥîñĝ ţĥë ðåšĥƀôåřðš åṽåîļåƀļë ţô ýöûř ôřĝåñîšåţîôñ.]",
         "loadingDashboardTitle": "[Ļôåðîñĝ ðåšĥƀôåřð]",
-        "loadingDashboardDescription": "[Ƒëţçĥîñĝ ŵîðĝëţš åñð ļåýôûţ ƒôř ţĥë šëļëçţëð ðåšĥƀôåřð.]"
+        "loadingDashboardDescription": "[Ƒëţçĥîñĝ ŵîðĝëţš åñð ļåýôûţ ƒôř ţĥë šëļëçţëð ðåšĥƀôåřð.]",
+        "noSharedDashboardsTitle": "[Ñô dåšhbôårdš ýëţ]",
+        "noSharedDashboardsDescription": "[Dåšhbôårdš åppëår hërë ôñçë šômëôñë îñ ýôûr ôrgåñîšåţîôñ çrëåţëš ôñë.]"
       },
       "status": {
         "ready": "[Çĥåñĝëš šåṽë åûţôḿåţîçåļļý ŵĥîļë ýöû ëðîţ.]",

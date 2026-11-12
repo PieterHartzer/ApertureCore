@@ -15,6 +15,7 @@ import { useSavedSqlQueries } from '~/composables/database/useSavedSqlQueries'
 import { useNotifications } from '~/composables/ui/useNotifications'
 import type { SavedSqlQueryDeleteRequest } from '~/types/saved-sql-queries'
 import { translateMessage } from '~/utils/translateMessage'
+import { useAppPermissions } from '~/composables/useAppPermissions'
 
 interface SavedSqlQueryListItem {
   id: string
@@ -33,6 +34,8 @@ export default defineComponent({
   },
   async setup() {
     const { t } = useI18n()
+    // Hides controls the person can't use; the server checks every request.
+    const permissions = useAppPermissions()
     // Needs the component's setup context, so it runs before the first await.
     const extraColumns = appExtensions.useQueryListColumns?.()
     const { success } = useNotifications()
@@ -88,10 +91,12 @@ export default defineComponent({
           return h('span', { class: [extra.numeric ? 'block text-right tabular-nums' : '', tone ? toneClass[tone] : ''] }, extra.display(row.original.id))
         }
       })),
-      {
-        id: 'actions',
-        header: t('queries.index.table.columns.actions')
-      }
+      ...(permissions.value.editQueries
+        ? [{
+            id: 'actions',
+            header: t('queries.index.table.columns.actions')
+          }]
+        : [])
     ])
 
     const PAGE_SIZE = 25
@@ -171,6 +176,7 @@ export default defineComponent({
     }
 
     return {
+      permissions,
       columns,
       onPageChange,
       PAGE_SIZE,

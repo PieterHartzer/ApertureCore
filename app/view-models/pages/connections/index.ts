@@ -10,6 +10,7 @@ import { useDatabaseConnectionDelete } from '~/composables/database/useDatabaseC
 import { useSavedDatabaseConnections } from '~/composables/database/useSavedDatabaseConnections'
 import { useNotifications } from '~/composables/ui/useNotifications'
 import { translateMessage } from '~/utils/translateMessage'
+import { useAppPermissions } from '~/composables/useAppPermissions'
 
 interface SavedDatabaseConnectionListItem {
   id: string
@@ -33,6 +34,8 @@ export default defineComponent({
   async setup() {
     const isCreationBlocked = appExtensions.useConnectionCreationBlocked?.() ?? computed(() => false)
     const { t } = useI18n()
+    // Hides controls the person can't use; the server checks every request.
+    const permissions = useAppPermissions()
     const { success } = useNotifications()
     const { deleteConnection } = useDatabaseConnectionDelete()
     const requestFetch = import.meta.server
@@ -57,10 +60,12 @@ export default defineComponent({
         accessorKey: 'databaseType',
         header: t('connections.index.table.columns.databaseType')
       },
-      {
-        id: 'actions',
-        header: t('connections.index.table.columns.actions')
-      }
+      ...(permissions.value.manageConnections
+        ? [{
+            id: 'actions',
+            header: t('connections.index.table.columns.actions')
+          }]
+        : [])
     ])
 
     const connections = computed(() => {
@@ -143,6 +148,7 @@ export default defineComponent({
     }
 
     return {
+      permissions,
       columns,
       connections,
       isCreationBlocked,

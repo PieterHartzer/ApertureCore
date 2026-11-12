@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+import { useAppPermissions } from '~/composables/useAppPermissions'
 import { appExtensions, type NavigationGroup } from '~/extensions'
 
 const route = useRoute()
@@ -8,6 +9,7 @@ const brandName = useAppConfig().brand.name
 const { user, logout } = useOidcAuth()
 
 const extraGroups = appExtensions.useNavigationGroups?.()
+const permissions = useAppPermissions()
 const userDetails = computed(() => {
   const info = user.value?.userInfo as Record<string, unknown> | undefined
   const claims = user.value?.claims as Record<string, unknown> | undefined
@@ -31,22 +33,22 @@ const groups = computed<NavigationGroup[]>(() => {
       key: 'main',
       items: [
         { to: '/', label: t('navigation.dashboard'), icon: 'i-lucide-layout-dashboard' },
-        { to: '/sql-workspace', label: t('navigation.workspace'), icon: 'i-lucide-square-terminal' }
+        { to: '/sql-workspace', label: t('navigation.workspace'), icon: 'i-lucide-square-terminal', permission: 'editQueries' as const }
       ]
     },
     {
       key: 'data',
       label: t('navigation.data'),
       items: [
-        { to: '/queries', label: t('navigation.queries'), icon: 'i-lucide-file-code-2' },
-        { to: '/connections', label: t('navigation.connections'), icon: 'i-lucide-database' }
+        { to: '/queries', label: t('navigation.queries'), icon: 'i-lucide-file-code-2', permission: 'editQueries' as const },
+        { to: '/connections', label: t('navigation.connections'), icon: 'i-lucide-database', permission: 'viewConnections' as const }
       ]
     },
     {
       key: 'settings',
       label: t('navigation.settings'),
       placement: 'bottom' as const,
-      items: [{ to: '/settings/ai-models', label: t('navigation.aiModels'), icon: 'i-lucide-sparkles' }]
+      items: [{ to: '/settings/ai-models', label: t('navigation.aiModels'), icon: 'i-lucide-sparkles', permission: 'editQueries' as const }]
     },
     ...(extraGroups?.value ?? [])
   ]) {
@@ -56,7 +58,9 @@ const groups = computed<NavigationGroup[]>(() => {
     else merged.push({ ...group, items: [...group.items] })
   }
 
-  return merged.filter(group => group.items.length > 0)
+  return merged
+    .map(group => ({ ...group, items: group.items.filter(item => !item.permission || permissions.value[item.permission]) }))
+    .filter(group => group.items.length > 0)
 })
 const topGroups = computed(() => groups.value.filter(group => group.placement !== 'bottom'))
 const bottomGroups = computed(() => groups.value.filter(group => group.placement === 'bottom'))

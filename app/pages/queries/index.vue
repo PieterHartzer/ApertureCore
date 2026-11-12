@@ -17,6 +17,7 @@ export default component
 
 
           <UButton
+            v-if="permissions.editQueries"
             to="/sql-workspace"
             icon="i-lucide-plus"
             :label="t('queries.index.actions.new')"
@@ -81,7 +82,7 @@ export default component
         :title="t('queries.index.empty.title')"
         :description="t('queries.index.empty.description')"
       >
-        <UButton to="/sql-workspace" icon="i-lucide-plus" :label="t('queries.index.actions.addFirst')" />
+        <UButton v-if="permissions.editQueries" to="/sql-workspace" icon="i-lucide-plus" :label="t('queries.index.actions.addFirst')" />
       </AppEmptyState>
 
       <DeleteSavedSqlQueryDialog
