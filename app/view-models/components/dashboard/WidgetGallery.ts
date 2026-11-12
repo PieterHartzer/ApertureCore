@@ -29,6 +29,11 @@ export default defineComponent({
     selectedId: {
       type: String,
       default: ''
+    },
+    // Widgets that fit the chosen query, best first.
+    suggestedIds: {
+      type: Array as PropType<string[]>,
+      default: () => []
     }
   },
   emits: ['update:open', 'select'],
@@ -96,8 +101,13 @@ export default defineComponent({
     const sections = computed(() => {
       const visible = entries.value.filter(matches)
       const others = visible.filter(entry => entry.trailingLabel)
+      const browsing = activeGroup.value === 'all' && !search.value.trim()
+      const suggested = browsing
+        ? props.suggestedIds.flatMap(id => entries.value.find(entry => entry.id === id && !entry.trailingLabel) ?? [])
+        : []
 
       return [
+        { id: 'suggested', title: t('pages.dashboard.gallery.suggested'), items: suggested },
         { id: 'included', title: others.length ? t('pages.dashboard.gallery.included') : '', items: visible.filter(entry => !entry.trailingLabel) },
         { id: 'others', title: t('pages.dashboard.gallery.others'), items: others }
       ]

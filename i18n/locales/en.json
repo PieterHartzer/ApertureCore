@@ -277,12 +277,14 @@
             "label": "Query",
             "description": "The saved SQL query that powers this widget.",
             "placeholder": "Select a saved query",
-            "option": "{queryName} ({connectionName})"
+            "option": "{queryName} ({connectionName})",
+            "search": "Search queries"
           },
           "plugin": {
             "label": "Plugin",
             "description": "The renderer used to display the query result.",
-            "placeholder": "Select a UI plugin"
+            "placeholder": "Select a UI plugin",
+            "search": "Search widgets"
           },
           "title": {
             "label": "Widget title",
@@ -334,6 +336,9 @@
           "data": "Data",
           "format": "Format",
           "style": "Style"
+        },
+        "suggestions": {
+          "label": "Suggested:"
         }
       },
       "preview": {
@@ -657,7 +662,8 @@
                 "body": "Normal",
                 "large": "Large",
                 "heading": "Heading",
-                "display": "Display"
+                "display": "Display",
+                "fill": "Fill the widget"
               }
             },
             "textWeight": {
@@ -697,6 +703,76 @@
             },
             "columnFormats": {
               "label": "Column formats"
+            },
+            "trendChart": {
+              "label": "Chart",
+              "options": {
+                "bar": "Bars",
+                "line": "Line",
+                "area": "Area"
+              }
+            },
+            "comparisonText": {
+              "label": "Comparison text"
+            },
+            "blinkSeparator": {
+              "label": "Blink the colon"
+            },
+            "clockFont": {
+              "label": "Font",
+              "options": {
+                "dashboard": "Same as the dashboard",
+                "sans": "Clean (Inter)",
+                "rounded": "Rounded",
+                "serif": "Serif",
+                "mono": "Monospace",
+                "condensed": "Condensed",
+                "segment": "LED display"
+              }
+            },
+            "secondaryColor": {
+              "label": "Date and caption colour"
+            },
+            "smoothSeconds": {
+              "label": "Sweeping second hand"
+            },
+            "dialStyle": {
+              "label": "Dial",
+              "options": {
+                "ticks": "Hour and minute marks",
+                "numbers": "Numbers",
+                "roman": "Roman numerals",
+                "quarters": "Quarter marks",
+                "minimal": "Plain"
+              }
+            },
+            "handStyle": {
+              "label": "Hands",
+              "options": {
+                "modern": "Modern",
+                "classic": "Classic",
+                "thin": "Thin"
+              }
+            },
+            "dialBorder": {
+              "label": "Rim",
+              "options": {
+                "thin": "Thin",
+                "thick": "Thick",
+                "none": "None"
+              }
+            },
+            "faceColor": {
+              "label": "Face colour"
+            },
+            "handColor": {
+              "label": "Hand colour"
+            },
+            "secondHandColor": {
+              "label": "Second hand colour"
+            },
+            "markColor": {
+              "label": "Mark colour"
             }
           },
           "sections": {
@@ -903,7 +979,8 @@
           "table": "Tables",
           "content": "Text and time",
           "other": "Other"
-        }
+        },
+        "suggested": "Suggested for this query"
       }
     }
   },

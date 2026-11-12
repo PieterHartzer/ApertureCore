@@ -255,12 +255,14 @@
             "label": "[Qûëřý]",
             "description": "[Ţĥë šåṽëð ŠQĻ qüëřý ţĥåţ þôŵëřš ţĥîš ŵîðĝëţ.]",
             "placeholder": "[Šëļëçţ å šåṽëð qüëřý]",
-            "option": "[{queryName} ({connectionName})]"
+            "option": "[{queryName} ({connectionName})]",
+            "search": "[Šëårçh qûërîëš]"
           },
           "plugin": {
             "label": "[Ṕļûĝîñ]",
             "description": "[Ţĥë řëñðëřëř ûšëð ţô ðîšþļåý ţĥë qüëřý řëšûļţ.]",
-            "placeholder": "[Šëļëçţ å ÛÎ þļûĝîñ]"
+            "placeholder": "[Šëļëçţ å ÛÎ þļûĝîñ]",
+            "search": "[Šëårçh wîdgëţš]"
           },
           "title": {
             "label": "[Ŵîðĝëţ ţîţļë]",
@@ -312,6 +314,9 @@
           "data": "[Dåţå]",
           "format": "[Fôrmåţ]",
           "style": "[Sţylë]"
+        },
+        "suggestions": {
+          "label": "[Šûggëšţëd:]"
         }
       },
       "preview": {
@@ -635,7 +640,8 @@
                 "body": "[Ñôŕḿåļ]",
                 "large": "[Ļåŕĝë]",
                 "heading": "[Ĥëåðîñĝ]",
-                "display": "[Ðîšþļåý]"
+                "display": "[Ðîšþļåý]",
+                "fill": "[Fîll ţhë wîdgëţ]"
               }
             },
             "textWeight": {
@@ -675,6 +681,76 @@
             },
             "columnFormats": {
               "label": "[Çôļûḿñ ƒôŕḿåţš]"
+            },
+            "trendChart": {
+              "label": "[Chårţ]",
+              "options": {
+                "bar": "[Bårš]",
+                "line": "[Lîñë]",
+                "area": "[Årëå]"
+              }
+            },
+            "comparisonText": {
+              "label": "[Cômpårîšôñ ţëxţ]"
+            },
+            "blinkSeparator": {
+              "label": "[Blîñk ţhë çôlôñ]"
+            },
+            "clockFont": {
+              "label": "[Fôñţ]",
+              "options": {
+                "dashboard": "[Såmë åš ţhë dåšhbôård]",
+                "sans": "[Clëåñ (Îñţër)]",
+                "rounded": "[Rôûñdëd]",
+                "serif": "[Sërîf]",
+                "mono": "[Môñôšpåçë]",
+                "condensed": "[Côñdëñšëd]",
+                "segment": "[LËD dîšplåy]"
+              }
+            },
+            "secondaryColor": {
+              "label": "[Dåţë åñd çåpţîôñ çôlôûr]"
+            },
+            "smoothSeconds": {
+              "label": "[Swëëpîñg šëçôñd håñd]"
+            },
+            "dialStyle": {
+              "label": "[Dîål]",
+              "options": {
+                "ticks": "[Hôûr åñd mîñûţë mårkš]",
+                "numbers": "[Nûmbërš]",
+                "roman": "[Rômåñ ñûmërålš]",
+                "quarters": "[Qûårţër mårkš]",
+                "minimal": "[Plåîñ]"
+              }
+            },
+            "handStyle": {
+              "label": "[Håñdš]",
+              "options": {
+                "modern": "[Môdërñ]",
+                "classic": "[Clåššîç]",
+                "thin": "[Thîñ]"
+              }
+            },
+            "dialBorder": {
+              "label": "[Rîm]",
+              "options": {
+                "thin": "[Thîñ]",
+                "thick": "[Thîçk]",
+                "none": "[Nôñë]"
+              }
+            },
+            "faceColor": {
+              "label": "[Fåçë çôlôûr]"
+            },
+            "handColor": {
+              "label": "[Håñd çôlôûr]"
+            },
+            "secondHandColor": {
+              "label": "[Sëçôñd håñd çôlôûr]"
+            },
+            "markColor": {
+              "label": "[Mårk çôlôûr]"
             }
           },
           "sections": {
@@ -903,7 +979,8 @@
           "table": "[Tåblëš]",
           "content": "[Ţëxţ åñð ţîḿë]",
           "other": "[Ôţhër]"
-        }
+        },
+        "suggested": "[Šûggëšţëd för ţhîš qûëry]"
       }
     }
   },

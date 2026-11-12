@@ -304,7 +304,8 @@ export default component
                 v-model:open="isWidgetGalleryOpen"
                 :items="pluginOptions"
                 :selected-id="draft.pluginId"
-                @select="draft.pluginId = $event"
+                :suggested-ids="suggestedPluginIds"
+                @select="choosePlugin($event)"
               />
 
               <UTabs
@@ -321,7 +322,15 @@ export default component
                 <h3 class="px-3 py-2.5 text-sm font-medium text-highlighted">{{ t('pages.dashboard.builder.groups.widget') }}</h3>
                 <div class="grid grid-cols-6 gap-3 border-t border-default p-3">
                   <UFormField v-if="selectedPluginUsesQuery" class="col-span-6 sm:col-span-3" name="queryId" :label="t('pages.dashboard.builder.fields.query.label')">
-                    <USelect v-model="draft.queryId" class="w-full" :items="queryOptions" :placeholder="t('pages.dashboard.builder.fields.query.placeholder')" />
+                    <USelectMenu
+                      v-model="draft.queryId"
+                      class="w-full"
+                      value-key="value"
+                      :items="queryOptions"
+                      :search-input="{ placeholder: t('pages.dashboard.builder.fields.query.search') }"
+                      :placeholder="t('pages.dashboard.builder.fields.query.placeholder')"
+                      data-query-select
+                    />
                   </UFormField>
                   <UFormField class="col-span-6 sm:col-span-3" name="pluginId" :label="t('pages.dashboard.builder.fields.plugin.label')">
                     <template #hint>
@@ -335,12 +344,33 @@ export default component
                         @click="isWidgetGalleryOpen = true"
                       />
                     </template>
-                    <USelect v-model="draft.pluginId" class="w-full" :items="pluginOptions" :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')">
+                    <USelectMenu
+                      :model-value="draft.pluginId"
+                      class="w-full"
+                      value-key="value"
+                      :items="pluginOptions"
+                      :search-input="{ placeholder: t('pages.dashboard.builder.fields.plugin.search') }"
+                      :placeholder="t('pages.dashboard.builder.fields.plugin.placeholder')"
+                      data-plugin-select
+                      @update:model-value="choosePlugin(String($event ?? ''))"
+                    >
                       <template #item-trailing="{ item }">
-                        <span v-if="item.trailingLabel" class="text-xs text-dimmed">{{ item.trailingLabel }}</span>
+                        <span v-if="'trailingLabel' in item && item.trailingLabel" class="text-xs text-dimmed">{{ item.trailingLabel }}</span>
                       </template>
-                    </USelect>
+                    </USelectMenu>
                   </UFormField>
+                  <div v-if="suggestedPlugins.length > 1" class="col-span-6 flex flex-wrap items-center gap-1.5" data-widget-suggestions>
+                    <span class="text-xs text-muted">{{ t('pages.dashboard.builder.suggestions.label') }}</span>
+                    <UButton
+                      v-for="suggestion in suggestedPlugins"
+                      :key="suggestion.id"
+                      size="xs"
+                      :variant="draft.pluginId === suggestion.id ? 'soft' : 'outline'"
+                      :color="draft.pluginId === suggestion.id ? 'primary' : 'neutral'"
+                      :label="suggestion.label"
+                      @click="choosePlugin(suggestion.id)"
+                    />
+                  </div>
                   <UFormField class="col-span-6 sm:col-span-3" name="title" :label="t('pages.dashboard.builder.fields.title.label')">
                     <UInput v-model="draft.title" class="w-full" :placeholder="t('pages.dashboard.builder.fields.title.placeholder')" />
                   </UFormField>
@@ -835,7 +865,7 @@ export default component
 
       <section data-dashboard-canvas :data-editing="isDashboardEditing ? '' : undefined" class="space-y-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
-          <div class="space-y-1">
+          <div class="space-y-1" data-print-hide>
             <p class="text-sm leading-6 text-muted">
               {{
                 hasSelectedDashboard

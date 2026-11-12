@@ -93,7 +93,8 @@ const browserOption = (modelId: string) => ai.local.models.value.find(option => 
   <UPage>
     <UPageHeader :title="$t('ai.title')" :description="$t('ai.subtitle')" />
     <UPageBody>
-      <UAlert v-if="error" color="error" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error)" />
+      <!-- While a provider dialog is open, its error shows in the dialog instead. -->
+      <UAlert v-if="error && !editing" color="error" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error)" />
       <UButton v-if="ai.sessionExpired.value" :to="{ path: '/login', query: { callbackRedirectUrl: '/settings/ai-models' } }" :label="$t('interface.signInAgain')" />
       <p v-if="notice" role="status" class="text-sm text-success">{{ notice }}</p>
 
@@ -132,6 +133,7 @@ const browserOption = (modelId: string) => ai.local.models.value.find(option => 
               <UButton v-if="browserOption(model.modelId)?.cached" color="neutral" variant="ghost" size="xs" :label="$t('interface.deleteDownloadedFiles')" :disabled="busy" @click="perform(() => ai.local.deleteDownload(model.modelId))" />
             </li>
           </ul>
+          <UAlert v-if="error" class="mt-4" color="error" variant="subtle" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error)" />
         </template>
       </UModal>
 
@@ -157,6 +159,7 @@ const browserOption = (modelId: string) => ai.local.models.value.find(option => 
               </UFormField>
             </template>
           </form>
+          <UAlert v-if="error" class="mt-4" color="error" variant="subtle" :title="$t('interface.couldNotCompleteTheRequest')" :description="localizeAppMessage($t, error)" data-provider-error />
           <p v-if="confirmDisconnect" role="alert" class="mt-4 text-sm text-error">{{ $t('ai.disconnectConfirm', { provider: editing && editing !== 'browser' ? nameOf(editing) : '' }) }}</p>
         </template>
         <template #footer>

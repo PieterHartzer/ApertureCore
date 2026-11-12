@@ -62,6 +62,7 @@ import {
   type PluginInputOptionValue
 } from '~/types/uiPlugin'
 import { translateMessage } from '~/utils/translateMessage'
+import { autoMapFields, describeResultShape, suggestCharts } from '~/utils/charts/chart-suggestions'
 import { useAppPermissions } from '~/composables/useAppPermissions'
 
 const DASHBOARD_REFRESH_TICK_MS = 5000
@@ -315,6 +316,26 @@ export default defineComponent({
         previewState.value.rows
       )
     })
+
+    // Widgets that fit what the chosen query returned, best first. Only widgets the
+    // workspace can add are suggested.
+    const suggestedPluginIds = computed(() => {
+      if (!previewState.value || previewState.value.status !== 'success' || !previewFieldOptions.value.length) return []
+
+      const available = pluginOptions.value.flatMap(item => 'value' in item && !item.trailingLabel ? [item.value] : [])
+
+      return suggestCharts(describeResultShape(previewFieldOptions.value, previewState.value.rows), available)
+    })
+
+    const suggestedPlugins = computed(() => suggestedPluginIds.value.map(id => ({ id, label: getPluginLabel(id) })))
+
+    // Set when the person picks a widget, so a suggestion never replaces their choice.
+    const pluginChosenByPerson = ref(false)
+
+    const choosePlugin = (pluginId: string) => {
+      pluginChosenByPerson.value = true
+      draft.value.pluginId = pluginId
+    }
 
     const queryListErrorMessage = computed(() => {
       if (!queryListResponse.value || queryListResponse.value.ok) {
@@ -992,7 +1013,9 @@ export default defineComponent({
         })
       }
 
-      draft.value.pluginConfig = normalizedConfig
+      draft.value.pluginConfig = selectedPlugin.value && previewFieldOptions.value.length
+        ? autoMapFields(selectedPlugin.value.inputSchema, previewFieldOptions.value, normalizedConfig)
+        : normalizedConfig
     }
 
     const loadPreviewQuery = async (force = false) => {
@@ -1066,6 +1089,7 @@ export default defineComponent({
 
     const resetDraft = () => {
       editingWidgetId.value = null
+      pluginChosenByPerson.value = false
       draft.value = createEmptyDashboardWidgetDraft()
       draft.value.dashboardId = selectedDashboard.value?.id ?? ''
     }
@@ -1714,6 +1738,15 @@ export default defineComponent({
       }
     )
 
+    // A new widget starts on the best fit for its query, until the person picks one.
+    watch(suggestedPluginIds, (ids) => {
+      const best = ids[0]
+
+      if (best && !isEditingWidget.value && !pluginChosenByPerson.value && draft.value.pluginId !== best) {
+        draft.value.pluginId = best
+      }
+    })
+
     watch(
       () => [
         selectedPlugin.value?.id ?? '',
@@ -1743,6 +1776,9 @@ export default defineComponent({
 
 
     return {
+      choosePlugin,
+      suggestedPluginIds,
+      suggestedPlugins,
       permissions,
       addColumnFormat,
       columnFormatColumnOptions,
