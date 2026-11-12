@@ -11,7 +11,12 @@ export default component
       :description="hasSelectedDashboard ? undefined : t('pages.dashboard.description')"
     >
       <template #links>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2" data-print-hide>
+          <ExtensionSlot
+            v-if="hasSelectedDashboard"
+            name="dashboard.actions"
+            :slot-props="{ dashboardName: selectedDashboardName, isEditing: isDashboardEditing }"
+          />
           <span v-if="dashboards.length > 1" class="hidden text-xs font-medium text-muted sm:inline">{{ t('pages.dashboard.selector.switchLabel') }}</span>
           <USelect
             v-if="dashboards.length > 1"
