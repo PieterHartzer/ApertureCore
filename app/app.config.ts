@@ -15,7 +15,8 @@ export default defineAppConfig({
       compoundVariants: [{
         color: 'primary',
         variant: 'solid',
-        class: 'bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 active:from-blue-700 active:to-indigo-700 disabled:from-blue-600 disabled:to-indigo-600 aria-disabled:from-blue-600 aria-disabled:to-indigo-600 dark:hover:from-blue-700 dark:hover:to-indigo-700'
+        // Colours come from --button-* in main.css, so a layer can restyle buttons without replacing this.
+        class: 'bg-linear-to-r from-(--button-from) to-(--button-to) text-(--button-text) hover:from-(--button-hover-from) hover:to-(--button-hover-to) active:from-(--button-hover-from) active:to-(--button-hover-to) disabled:from-(--button-from) disabled:to-(--button-to) aria-disabled:from-(--button-from) aria-disabled:to-(--button-to)'
       }]
     },
     pageHeader: {

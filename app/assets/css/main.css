@@ -109,6 +109,12 @@
 }
 
 :root {
+  /* The primary button: a blue to indigo gradient. A layer may set its own. */
+  --button-from: var(--color-blue-600);
+  --button-to: var(--color-indigo-600);
+  --button-hover-from: var(--color-blue-700);
+  --button-hover-to: var(--color-indigo-700);
+  --button-text: #fff;
   --glow-strength: 0.16;
   --sql-keyword: #1d4ed8;
   --sql-string: #15803d;

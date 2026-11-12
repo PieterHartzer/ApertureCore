@@ -21,9 +21,28 @@ export interface ChartColors {
   ink: string
   tooltipBackground: string
   tooltipBorder: string
+  /** Text on the tooltip; defaults to ink when the tooltip is light. */
+  tooltipText?: string
 }
 
-export const getChartColors = (dark: boolean): ChartColors => dark
+export interface ChartColorTheme {
+  light: Partial<ChartColors>
+  dark: Partial<ChartColors>
+}
+
+let chartColorTheme: ChartColorTheme | null = null
+
+/** Lets a layer replace the default chart colours, for example with its brand palette. */
+export const registerChartColors = (theme: ChartColorTheme | null) => {
+  chartColorTheme = theme
+}
+
+export const getChartColors = (dark: boolean): ChartColors => ({
+  ...defaultChartColors(dark),
+  ...(chartColorTheme?.[dark ? 'dark' : 'light'] ?? {})
+})
+
+const defaultChartColors = (dark: boolean): ChartColors => dark
   ? {
       categorical: DARK_CATEGORICAL,
       primary: DARK_CATEGORICAL[0]!,

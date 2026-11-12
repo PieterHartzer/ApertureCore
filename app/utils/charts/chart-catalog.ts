@@ -75,7 +75,7 @@ const tooltip = (context: ChartContext, trigger: 'axis' | 'item' = 'axis') => ({
   valueFormatter: (value: unknown) => typeof value === 'number' ? context.format.full(value) : toLabel(value),
   backgroundColor: context.colors.tooltipBackground,
   borderColor: context.colors.tooltipBorder,
-  textStyle: { color: context.colors.ink, fontSize: 12 }
+  textStyle: { color: context.colors.tooltipText ?? context.colors.ink, fontSize: 12 }
 })
 const legend = (context: ChartContext, data?: string[]) => ({
   top: 0,
