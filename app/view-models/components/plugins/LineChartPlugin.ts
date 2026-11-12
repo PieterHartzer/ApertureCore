@@ -4,7 +4,7 @@ import type { EChartsOption } from 'echarts'
 import PluginChart from '~/components/plugins/PluginChart.vue'
 import { useChartTheme } from '~/composables/useChartTheme'
 import { useObservedElementSize } from '~/composables/useObservedElementSize'
-import { getChartColors } from '~/utils/charts/chart-colors'
+import { applySeriesStyle, getChartColors } from '~/utils/charts/chart-colors'
 import { applyAdvancedOptions, applyCartesianSettings, applyLabelOverridesToOption, colorSetting } from '~/utils/charts/chart-settings'
 import { numberFormatterFor } from '~/utils/charts/column-formats'
 import type { SavedSqlQueryResultRow } from '~/types/saved-sql-queries'
@@ -144,7 +144,8 @@ export default defineComponent({
     }))
 
     const chartOption = computed(() => {
-      const option = applyAdvancedOptions(applyLabelOverridesToOption(applyCartesianSettings(baseOption.value, props.config, valueFormat.value, getChartColors(useColorModeIsDark())), props.config), props.config)
+      const colors = getChartColors(useColorModeIsDark())
+      const option = applyAdvancedOptions(applyLabelOverridesToOption(applyCartesianSettings(applySeriesStyle(baseOption.value, colors), props.config, valueFormat.value, colors), props.config), props.config)
       const fontFamily = chartTheme.value.fontFamily
 
       return fontFamily ? { ...option, textStyle: { fontFamily } } : option

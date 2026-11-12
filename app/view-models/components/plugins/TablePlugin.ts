@@ -61,7 +61,7 @@ export default defineComponent({
         return {
           accessorKey: columnName,
           header: overrideLabel(props.config, columnName),
-          ...(numeric ? { meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } } } : {}),
+          ...(numeric ? { meta: { class: { th: 'text-right', td: 'widget-table-number text-right tabular-nums' } } } : {}),
           ...(numeric && formatsColumn(columnName)
             ? { cell: ({ getValue }: { getValue: () => unknown }) => formatCell(columnName)(getValue()) }
             : {})

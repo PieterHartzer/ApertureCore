@@ -31,6 +31,11 @@ export default component
   font-size: var(--widget-table-size, inherit);
 }
 
+/* Number columns line up; a layer may give them a monospaced font with --table-number-font. */
+.widget-table :deep(td.widget-table-number) {
+  font-family: var(--table-number-font, inherit);
+}
+
 .widget-table[style*='--widget-table-align'] :deep(th),
 .widget-table[style*='--widget-table-align'] :deep(td) {
   text-align: var(--widget-table-align);

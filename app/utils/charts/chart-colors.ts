@@ -23,6 +23,51 @@ export interface ChartColors {
   tooltipBorder: string
   /** Text on the tooltip; defaults to ink when the tooltip is light. */
   tooltipText?: string
+  /** Width of chart lines; charts keep their own width when unset. */
+  lineWidth?: number
+  /** Opacity of the fill under a line (not stacked areas); charts keep their own when unset. */
+  areaOpacity?: number
+  /** Fill under a chart's only line; the line's own colour when unset. */
+  areaColor?: string
+}
+
+type SeriesLike = Record<string, unknown> & { type?: unknown, stack?: unknown, lineStyle?: Record<string, unknown>, areaStyle?: Record<string, unknown> }
+
+/**
+ * Applies the palette's line width and area fill to line series. Lines drawn
+ * on purpose (hidden band edges, thin reference lines) and stacked areas keep
+ * their own look.
+ */
+export const applySeriesStyle = <T>(option: T, colors: ChartColors): T => {
+  const source = (option as { series?: unknown }).series
+
+  if (!source || (colors.lineWidth === undefined && colors.areaOpacity === undefined)) return option
+
+  const list = (Array.isArray(source) ? source : [source]) as SeriesLike[]
+  const lines = list.filter(series => series?.type === 'line')
+  const series = list.map((item) => {
+    if (item?.type !== 'line') return item
+
+    const width = item.lineStyle?.width
+    const visible = item.lineStyle?.opacity !== 0
+    const next: SeriesLike = { ...item }
+
+    if (colors.lineWidth !== undefined && visible && (width === undefined || width === 2)) {
+      next.lineStyle = { ...item.lineStyle, width: colors.lineWidth }
+    }
+
+    if (colors.areaOpacity !== undefined && item.areaStyle && !item.stack) {
+      next.areaStyle = {
+        ...item.areaStyle,
+        opacity: colors.areaOpacity,
+        ...(lines.length === 1 && colors.areaColor ? { color: colors.areaColor } : {})
+      }
+    }
+
+    return next
+  })
+
+  return { ...option, series: Array.isArray(source) ? series : series[0] }
 }
 
 export interface ChartColorTheme {
@@ -78,6 +123,8 @@ export const applyDashboardChartColors = (colors: ChartColors, style: { primary?
   ...colors,
   primary: style.primary ?? colors.primary,
   categorical: style.primary ? [style.primary, ...colors.categorical.slice(1)] : colors.categorical,
+  // A dashboard's own main colour also fills the area under its lines.
+  areaColor: style.primary ? undefined : colors.areaColor,
   label: style.text ?? colors.label,
   grid: style.grid ?? colors.grid
 })

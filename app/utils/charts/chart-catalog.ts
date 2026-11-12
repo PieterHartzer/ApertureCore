@@ -1,6 +1,6 @@
 import type { EChartsOption } from 'echarts'
 
-import { MAX_CATEGORICAL_SERIES, readableTextOn, type ChartColors } from './chart-colors'
+import { applySeriesStyle, MAX_CATEGORICAL_SERIES, readableTextOn, type ChartColors } from './chart-colors'
 import { applyAdvancedOptions, applyCartesianSettings, applyLabelOverridesToOption, type ValueFormatter } from './chart-settings'
 
 export type ChartRow = Record<string, string | number | boolean | null>
@@ -152,5 +152,5 @@ export const registerCatalogCharts = (charts: CatalogChart[]) => {
 export const buildChartOption = (chart: CatalogChart, context: ChartContext): EChartsOption | null => {
   const option = chart.build(context)
 
-  return option ? applyAdvancedOptions(applyLabelOverridesToOption(applyCartesianSettings(option, context.config, context.format, context.colors), context.config), context.config) : null
+  return option ? applyAdvancedOptions(applyLabelOverridesToOption(applyCartesianSettings(applySeriesStyle(option, context.colors), context.config, context.format, context.colors), context.config), context.config) : null
 }

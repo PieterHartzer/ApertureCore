@@ -7,7 +7,8 @@ const route = useRoute()
 const { t } = useI18n()
 const brandName = useAppConfig().brand.name
 // A layer may set brand.logo to its own icon; otherwise the default mark is shown.
-const brandLogo = (useAppConfig().brand as { logo?: { light: string, dark: string } }).logo
+// With includesName, the image already holds the name (a wordmark), so the name is not typed beside it.
+const brandLogo = (useAppConfig().brand as { logo?: { light: string, dark: string, includesName?: boolean } }).logo
 const { user, logout } = useOidcAuth()
 
 const extraGroups = appExtensions.useNavigationGroups?.()
@@ -77,9 +78,9 @@ const linkClass = (path: string) => active(path)
   <header class="sticky top-0 z-40 border-b border-default bg-[var(--surface)] backdrop-blur-xl lg:hidden">
     <div class="flex items-center gap-2 px-4 py-2">
       <NuxtLink to="/" class="flex items-center gap-2 text-sm font-semibold text-highlighted">
-        <template v-if="brandLogo"><img :src="brandLogo.light" alt="" class="size-6 dark:hidden"><img :src="brandLogo.dark" alt="" class="hidden size-6 dark:block"></template>
+        <template v-if="brandLogo"><img :src="brandLogo.light" :alt="brandLogo.includesName ? brandName : ''" class="h-6 w-auto dark:hidden"><img :src="brandLogo.dark" :alt="brandLogo.includesName ? brandName : ''" class="hidden h-6 w-auto dark:block"></template>
         <span v-else class="grid size-6 place-items-center rounded-md bg-linear-to-br from-blue-500 to-violet-600 text-white"><UIcon name="i-lucide-aperture" class="size-4" aria-hidden="true" /></span>
-        {{ brandName }}
+        <template v-if="!brandLogo?.includesName">{{ brandName }}</template>
       </NuxtLink>
       <div class="ml-auto flex items-center gap-1">
         <UColorModeButton size="sm" />
@@ -100,9 +101,9 @@ const linkClass = (path: string) => active(path)
 
   <aside class="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-default bg-[var(--surface)] backdrop-blur-xl lg:flex">
     <NuxtLink to="/" class="flex h-14 items-center gap-2 px-4 text-sm font-semibold text-highlighted">
-      <template v-if="brandLogo"><img :src="brandLogo.light" alt="" class="size-6 dark:hidden"><img :src="brandLogo.dark" alt="" class="hidden size-6 dark:block"></template>
+      <template v-if="brandLogo"><img :src="brandLogo.light" :alt="brandLogo.includesName ? brandName : ''" class="h-6 w-auto dark:hidden"><img :src="brandLogo.dark" :alt="brandLogo.includesName ? brandName : ''" class="hidden h-6 w-auto dark:block"></template>
         <span v-else class="grid size-6 place-items-center rounded-md bg-linear-to-br from-blue-500 to-violet-600 text-white"><UIcon name="i-lucide-aperture" class="size-4" aria-hidden="true" /></span>
-      {{ brandName }}
+      <template v-if="!brandLogo?.includesName">{{ brandName }}</template>
     </NuxtLink>
 
     <nav :aria-label="t('navigation.label')" class="flex flex-1 flex-col gap-5 overflow-y-auto px-2 py-2">
