@@ -29,6 +29,49 @@ export default component
 
     <section class="connection-section">
       <div>
+        <h2 class="text-sm font-medium text-highlighted">{{ t('connections.form.entry.title') }}</h2>
+        <p class="mt-0.5 text-xs leading-5 text-muted">{{ t('connections.form.entry.description') }}</p>
+      </div>
+      <div class="min-w-0 space-y-4">
+        <UTabs
+          v-model="entryMode"
+          :items="entryModeItems"
+          :content="false"
+          size="sm"
+          class="w-full sm:w-auto"
+        />
+
+        <template v-if="entryMode === 'string'">
+          <UFormField
+            name="connectionString"
+            :label="t('connections.form.connectionString.label')"
+            :help="t('connections.form.connectionString.help')"
+            :error="connectionStringError || undefined"
+          >
+            <UTextarea
+              v-model="connectionString"
+              :placeholder="connectionStringPlaceholder"
+              :rows="3"
+              autoresize
+              spellcheck="false"
+              autocomplete="off"
+              class="w-full"
+              :ui="{ base: 'font-mono text-xs' }"
+            />
+          </UFormField>
+
+          <dl v-if="connectionStringSummary.length" class="grid gap-x-6 gap-y-2 rounded-lg border border-default bg-muted p-3 text-xs sm:grid-cols-2">
+            <div v-for="item in connectionStringSummary" :key="item.label" class="flex min-w-0 gap-2">
+              <dt class="shrink-0 text-muted">{{ item.label }}</dt>
+              <dd class="truncate font-mono text-highlighted">{{ item.value }}</dd>
+            </div>
+          </dl>
+        </template>
+      </div>
+    </section>
+
+    <section v-if="entryMode === 'fields'" class="connection-section">
+      <div>
         <h2 class="text-sm font-medium text-highlighted">{{ t('connections.form.sections.server.title') }}</h2>
         <p class="mt-0.5 text-xs leading-5 text-muted">{{ t('connections.form.sections.server.description') }}</p>
       </div>
@@ -57,7 +100,7 @@ export default component
       </div>
     </section>
 
-    <section class="connection-section">
+    <section v-if="entryMode === 'fields'" class="connection-section">
       <div>
         <h2 class="text-sm font-medium text-highlighted">{{ t('connections.form.sections.login.title') }}</h2>
         <p class="mt-0.5 text-xs leading-5 text-muted">{{ t('connections.form.sections.login.description') }}</p>
@@ -81,28 +124,29 @@ export default component
           </UFormField>
         </div>
 
-        <details class="group rounded-lg border border-default bg-muted text-sm">
-          <summary class="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 font-medium text-highlighted">
-            <UIcon name="i-lucide-shield-check" class="size-4 text-primary" aria-hidden="true" />
-            {{ t('connections.form.readOnly.title') }}
-            <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 text-muted transition-transform group-open:rotate-180" aria-hidden="true" />
-          </summary>
-          <div class="space-y-3 border-t border-default p-3">
-            <p class="text-muted">{{ t('connections.form.readOnly.description') }}</p>
-            <pre class="overflow-x-auto rounded-md border border-default bg-default p-3 font-mono text-xs text-default">{{ readOnlyLoginSql }}</pre>
-            <UButton
-              type="button"
-              size="xs"
-              color="neutral"
-              variant="outline"
-              :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
-              :label="copied ? t('connections.form.readOnly.copied') : t('connections.form.readOnly.copy')"
-              @click="copy(readOnlyLoginSql)"
-            />
-          </div>
-        </details>
       </div>
     </section>
+
+    <details class="group rounded-lg border border-default bg-muted text-sm">
+      <summary class="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 font-medium text-highlighted">
+        <UIcon name="i-lucide-shield-check" class="size-4 text-primary" aria-hidden="true" />
+        {{ t('connections.form.readOnly.title') }}
+        <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 text-muted transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div class="space-y-3 border-t border-default p-3">
+        <p class="text-muted">{{ t('connections.form.readOnly.description') }}</p>
+        <pre class="overflow-x-auto rounded-md border border-default bg-default p-3 font-mono text-xs text-default">{{ readOnlyLoginSql }}</pre>
+        <UButton
+          type="button"
+          size="xs"
+          color="neutral"
+          variant="outline"
+          :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
+          :label="copied ? t('connections.form.readOnly.copied') : t('connections.form.readOnly.copy')"
+          @click="copy(readOnlyLoginSql)"
+        />
+      </div>
+    </details>
 
     <AppAlert
       v-if="screenAlert"

@@ -1138,7 +1138,18 @@
         "copy": "Copy SQL",
         "copied": "Copied"
       },
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "entry": {
+        "title": "How to connect",
+        "description": "Paste the connection string your provider shows, or fill in each field yourself.",
+        "string": "Connection string",
+        "fields": "Separate fields"
+      },
+      "connectionString": {
+        "label": "Connection string",
+        "help": "Your provider shows it under Connect or Connection details. We read it into the fields; the string itself is never stored.",
+        "invalid": "This doesn’t look like a PostgreSQL, MySQL or SQL Server connection string."
+      }
     },
     "index": {
       "headline": "Connections",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "SQL query contains invalid characters.",
     "onlyASingleSQLStatementCanBeUsed": "Only a single SQL statement can be used.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Only read-only SELECT queries are allowed.",
-    "savedSQLQuerySecretIsInvalid": "Saved SQL query secret is invalid."
+    "savedSQLQuerySecretIsInvalid": "Saved SQL query secret is invalid.",
+    "saveChanges": "Save changes",
+    "saveAsNew": "Save as new query",
+    "saveAsNewHint": "Keeps the saved query and creates a new one with this name and SQL."
   }
 }

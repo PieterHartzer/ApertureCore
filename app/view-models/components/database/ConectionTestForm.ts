@@ -12,6 +12,7 @@ import {
   DATABASE_SSL_MODES,
   DATABASE_TYPES
 } from '~/types/database'
+import { parseConnectionString } from '~/utils/connection-string'
 import { translateMessage } from '~/utils/translateMessage'
 
 const READ_ONLY_LOGIN_SQL: Record<DatabaseConnection['databaseType'], string> = {
@@ -109,6 +110,47 @@ export default defineComponent({
       if (previous && connection.value.port === DEFAULT_PORTS[previous]) {
         connection.value.port = DEFAULT_PORTS[next]
       }
+    })
+
+    // Most providers hand out one connection string; pasting it fills the fields
+    // below, so testing, saving and encryption work exactly as with typed fields.
+    const entryMode = ref<'string' | 'fields'>(props.mode === 'create' ? 'string' : 'fields')
+    const connectionString = ref('')
+    const connectionStringError = ref('')
+    const entryModeItems = computed(() => [
+      { label: t('connections.form.entry.string'), value: 'string', icon: 'i-lucide-link' },
+      { label: t('connections.form.entry.fields'), value: 'fields', icon: 'i-lucide-list' }
+    ])
+    const connectionStringPlaceholder = 'postgres://user:password@host:5432/database?sslmode=require'
+
+    watch(connectionString, (text) => {
+      connectionStringError.value = ''
+
+      if (!text.trim()) return
+
+      const parsed = parseConnectionString(text)
+
+      if (!parsed.ok) {
+        connectionStringError.value = t('connections.form.connectionString.invalid')
+        return
+      }
+
+      Object.assign(connection.value, parsed.value)
+    })
+
+    const connectionStringSummary = computed(() => {
+      if (!connectionString.value.trim() || connectionStringError.value) return []
+
+      const value = connection.value
+
+      return [
+        { label: t('connections.new.fields.databaseType.label'), value: t(`database.types.${value.databaseType}`) },
+        { label: t('connections.new.fields.host.label'), value: value.port ? `${value.host}:${value.port}` : value.host },
+        { label: t('connections.new.fields.databaseName.label'), value: value.databaseName || '—' },
+        { label: t('connections.new.fields.username.label'), value: value.username || '—' },
+        { label: t('connections.new.fields.password.label'), value: value.password ? '••••••••' : '—' },
+        { label: t('connections.new.fields.sslMode.label'), value: t(`database.sslModes.${value.sslMode}`) }
+      ]
     })
 
     const databaseTypeItems = computed(() => {
@@ -290,6 +332,12 @@ export default defineComponent({
     return {
       canSave,
       connection,
+      connectionString,
+      connectionStringError,
+      connectionStringPlaceholder,
+      connectionStringSummary,
+      entryMode,
+      entryModeItems,
       copied,
       copy,
       databaseTypeItems,

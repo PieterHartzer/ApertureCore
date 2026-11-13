@@ -1138,7 +1138,18 @@
         "copy": "Copier le SQL",
         "copied": "Copié"
       },
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "entry": {
+        "title": "Comment se connecter",
+        "description": "Collez la chaîne de connexion fournie par votre hébergeur, ou remplissez chaque champ vous-même.",
+        "string": "Chaîne de connexion",
+        "fields": "Champs séparés"
+      },
+      "connectionString": {
+        "label": "Chaîne de connexion",
+        "help": "Votre hébergeur l’affiche sous Connect ou dans les détails de connexion. Nous la lisons pour remplir les champs ; la chaîne elle-même n’est jamais enregistrée.",
+        "invalid": "Ceci ne ressemble pas à une chaîne de connexion PostgreSQL, MySQL ou SQL Server."
+      }
     },
     "index": {
       "headline": "Connexions",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "La requête SQL contient des caractères invalides.",
     "onlyASingleSQLStatementCanBeUsed": "Une seule instruction SQL peut être utilisée.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Seules les requêtes SELECT en lecture seule sont autorisées.",
-    "savedSQLQuerySecretIsInvalid": "Le secret de la requête SQL enregistrée est invalide."
+    "savedSQLQuerySecretIsInvalid": "Le secret de la requête SQL enregistrée est invalide.",
+    "saveChanges": "Enregistrer les modifications",
+    "saveAsNew": "Enregistrer comme nouvelle requête",
+    "saveAsNewHint": "Conserve la requête enregistrée et en crée une nouvelle avec ce nom et ce SQL."
   }
 }

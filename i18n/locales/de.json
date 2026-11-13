@@ -1138,7 +1138,18 @@
         "copy": "SQL kopieren",
         "copied": "Kopiert"
       },
-      "cancel": "Abbrechen"
+      "cancel": "Abbrechen",
+      "entry": {
+        "title": "So verbinden Sie sich",
+        "description": "Fügen Sie den Verbindungsstring Ihres Anbieters ein oder füllen Sie die Felder einzeln aus.",
+        "string": "Verbindungsstring",
+        "fields": "Einzelne Felder"
+      },
+      "connectionString": {
+        "label": "Verbindungsstring",
+        "help": "Ihr Anbieter zeigt ihn unter Connect oder in den Verbindungsdetails. Wir übernehmen ihn in die Felder; der String selbst wird nie gespeichert.",
+        "invalid": "Das sieht nicht nach einem Verbindungsstring für PostgreSQL, MySQL oder SQL Server aus."
+      }
     },
     "index": {
       "headline": "Verbindungen",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "Die SQL-Abfrage enthält ungültige Zeichen.",
     "onlyASingleSQLStatementCanBeUsed": "Es kann nur eine einzelne SQL-Anweisung verwendet werden.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Nur SELECT-Abfragen mit Lesezugriff sind erlaubt.",
-    "savedSQLQuerySecretIsInvalid": "Das Secret der gespeicherten SQL-Abfrage ist ungültig."
+    "savedSQLQuerySecretIsInvalid": "Das Secret der gespeicherten SQL-Abfrage ist ungültig.",
+    "saveChanges": "Änderungen speichern",
+    "saveAsNew": "Als neue Abfrage speichern",
+    "saveAsNewHint": "Behält die gespeicherte Abfrage und legt eine neue mit diesem Namen und diesem SQL an."
   }
 }

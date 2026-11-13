@@ -1138,7 +1138,18 @@
         "copy": "Copiar SQL",
         "copied": "Copiado"
       },
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "entry": {
+        "title": "Como ligar",
+        "description": "Cole a string de ligação que o seu fornecedor mostra ou preencha cada campo.",
+        "string": "String de ligação",
+        "fields": "Campos separados"
+      },
+      "connectionString": {
+        "label": "String de ligação",
+        "help": "O seu fornecedor mostra-a em Connect ou nos detalhes de ligação. Lemo-la para preencher os campos; a string em si nunca é guardada.",
+        "invalid": "Isto não parece uma string de ligação de PostgreSQL, MySQL ou SQL Server."
+      }
     },
     "index": {
       "headline": "Ligações",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "A consulta SQL contém caracteres inválidos.",
     "onlyASingleSQLStatementCanBeUsed": "Só é possível usar uma única instrução SQL.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Só são permitidas consultas SELECT só de leitura.",
-    "savedSQLQuerySecretIsInvalid": "O segredo da consulta SQL guardada é inválido."
+    "savedSQLQuerySecretIsInvalid": "O segredo da consulta SQL guardada é inválido.",
+    "saveChanges": "Guardar alterações",
+    "saveAsNew": "Guardar como nova consulta",
+    "saveAsNewHint": "Mantém a consulta guardada e cria uma nova com este nome e este SQL."
   }
 }

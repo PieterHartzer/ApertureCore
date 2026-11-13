@@ -1138,7 +1138,18 @@
         "copy": "Copiar SQL",
         "copied": "Copiado"
       },
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "entry": {
+        "title": "Cómo conectar",
+        "description": "Pega la cadena de conexión que muestra tu proveedor o rellena cada campo tú mismo.",
+        "string": "Cadena de conexión",
+        "fields": "Campos por separado"
+      },
+      "connectionString": {
+        "label": "Cadena de conexión",
+        "help": "Tu proveedor la muestra en Connect o en los datos de conexión. La leemos y rellenamos los campos; la cadena en sí nunca se guarda.",
+        "invalid": "No parece una cadena de conexión de PostgreSQL, MySQL o SQL Server."
+      }
     },
     "index": {
       "headline": "Conexiones",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "La consulta SQL contiene caracteres no válidos.",
     "onlyASingleSQLStatementCanBeUsed": "Solo se puede usar una única sentencia SQL.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Solo se permiten consultas SELECT de solo lectura.",
-    "savedSQLQuerySecretIsInvalid": "El secreto de la consulta SQL guardada no es válido."
+    "savedSQLQuerySecretIsInvalid": "El secreto de la consulta SQL guardada no es válido.",
+    "saveChanges": "Guardar cambios",
+    "saveAsNew": "Guardar como consulta nueva",
+    "saveAsNewHint": "Conserva la consulta guardada y crea una nueva con este nombre y este SQL."
   }
 }

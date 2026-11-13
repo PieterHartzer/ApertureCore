@@ -1138,6 +1138,17 @@
         "description": "[@:{'app.name'} refuses logins that can do more than read. Run this as an administrator and change the password.]",
         "copy": "[Copy SQL]",
         "copied": "[Copied]"
+      },
+      "entry": {
+        "title": "[Hôw tô cônnëct]",
+        "description": "[Påstë thë cônnëctîôn strîng yôûr prôvîdër shôws, ôr fîll în ëåch fîëld yôûrsëlf.]",
+        "string": "[Cônnëctîôn strîng]",
+        "fields": "[Sëpåråtë fîëlds]"
+      },
+      "connectionString": {
+        "label": "[Cônnëctîôn strîng]",
+        "help": "[Yôûr prôvîdër shôws ît ûndër Cônnëct ôr Cônnëctîôn dëtåîls. Wë rëåd ît întô thë fîëlds; thë strîng îtsëlf îs nëvër stôrëd.]",
+        "invalid": "[Thîs dôësn’t lôôk lîkë å PôstgrëSQL, MySQL ôr SQL Sërvër cônnëctîôn strîng.]"
       }
     },
     "index": {
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "[ŠQĻ qûëřý çôñţåîñš îñṽåļîð çĥåřåçţëřš.]",
     "onlyASingleSQLStatementCanBeUsed": "[Ôñļý å šîñĝļë ŠQĻ šţåţëḿëñţ çåñ ƀë ûšëð.]",
     "onlyReadOnlySELECTQueriesAreAllowed": "[Ôñļý řëåð-ôñļý ŠËĻËÇŢ qûëřîëš åřë åļļôŵëð.]",
-    "savedSQLQuerySecretIsInvalid": "[Šåṽëð ŠQĻ qûëřý šëçřëţ îš îñṽåļîð.]"
+    "savedSQLQuerySecretIsInvalid": "[Šåṽëð ŠQĻ qûëřý šëçřëţ îš îñṽåļîð.]",
+    "saveChanges": "[Såvë chångës]",
+    "saveAsNew": "[Såvë ås nëw quëry]",
+    "saveAsNewHint": "[Këëps thë såvëd quëry ånd crëåtës å nëw ônë with this nåmë ånd SQL.]"
   }
 }

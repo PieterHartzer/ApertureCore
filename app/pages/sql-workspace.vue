@@ -81,7 +81,10 @@ const discardAndOpenQuery = () => {
   pendingQuery.value = null
   if (target) void openQuery(target)
 }
-const queryLoadFailed = computed(() => !!queryId.value && !existingQuery.value?.query)
+// Only the query this page opened with can fail to load. Right after a first save
+// queryId holds the new id for a moment before the page switches to it.
+const openedQueryId = queryId.value
+const queryLoadFailed = computed(() => !!openedQueryId && !existingQuery.value?.query)
 const hydrateQuery = () => {
   const query = existingQuery.value?.query
   if (!query) return
@@ -270,21 +273,25 @@ const runTest = async () => {
   } catch (cause) { if (current === revision) error.value = messageFor(cause) }
   finally { testing.value = false }
 }
-const save = async () => {
-  if (busy.value || !canSave.value || saved.value) return
+// Editing a saved query: "Save changes" updates it, "Save as new query" keeps
+// it and creates another one, so changing the name and SQL never overwrites by surprise.
+const save = async (asNew = false) => {
+  if (busy.value || !canSave.value || (saved.value && !asNew)) return
   saving.value = true
   errorTitle.value = 'Could not save query'
   error.value = ''
   const current = revision
   try {
     const input = { connectionId: connectionId.value, queryName: queryName.value, sql: sql.value }
-    const response = await (queryId.value ? updateQuery(queryId.value, input) : saveQuery(input))
+    const creating = asNew || !queryId.value
+    const response = await (creating ? saveQuery(input) : updateQuery(queryId.value, input))
     if (current !== revision) return
     if (response.ok) {
       saved.value = true
-      if (!queryId.value && response.query) {
+      if (creating && response.query) {
+        const firstSave = !queryId.value
         queryId.value = response.query.id
-        await navigateTo({ path: '/sql-workspace', query: { queryId: response.query.id } }, { replace: true })
+        await navigateTo({ path: '/sql-workspace', query: { queryId: response.query.id } }, { replace: firstSave })
       }
     }
     else error.value = t(response.messageKey || response.message)
@@ -418,7 +425,8 @@ const save = async () => {
                 {{ $t('interface.queryName') }}
                 <UInput v-model="queryName" size="sm" class="min-w-0 flex-1" :placeholder="$t('interface.monthlySales')" :disabled="busy" />
               </label>
-              <UButton size="sm" icon="i-lucide-save" :label="$t('interface.saveQuery')" :loading="saving" :disabled="busy || saved || !canSave" :title="canSave ? undefined : $t('workspace.testBeforeSaving')" @click="save" />
+              <UButton size="sm" icon="i-lucide-save" :label="queryId ? $t('interface.saveChanges') : $t('interface.saveQuery')" :loading="saving" :disabled="busy || saved || !canSave" :title="canSave ? undefined : $t('workspace.testBeforeSaving')" @click="save()" />
+              <UButton v-if="queryId" size="sm" color="neutral" variant="outline" icon="i-lucide-copy-plus" :label="$t('interface.saveAsNew')" :disabled="busy || !canSave" :title="canSave ? $t('interface.saveAsNewHint') : $t('workspace.testBeforeSaving')" @click="save(true)" />
               <span v-if="saved" role="status" class="flex items-center gap-1 text-xs text-success"><UIcon name="i-lucide-check" class="size-3.5" aria-hidden="true" />{{ $t('workspace.saved') }}</span>
             </div>
           </WorkspacePanel>

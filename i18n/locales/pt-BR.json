@@ -1138,7 +1138,18 @@
         "copy": "Copiar SQL",
         "copied": "Copiado"
       },
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "entry": {
+        "title": "Como conectar",
+        "description": "Cole a string de conexão que seu provedor mostra ou preencha cada campo você mesmo.",
+        "string": "String de conexão",
+        "fields": "Campos separados"
+      },
+      "connectionString": {
+        "label": "String de conexão",
+        "help": "Seu provedor mostra em Connect ou nos detalhes de conexão. Lemos e preenchemos os campos; a string em si nunca é salva.",
+        "invalid": "Isto não parece uma string de conexão de PostgreSQL, MySQL ou SQL Server."
+      }
     },
     "index": {
       "headline": "Conexões",
@@ -1931,6 +1942,9 @@
     "sqlQueryContainsInvalidCharacters": "A consulta SQL contém caracteres inválidos.",
     "onlyASingleSQLStatementCanBeUsed": "Só é possível usar uma única instrução SQL.",
     "onlyReadOnlySELECTQueriesAreAllowed": "Só são permitidas consultas SELECT somente leitura.",
-    "savedSQLQuerySecretIsInvalid": "O segredo da consulta SQL salva é inválido."
+    "savedSQLQuerySecretIsInvalid": "O segredo da consulta SQL salva é inválido.",
+    "saveChanges": "Salvar alterações",
+    "saveAsNew": "Salvar como nova consulta",
+    "saveAsNewHint": "Mantém a consulta salva e cria uma nova com este nome e este SQL."
   }
 }
