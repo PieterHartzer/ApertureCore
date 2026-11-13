@@ -9,7 +9,8 @@ export default component
 </script>
 
 <template>
-  <main class="flex min-h-dvh items-center justify-center px-4 sm:px-6 lg:px-8">
+  <main class="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 sm:px-6 lg:px-8">
+    <AppBrand />
     <UCard class="w-full max-w-md">
       <template #header>
         <div class="flex items-start justify-between gap-4 sm:gap-6">

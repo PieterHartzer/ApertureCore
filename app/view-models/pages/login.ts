@@ -2,10 +2,12 @@ import { defineComponent } from 'vue'
 
 import AppAlert from '~/components/ui/AppAlert.vue'
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+import AppBrand from '~/components/ui/AppBrand.vue'
 
 export default defineComponent({
   components: {
     AppAlert,
+    AppBrand,
     AppLocaleSelect
   },
   async setup() {
