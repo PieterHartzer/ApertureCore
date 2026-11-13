@@ -1,0 +1,1936 @@
+{
+  "ai": {
+    "title": "KI-Anbieter",
+    "subtitle": "Wählen Sie, welche KI Ihr SQL schreibt. „In diesem Browser“ funktioniert sofort, ohne Konto.",
+    "browser": {
+      "name": "In diesem Browser",
+      "description": "Kostenlos und privat. Läuft auf Ihrem Computer, nichts verlässt dieses Gerät."
+    },
+    "local": {
+      "name": "Eigener Server",
+      "description": "Jeder OpenAI-kompatible Server, in Ihrem eigenen Netzwerk oder online erreichbar."
+    },
+    "cloud": {
+      "description": "Ihre Frage und Ihre Datenbankstruktur werden an {provider} gesendet."
+    },
+    "status": {
+      "connected": "Verbunden",
+      "notSetUp": "Nicht eingerichtet",
+      "attention": "Keine Modelle gefunden",
+      "ready": "Einsatzbereit"
+    },
+    "actions": {
+      "connect": "Verbinden",
+      "manage": "Verwalten",
+      "disconnect": "Trennen",
+      "refresh": "Modelle aktualisieren",
+      "save": "Speichern und verbinden"
+    },
+    "fields": {
+      "apiKey": "API-Schlüssel",
+      "apiKeyHint": "Fügen Sie den Schlüssel aus Ihrem Konto ein.",
+      "getKey": "Schlüssel holen",
+      "keepKey": "Leer lassen, um den gespeicherten Schlüssel zu behalten.",
+      "azureEndpoint": "Endpoint",
+      "azureEndpointHint": "Steht in Ihrer Azure-OpenAI-Ressource unter Keys and Endpoint.",
+      "azureEndpointPlaceholder": "https://your-resource.openai.azure.com",
+      "azureDeployments": "Deployment-Namen",
+      "azureDeploymentsHint": "Unter Deployments in Azure AI Foundry aufgeführt. Mehrere durch Kommas trennen.",
+      "azureDeploymentsPlaceholder": "gpt-4o, gpt-4o-mini",
+      "urlPlaceholder": "https://ai.example.com/v1",
+      "url": "Serveradresse",
+      "urlHint": "Anfragen gehen direkt von Ihrem Browser an diesen Server, daher muss er diese App zulassen (CORS).",
+      "serverKey": "API-Schlüssel (optional, nur für diesen Besuch gespeichert)"
+    },
+    "modelsFound": "{count} Modelle einsatzbereit.",
+    "connectedNotice": "{provider} ist verbunden. Wählen Sie es im SQL-Editor aus.",
+    "disconnectConfirm": "{provider} trennen? Der gespeicherte Schlüssel und die Modelle werden entfernt.",
+    "browserModels": "Modelle",
+    "cached": "Heruntergeladen",
+    "notCached": "Wird beim ersten Einsatz geladen"
+  },
+  "workspace": {
+    "querySelect": "Abfrage",
+    "newQuery": "Neue Abfrage",
+    "discard": {
+      "title": "Nicht gespeicherte Änderungen verwerfen?",
+      "description": "Ihr SQL enthält Änderungen, die nicht gespeichert wurden.",
+      "confirm": "Änderungen verwerfen",
+      "keep": "Weiter bearbeiten"
+    },
+    "panels": {
+      "prompt": "Fragen Sie in Ihren eigenen Worten",
+      "sql": "SQL",
+      "results": "Ergebnisse"
+    },
+    "ask": {
+      "question": "Was möchten Sie wissen?",
+      "refreshModels": "Modelle aktualisieren",
+      "modelListFailed": "Modelle konnten von diesem Server nicht gelesen werden. Prüfen Sie, ob er läuft und diese App zulässt.",
+      "provider": "KI-Anbieter",
+      "model": "Modell",
+      "manage": "KI-Anbieter einrichten",
+      "noModels": "Noch keine Modelle",
+      "serverKey": "API-Schlüssel des Servers (optional)",
+      "downloadAndGenerate": "Modell herunterladen und generieren",
+      "downloadNote": "Der erste Download kann einige Minuten dauern."
+    },
+    "collapsePanel": "{panel} einklappen",
+    "expandPanel": "{panel} ausklappen",
+    "resizePanels": "Bereiche anpassen",
+    "resultsBelow": "Ergebnisse unter dem SQL anzeigen",
+    "resultsBeside": "Ergebnisse neben dem SQL anzeigen",
+    "rereadSchema": "Schema neu einlesen",
+    "saved": "Gespeichert",
+    "testFailed": "Der Test ist fehlgeschlagen. Siehe Fehler oben.",
+    "connectDatabaseDescription": "Fügen Sie eine Datenbankverbindung hinzu, um Abfragen zu schreiben und zu testen.",
+    "readingSchema": "Datenbankschema wird gelesen…",
+    "editTitle": "Abfrage im SQL-Bereich bearbeiten",
+    "loadFailed": "Abfrage konnte nicht geladen werden",
+    "testBeforeSaving": "Testen Sie das aktuelle SQL erfolgreich, bevor Sie speichern."
+  },
+  "common": {
+    "labels": {
+      "locale": "Sprache"
+    }
+  },
+  "database": {
+    "types": {
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL / MariaDB",
+      "mssql": "Microsoft SQL Server"
+    },
+    "sslModes": {
+      "disable": "SSL deaktivieren",
+      "require": "SSL verlangen (Zertifikat prüfen)"
+    }
+  },
+  "errors": {
+    "auth": {
+      "organizationRequired": "In der aktuellen Sitzung fehlt der Kontext Ihrer Organisation.",
+      "unauthorized": "Sie müssen angemeldet sein, um diese Ressource zu nutzen.",
+      "crossOrigin": "Diese Anfrage kam von einer anderen Website und wurde deshalb abgelehnt. Laden Sie die Seite neu und versuchen Sie es erneut."
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "headline": "@:{'app.name'}",
+      "title": "Dashboard",
+      "description": "Erstellen Sie schreibgeschützte Dashboards, Kennzahlen und Karten aus Ihrer eigenen Datenbank.",
+      "errors": {
+        "loadQueriesTitle": "Dashboard-Abfragen konnten nicht geladen werden",
+        "loadDashboardsTitle": "Dashboards konnten nicht geladen werden",
+        "loadDashboardTitle": "Das ausgewählte Dashboard konnte nicht geladen werden"
+      },
+      "states": {
+        "loadingDashboardsTitle": "Dashboards werden geladen",
+        "loadingDashboardsDescription": "Die für Ihre Organisation verfügbaren Dashboards werden abgerufen.",
+        "loadingDashboardTitle": "Dashboard wird geladen",
+        "loadingDashboardDescription": "Widgets und Layout des ausgewählten Dashboards werden abgerufen.",
+        "noSharedDashboardsTitle": "Noch keine Dashboards",
+        "noSharedDashboardsDescription": "Dashboards erscheinen hier, sobald jemand in Ihrer Organisation eines erstellt."
+      },
+      "status": {
+        "ready": "Änderungen werden beim Bearbeiten automatisch gespeichert.",
+        "saving": "Dashboard-Änderungen werden gespeichert...",
+        "saved": "Dashboard gespeichert."
+      },
+      "gettingStarted": {
+        "title": "Erste Schritte",
+        "description": "Drei Schritte zu Ihrem ersten Live-Dashboard.",
+        "done": "Erledigt",
+        "steps": {
+          "connect": {
+            "title": "Datenbank verbinden",
+            "description": "Nutzen Sie eine Anmeldung mit reinem Lesezugriff. Es wird nie etwas geschrieben.",
+            "action": "Verbindung hinzufügen"
+          },
+          "query": {
+            "title": "Abfrage schreiben",
+            "description": "Schreiben Sie SQL oder beschreiben Sie, was Sie brauchen, und lassen Sie die KI einen Entwurf erstellen.",
+            "action": "SQL-Editor öffnen"
+          },
+          "dashboard": {
+            "title": "Dashboard erstellen",
+            "description": "Machen Sie aus Ihren Abfragen Diagramme, Kennzahlen und Tabellen.",
+            "action": "Dashboard erstellen"
+          }
+        }
+      },
+      "empty": {
+        "title": "Noch keine Dashboards",
+        "description": "Erstellen Sie ein Dashboard, um Widgets anzuordnen und eingebettete Ansichten zu teilen.",
+        "action": "Dashboard erstellen"
+      },
+      "selector": {
+        "switchLabel": "Dashboard",
+        "placeholder": "Dashboard auswählen",
+        "option": "{dashboardName} ({widgetCount} Widgets)",
+        "actions": {
+          "new": "Neues Dashboard",
+          "settings": "Dashboard-Einstellungen"
+        },
+        "create": {
+          "title": "Dashboard erstellen",
+          "description": "Beginnen Sie ein neues Dashboard für eigene Widgets, ein eigenes Layout und eigene Einbettungseinstellungen.",
+          "errorTitle": "Dashboard konnte nicht erstellt werden",
+          "fields": {
+            "dashboardName": {
+              "label": "Name des Dashboards",
+              "description": "Verwenden Sie einen klaren Namen, damit es in der Auswahl leicht zu finden ist.",
+              "placeholder": "Überblick für die Geschäftsleitung"
+            }
+          },
+          "actions": {
+            "cancel": "Abbrechen",
+            "submit": "Dashboard erstellen"
+          }
+        },
+        "settings": {
+          "title": "Dashboard-Einstellungen",
+          "description": "Benennen Sie dieses Dashboard um und legen Sie fest, ob es über seine GUID öffentlich eingebettet werden darf.",
+          "errorTitle": "Dashboard-Einstellungen konnten nicht gespeichert werden",
+          "fields": {
+            "dashboardName": {
+              "label": "Name des Dashboards",
+              "description": "Ändern Sie den Namen, der in der Auswahl angezeigt wird.",
+              "placeholder": "Überblick für die Geschäftsleitung"
+            },
+            "appearance": {
+              "label": "Hintergrund",
+              "description": "Geben Sie diesem Dashboard ein eigenes Aussehen.",
+              "options": {
+                "default": "Standard",
+                "aurora": "Polarlicht",
+                "ocean": "Ozean",
+                "sunset": "Sonnenuntergang",
+                "forest": "Wald",
+                "plain": "Schlicht"
+              }
+            },
+            "isDefault": {
+              "label": "Dieses Dashboard zuerst öffnen",
+              "description": "Alle in Ihrer Organisation sehen dieses Dashboard nach der Anmeldung. Wenn Sie es hier aktivieren, wird es für jedes andere Dashboard deaktiviert."
+            },
+            "embedEnabled": {
+              "label": "Einbetten aktivieren",
+              "description": "Erlaubt, dieses Dashboard über seine Einbettungs-GUID öffentlich anzuzeigen."
+            }
+          },
+          "actions": {
+            "cancel": "Abbrechen",
+            "save": "Einstellungen speichern",
+            "delete": "Dashboard löschen"
+          }
+        },
+        "delete": {
+          "title": "Dashboard löschen",
+          "description": "{dashboardName} für diese Organisation löschen. Damit werden das gespeicherte Widget-Layout und der Einbettungszugang entfernt.",
+          "errorTitle": "Dashboard konnte nicht gelöscht werden",
+          "confirmationLabel": "Geben Sie zur Bestätigung den Namen des Dashboards ein",
+          "confirmationDescription": "Diese Aktion ist endgültig und kann in der Oberfläche nicht rückgängig gemacht werden.",
+          "actions": {
+            "cancel": "Abbrechen",
+            "confirm": "Dashboard löschen",
+            "confirmLoading": "Wird gelöscht..."
+          }
+        },
+        "embed": {
+          "guidLabel": "Einbettungs-GUID",
+          "guidDescription": "Das ist die öffentliche Kennung, die die iframe-Route verwendet.",
+          "urlLabel": "Einbettungs-URL",
+          "urlDescription": "Verwenden Sie diese URL in einem iframe, um das Dashboard ohne die übliche App-Oberfläche anzuzeigen.",
+          "enabledHint": "Einbetten ist für dieses Dashboard aktiviert.",
+          "pendingHint": "Der Link funktioniert, sobald Sie speichern.",
+          "disabledHint": "Aktivieren Sie das Einbetten, bevor Sie die öffentliche iframe-URL kopieren oder verwenden.",
+          "copied": "Einbettungs-URL in die Zwischenablage kopiert.",
+          "actions": {
+            "copy": "URL kopieren"
+          },
+          "newLink": {
+            "label": "Neuer Link",
+            "description": "Gibt diesem Dashboard eine neue Einbettungsadresse. Nutzen Sie das, wenn der Link bei jemandem gelandet ist, der ihn nicht haben sollte.",
+            "action": "Neuen Link erstellen",
+            "confirm": "Ja, Link ersetzen",
+            "warning": "Der aktuelle Link funktioniert sofort nicht mehr, auf jeder Website, die ihn verwendet.",
+            "done": "Aktualisieren Sie den Einbettungscode auf Ihren Websites mit dem neuen Link.",
+            "doneTitle": "Neuer Link erstellt"
+          },
+          "allowedOrigins": {
+            "label": "Erlaubte Websites",
+            "description": "Das Dashboard wird nur auf diesen Websites angezeigt, eine pro Zeile. Wer den Link direkt öffnet, sieht es nicht. Leer lassen, um jede Website zu erlauben.",
+            "placeholder": "https://portal.example.com\n*.example.com",
+            "invalid": "Prüfen Sie die erlaubten Websites: Verwenden Sie Adressen wie https://example.com, eine pro Zeile, höchstens {max}."
+          }
+        }
+      },
+      "notifications": {
+        "saveErrorTitle": "Dashboard konnte nicht gespeichert werden",
+        "loadErrorTitle": "Dashboard konnte nicht geladen werden",
+        "createSuccessTitle": "Dashboard erstellt",
+        "deleteSuccessTitle": "Dashboard gelöscht",
+        "settingsSavedTitle": "Einstellungen gespeichert",
+        "embedCopiedTitle": "Einbettungs-URL kopiert"
+      },
+      "embed": {
+        "errorTitle": "Eingebettetes Dashboard konnte nicht geladen werden",
+        "loading": "Eingebettetes Dashboard wird geladen...",
+        "empty": "Dieses eingebettete Dashboard ist nicht verfügbar."
+      },
+      "builder": {
+        "groups": {
+          "widget": "Widget",
+          "data": "Daten",
+          "content": "Inhalt"
+        },
+        "title": "Widget hinzufügen",
+        "description": "Wählen Sie eine gespeicherte Abfrage und ein Plugin und ordnen Sie die Felder der Abfrage den Eingaben des Widgets zu.",
+        "editTitle": "Widget bearbeiten",
+        "editDescription": "Ändern Sie gespeicherte Abfrage, Plugin und Konfiguration des ausgewählten Widgets.",
+        "fields": {
+          "query": {
+            "label": "Abfrage",
+            "description": "Die gespeicherte SQL-Abfrage, die dieses Widget speist.",
+            "placeholder": "Gespeicherte Abfrage auswählen",
+            "option": "{queryName} ({connectionName})",
+            "search": "Abfragen suchen"
+          },
+          "plugin": {
+            "label": "Plugin",
+            "description": "Die Komponente, die das Abfrageergebnis darstellt.",
+            "placeholder": "Plugin auswählen",
+            "search": "Widgets suchen"
+          },
+          "title": {
+            "label": "Widget-Titel",
+            "description": "Optional. Leer lassen, um einen Titel aus Abfrage und Plugin zu erzeugen.",
+            "placeholder": "Umsatzentwicklung"
+          },
+          "refresh": {
+            "label": "Aktualisierungsintervall",
+            "description": "Wie oft sich dieses Widget aktualisiert, solange das Dashboard geöffnet ist."
+          }
+        },
+        "refresh": {
+          "every60": "Jede Minute",
+          "every300": "Alle 5 Minuten",
+          "every900": "Alle 15 Minuten",
+          "every3600": "Jede Stunde"
+        },
+        "mapping": {
+          "title": "Plugin-Konfiguration",
+          "description": "Ordnen Sie die Felder der Abfrage zu und konfigurieren Sie die Plugin-Eingaben, bevor das Widget angezeigt wird.",
+          "placeholder": "Wert auswählen",
+          "multiplePlaceholder": "Einen oder mehrere Werte auswählen",
+          "option": "{field} ({type})",
+          "emptyTitle": "Zuerst ein Plugin auswählen",
+          "emptyDescription": "Plugin-Optionen erscheinen, sobald eine Komponente ausgewählt ist.",
+          "noneTitle": "Keine Plugin-Konfiguration nötig",
+          "noneDescription": "Dieses Plugin kann das Abfrageergebnis ohne weitere Konfiguration darstellen.",
+          "types": {
+            "string": "Text",
+            "number": "Zahl",
+            "boolean": "Wahrheitswert",
+            "date": "Datum",
+            "unknown": "unbekannt"
+          }
+        },
+        "defaultTitle": "{queryName}",
+        "preview": {
+          "loadingTitle": "Abfragevorschau wird geladen",
+          "loadingDescription": "Die ausgewählte Abfrage wird ausgeführt, damit Feldzuordnung und Widget-Vorschau übereinstimmen.",
+          "errorTitle": "Vorschau konnte nicht geladen werden"
+        },
+        "actions": {
+          "add": "Widget hinzufügen",
+          "save": "Änderungen speichern",
+          "cancelEdit": "Bearbeitung abbrechen",
+          "refreshPreview": "Vorschau aktualisieren"
+        },
+        "tabs": {
+          "data": "Daten",
+          "format": "Format",
+          "style": "Stil"
+        },
+        "suggestions": {
+          "label": "Vorschlag:"
+        }
+      },
+      "preview": {
+        "title": "Widget-Vorschau",
+        "description": "Sehen Sie das ausgewählte Plugin mit zwischengespeicherten Abfrageergebnissen in der Vorschau, bevor Sie es zum Dashboard hinzufügen.",
+        "empty": "Wählen Sie eine Abfrage und ein Plugin für die Vorschau eines Widgets."
+      },
+      "widgets": {
+        "title": "Dashboard-Widgets",
+        "description": "Widgets nutzen zwischengespeicherte Abfrageergebnisse, lassen sich im Raster neu anordnen und aktualisieren sich automatisch, solange das Dashboard offen ist.",
+        "actions": {
+          "drag": "Widget ziehen",
+          "edit": "Bearbeiten",
+          "editDashboard": "Dashboard bearbeiten",
+          "doneEditing": "Bearbeitung beenden",
+          "refreshAll": "Alle Widgets aktualisieren",
+          "refreshOne": "Aktualisieren",
+          "remove": "Entfernen"
+        },
+        "empty": {
+          "title": "Noch keine Widgets",
+          "description": "Machen Sie aus einer gespeicherten Abfrage ein Diagramm, eine Kennzahl oder eine Tabelle."
+        },
+        "card": {
+          "fallbackTitle": "Widget ohne Titel",
+          "missingQuery": "Die gespeicherte Abfrage für dieses Widget ist nicht mehr verfügbar.",
+          "refreshing": "Wird aktualisiert",
+          "queryMissingTitle": "Abfrage nicht verfügbar",
+          "queryMissingDescription": "Dieses Widget verweist auf eine gespeicherte Abfrage, die in der aktuellen Organisation nicht gefunden wurde.",
+          "loadingTitle": "Widget wird geladen",
+          "loadingDescription": "Die gespeicherte Abfrage für dieses Widget wird ausgeführt.",
+          "errorTitle": "Widget-Abfrage fehlgeschlagen"
+        }
+      },
+      "style": {
+        "open": "Dashboard-Stil",
+        "title": "Dashboard-Stil",
+        "description": "Änderungen werden sofort angezeigt. Speichern Sie, um sie zu behalten.",
+        "save": "Stil speichern",
+        "reset": "Alles zurücksetzen",
+        "groups": {
+          "page": "Seite",
+          "widgets": "Widgets",
+          "titles": "Widget-Titel",
+          "values": "Zahlen und Beschriftungen",
+          "charts": "Diagramme"
+        },
+        "fields": {
+          "pageBackground": {
+            "label": "Hintergrundfarbe"
+          },
+          "textColor": {
+            "label": "Textfarbe"
+          },
+          "fontFamily": {
+            "label": "Schrift",
+            "options": {
+              "sans": "Serifenlos",
+              "serif": "Serifenschrift",
+              "mono": "Festbreitenschrift"
+            }
+          },
+          "widgetGap": {
+            "label": "Abstand zwischen Widgets"
+          },
+          "cardBackground": {
+            "label": "Hintergrundfarbe"
+          },
+          "borderColor": {
+            "label": "Rahmenfarbe"
+          },
+          "borderWidth": {
+            "label": "Rahmenstärke"
+          },
+          "borderRadius": {
+            "label": "Eckenradius"
+          },
+          "cardPadding": {
+            "label": "Innenabstand"
+          },
+          "shadow": {
+            "label": "Schatten",
+            "options": {
+              "none": "Keiner",
+              "small": "Klein",
+              "medium": "Mittel",
+              "large": "Groß"
+            }
+          },
+          "hideTitles": {
+            "label": "Titel ausblenden"
+          },
+          "titleColor": {
+            "label": "Farbe"
+          },
+          "titleSize": {
+            "label": "Größe"
+          },
+          "titleWeight": {
+            "label": "Stärke",
+            "options": {
+              "400": "Normal",
+              "500": "Mittel",
+              "600": "Halbfett",
+              "700": "Fett"
+            }
+          },
+          "titleAlign": {
+            "label": "Ausrichtung",
+            "options": {
+              "left": "Links",
+              "center": "Mitte",
+              "right": "Rechts"
+            }
+          },
+          "valueColor": {
+            "label": "Zahlenfarbe"
+          },
+          "valueSize": {
+            "label": "Zahlengröße"
+          },
+          "labelColor": {
+            "label": "Beschriftungsfarbe"
+          },
+          "chartPrimary": {
+            "label": "Farbe der Hauptreihe"
+          },
+          "chartText": {
+            "label": "Textfarbe der Achsen"
+          },
+          "chartGrid": {
+            "label": "Farbe der Gitterlinien"
+          },
+          "borderStyle": {
+            "label": "Rahmenstil",
+            "options": {
+              "solid": "Durchgehend",
+              "dashed": "Gestrichelt",
+              "dotted": "Gepunktet",
+              "double": "Doppelt"
+            }
+          }
+        }
+      },
+      "plugins": {
+        "pie": {
+          "name": "Kreisdiagramm",
+          "description": "Teile eines Ganzen.",
+          "useWhen": "Sie möchten zeigen, wie sich eine Summe auf wenige Teile verteilt. Am besten mit fünf Segmenten oder weniger."
+        },
+        "catalog": {
+          "settings": {
+            "valueFontSize": {
+              "label": "Zahlengröße"
+            },
+            "labelFontSize": {
+              "label": "Beschriftungsgröße"
+            },
+            "tableFontSize": {
+              "label": "Textgröße"
+            },
+            "textAlign": {
+              "label": "Horizontale Ausrichtung",
+              "options": {
+                "left": "Links",
+                "center": "Mitte",
+                "right": "Rechts"
+              }
+            },
+            "verticalAlign": {
+              "label": "Vertikale Ausrichtung",
+              "options": {
+                "top": "Oben",
+                "middle": "Mitte",
+                "bottom": "Unten"
+              }
+            },
+            "labelOverrides": {
+              "label": "Beschriftungen umbenennen"
+            },
+            "advancedOptions": {
+              "label": "ECharts-Optionen (JSON)"
+            },
+            "valueFormat": {
+              "label": "Zahlenformat",
+              "options": {
+                "auto": "Automatisch",
+                "number": "Zahl (1,234.50)",
+                "compact": "Kompakt (1.2K)",
+                "currency": "Währung",
+                "percent": "Prozent (42 wird als 42 % angezeigt)",
+                "fraction": "Prozent aus Bruch (0.42 wird als 42 % angezeigt)"
+              }
+            },
+            "currency": {
+              "label": "Währung"
+            },
+            "decimals": {
+              "label": "Nachkommastellen"
+            },
+            "prefix": {
+              "label": "Text davor"
+            },
+            "suffix": {
+              "label": "Text danach"
+            },
+            "color": {
+              "label": "Farbe"
+            },
+            "axisMin": {
+              "label": "Achsenminimum"
+            },
+            "axisMax": {
+              "label": "Achsenmaximum"
+            },
+            "referenceValue": {
+              "label": "Wert der Ziellinie"
+            },
+            "referenceLabel": {
+              "label": "Beschriftung der Ziellinie"
+            },
+            "showValues": {
+              "label": "Werte im Diagramm anzeigen"
+            },
+            "normalColor": {
+              "label": "Anfangsfarbe"
+            },
+            "thresholds": {
+              "label": "Farbwechsel bei"
+            },
+            "goodDirection": {
+              "label": "Ein Anstieg ist",
+              "options": {
+                "neutral": "Neutral",
+                "up": "Gut",
+                "down": "Schlecht"
+              }
+            },
+            "maxValue": {
+              "label": "Maximum"
+            },
+            "minValue": {
+              "label": "Minimum"
+            },
+            "lowColor": {
+              "label": "Farbe für niedrig"
+            },
+            "highColor": {
+              "label": "Farbe für hoch"
+            },
+            "limit": {
+              "label": "Anzahl der angezeigten Einträge"
+            },
+            "positiveColor": {
+              "label": "Positive Farbe"
+            },
+            "negativeColor": {
+              "label": "Negative Farbe"
+            },
+            "totalColor": {
+              "label": "Farbe der Summe"
+            },
+            "labelMode": {
+              "label": "Segmentbeschriftungen",
+              "options": {
+                "auto": "Automatisch",
+                "none": "Keine",
+                "name": "Name",
+                "percent": "Name und Prozent",
+                "value": "Name und Wert"
+              }
+            },
+            "bins": {
+              "label": "Anzahl der Bereiche"
+            },
+            "referenceColor": {
+              "label": "Farbe der Ziellinie"
+            },
+            "referenceLineStyle": {
+              "label": "Stil der Ziellinie",
+              "options": {
+                "dashed": "Gestrichelt",
+                "solid": "Durchgehend",
+                "dotted": "Gepunktet"
+              }
+            },
+            "cardHideTitle": {
+              "label": "Titel ausblenden"
+            },
+            "cardHideShadow": {
+              "label": "Schatten ausblenden"
+            },
+            "cardBackground": {
+              "label": "Hintergrundfarbe"
+            },
+            "cardBorderColor": {
+              "label": "Rahmenfarbe"
+            },
+            "cardBorderWidth": {
+              "label": "Rahmenstärke"
+            },
+            "cardBorderStyle": {
+              "label": "Rahmenstil",
+              "options": {
+                "solid": "Durchgehend",
+                "dashed": "Gestrichelt",
+                "dotted": "Gepunktet",
+                "double": "Doppelt"
+              }
+            },
+            "cardRadius": {
+              "label": "Eckenradius"
+            },
+            "text": {
+              "label": "Text"
+            },
+            "textSize": {
+              "label": "Textgröße",
+              "options": {
+                "small": "Klein",
+                "body": "Normal",
+                "large": "Groß",
+                "heading": "Überschrift",
+                "display": "Sehr groß",
+                "fill": "Widget ausfüllen"
+              }
+            },
+            "textWeight": {
+              "label": "Stärke",
+              "options": {
+                "regular": "Normal",
+                "medium": "Mittel",
+                "semibold": "Halbfett",
+                "bold": "Fett"
+              }
+            },
+            "textColor": {
+              "label": "Textfarbe"
+            },
+            "timeZone": {
+              "label": "Zeitzone",
+              "options": {
+                "local": "Zeitzone des Betrachters"
+              }
+            },
+            "caption": {
+              "label": "Bildunterschrift"
+            },
+            "hourCycle": {
+              "label": "Uhr",
+              "options": {
+                "auto": "Übliches Format des Betrachters",
+                "h23": "24 Stunden",
+                "h12": "12 Stunden"
+              }
+            },
+            "showSeconds": {
+              "label": "Sekunden anzeigen"
+            },
+            "showDate": {
+              "label": "Datum anzeigen"
+            },
+            "columnFormats": {
+              "label": "Spaltenformate"
+            },
+            "trendChart": {
+              "label": "Diagramm",
+              "options": {
+                "bar": "Balken",
+                "line": "Linie",
+                "area": "Fläche"
+              }
+            },
+            "comparisonText": {
+              "label": "Vergleichstext"
+            },
+            "blinkSeparator": {
+              "label": "Doppelpunkt blinken lassen"
+            },
+            "clockFont": {
+              "label": "Schrift",
+              "options": {
+                "dashboard": "Wie das Dashboard",
+                "sans": "Klar (Inter)",
+                "rounded": "Abgerundet",
+                "serif": "Serifenschrift",
+                "mono": "Festbreitenschrift",
+                "condensed": "Schmal",
+                "segment": "LED-Anzeige"
+              }
+            },
+            "secondaryColor": {
+              "label": "Farbe von Datum und Bildunterschrift"
+            },
+            "smoothSeconds": {
+              "label": "Gleitender Sekundenzeiger"
+            },
+            "dialStyle": {
+              "label": "Zifferblatt",
+              "options": {
+                "ticks": "Stunden- und Minutenmarkierungen",
+                "numbers": "Zahlen",
+                "roman": "Römische Ziffern",
+                "quarters": "Viertelmarkierungen",
+                "minimal": "Schlicht"
+              }
+            },
+            "handStyle": {
+              "label": "Zeiger",
+              "options": {
+                "modern": "Modern",
+                "classic": "Klassisch",
+                "thin": "Schmal"
+              }
+            },
+            "dialBorder": {
+              "label": "Rand",
+              "options": {
+                "thin": "Dünn",
+                "thick": "Dick",
+                "none": "Keiner"
+              }
+            },
+            "faceColor": {
+              "label": "Farbe des Zifferblatts"
+            },
+            "handColor": {
+              "label": "Farbe der Zeiger"
+            },
+            "secondHandColor": {
+              "label": "Farbe des Sekundenzeigers"
+            },
+            "markColor": {
+              "label": "Farbe der Markierungen"
+            }
+          },
+          "sections": {
+            "text": "Text",
+            "labels": "Eigene Beschriftungen",
+            "advanced": "Erweitert",
+            "format": "Zahlenformat",
+            "thresholds": "Farbschwellen",
+            "range": "Bereich und Ziele",
+            "appearance": "Darstellung",
+            "card": "Karte"
+          },
+          "stepValue": "Ab Wert",
+          "stepColor": "Farbe",
+          "addStep": "Farbstufe hinzufügen",
+          "removeStep": "Stufe entfernen",
+          "advancedHelp": "Wird zu den Einstellungen dieses Diagramms hinzugefügt. Jede ECharts-Option funktioniert, außer solchen, die HTML hinzufügen oder externe Inhalte laden.",
+          "advancedInvalid": "Das ist kein gültiges JSON und wird daher ignoriert.",
+          "advancedDocs": "Alle ECharts-Optionen ansehen",
+          "labelFrom": "Originaltext",
+          "labelTo": "Anzeigen als",
+          "addLabel": "Beschriftung hinzufügen",
+          "addLabelsFromData": "Beschriftungen aus den Daten hinzufügen",
+          "removeLabel": "Beschriftung entfernen",
+          "defaultColor": "Standard",
+          "clearColor": "Standardfarbe verwenden",
+          "emptyRows": "Keine Daten für diese Felder vorhanden.",
+          "other": "Sonstige",
+          "total": "Summe",
+          "increase": "Anstieg",
+          "decrease": "Rückgang",
+          "low": "Niedrig",
+          "high": "Hoch",
+          "versus": "vs. {value}",
+          "fields": {
+            "xField": "Kategorie oder Datum",
+            "yField": "Wert",
+            "yFields": "Werte",
+            "valueField": "Wert",
+            "labelField": "Name",
+            "groupField": "Gruppe",
+            "formatColumns": "Zu formatierende Spalten (leer für alle Zahlenspalten)",
+            "maxField": "Maximum aus einer Spalte",
+            "targetField": "Ziel",
+            "comparisonField": "Vorheriger Wert",
+            "lineField": "Linienwert",
+            "lowField": "Niedrig",
+            "highField": "Hoch",
+            "startField": "Von Wert",
+            "endField": "Bis Wert",
+            "sizeField": "Größe",
+            "rowField": "Zeile",
+            "sourceField": "Von",
+            "openField": "Eröffnung",
+            "closeField": "Schluss"
+          },
+          "opacity": "Deckkraft",
+          "opacityFor": "Deckkraft von {name}",
+          "opacityNeedsColor": "Wählen Sie zuerst eine Farbe, um ihre Deckkraft einzustellen.",
+          "columnFormats": {
+            "column": "Spalte",
+            "format": "Format",
+            "currency": "Währung",
+            "decimals": "Nachkommastellen",
+            "style": "Stil",
+            "add": "Spalte hinzufügen",
+            "remove": "Dieses Spaltenformat entfernen",
+            "help": "Jede hier aufgeführte Spalte wird auf ihre eigene Weise angezeigt, vor dem Zahlenformat oben. Datumswerte im Stil des Betrachters folgen dessen Sprache; wählen Sie ein festes Muster, damit alle dieselbe Darstellung sehen.",
+            "kinds": {
+              "number": "Zahl",
+              "compact": "Kompakt (1.2K)",
+              "currency": "Währung",
+              "percent": "Prozent",
+              "fraction": "Prozent aus Bruch",
+              "date": "Datum",
+              "datetime": "Datum und Uhrzeit",
+              "time": "Uhrzeit",
+              "month": "Monat",
+              "year": "Jahr",
+              "relative": "Vergangene Zeit (vor 3 Tagen)",
+              "text": "Text"
+            },
+            "dateStyles": {
+              "short": "Kurz (8/15/26)",
+              "medium": "Mittel (Aug 15, 2026)",
+              "long": "Lang (August 15, 2026)",
+              "iso": "ISO (2026-08-15)",
+              "pattern": "Festes Muster"
+            },
+            "textCase": "Groß- und Kleinschreibung",
+            "pattern": "Muster, etwa DD.MM.YYYY",
+            "patternPresets": "Häufige Muster",
+            "patternHelp": "Alle sehen dieselbe Darstellung. YYYY Jahr · MM Monat · MMM Monatsname · DD Tag · ddd Wochentag · HH:mm 24-Stunden-Zeit · h:mm A 12-Stunden-Zeit · [Text] bleibt wie eingegeben.",
+            "preview": "Vorschau:",
+            "textCases": {
+              "none": "Wie geliefert",
+              "upper": "GROSSBUCHSTABEN",
+              "lower": "kleinbuchstaben",
+              "title": "Wörter Groß"
+            },
+            "dateStyleGroups": {
+              "viewer": "Im Stil jedes Betrachters",
+              "everyone": "Für alle gleich"
+            }
+          }
+        },
+        "shared": {
+          "loading": "Diagramm wird geladen..."
+        },
+        "renderer": {
+          "unknownTitle": "Unbekanntes Plugin",
+          "unknownDescription": "Dieses Widget verweist auf ein Plugin, das in der aktuellen App nicht registriert ist.",
+          "incompleteTitle": "Widget-Konfiguration unvollständig",
+          "incompleteDescription": "Füllen Sie alle erforderlichen Plugin-Eingaben aus, bevor dieses Widget angezeigt wird."
+        },
+        "table": {
+          "name": "Tabelle",
+          "description": "Zeigt die Zeilen der Abfrage in einer Tabelle.",
+          "fields": {
+            "visibleColumns": {
+              "label": "Sichtbare Spalten",
+              "description": "Wählen Sie die anzuzeigenden Spalten der Abfrage. Leer lassen, um alle Spalten zu zeigen."
+            }
+          },
+          "emptyColumns": "Für diese Abfrage sind noch keine Spalten verfügbar.",
+          "emptyRows": "Für dieses Widget wurden keine Zeilen geliefert.",
+          "useWhen": "Sie brauchen die genauen Zeilen und Werte, etwa eine Liste der letzten Bestellungen oder alles, was Zeile für Zeile gelesen wird."
+        },
+        "line-chart": {
+          "name": "Liniendiagramm",
+          "description": "Zeigt eine Zahlenreihe über einer Beschriftungs- oder Datumsachse.",
+          "fields": {
+            "xField": {
+              "label": "Feld der X-Achse"
+            },
+            "yField": {
+              "label": "Feld der Y-Achse"
+            }
+          },
+          "emptyMapping": "Ordnen Sie beide Achsen Feldern der Abfrage zu, um dieses Diagramm anzuzeigen.",
+          "emptyRows": "Dieses Diagramm braucht Zeilen mit Zahlenwerten im ausgewählten Messfeld.",
+          "useWhen": "Sie möchten zeigen, wie sich eine Zahl über die Zeit ändert, etwa der Umsatz pro Monat."
+        },
+        "bar-chart": {
+          "name": "Balkendiagramm",
+          "description": "Vergleicht eine Zahlenreihe über Kategorien.",
+          "fields": {
+            "xField": {
+              "label": "Kategoriefeld"
+            },
+            "yField": {
+              "label": "Wertfeld"
+            }
+          },
+          "emptyMapping": "Ordnen Sie beide Felder zu, um dieses Diagramm anzuzeigen.",
+          "emptyRows": "Dieses Diagramm braucht Zeilen mit Zahlenwerten im ausgewählten Wertfeld.",
+          "useWhen": "Sie möchten eine Zahl über wenige Kategorien vergleichen, etwa den Umsatz pro Produkt."
+        },
+        "stat-card": {
+          "name": "Kennzahlkarte",
+          "description": "Hebt eine Kennzahl aus der ersten Ergebniszeile hervor.",
+          "fields": {
+            "valueField": {
+              "label": "Wertfeld"
+            },
+            "labelField": {
+              "label": "Beschriftungsfeld"
+            }
+          },
+          "boolean": {
+            "true": "Wahr",
+            "false": "Falsch"
+          },
+          "emptyValue": "Kein Wert",
+          "emptyMapping": "Wählen Sie ein Wertfeld, um diese Kennzahlkarte anzuzeigen.",
+          "emptyRows": "Dieses Widget braucht mindestens eine Abfragezeile.",
+          "firstRowHint": "Angezeigt wird die erste Zeile, die diese Abfrage liefert.",
+          "useWhen": "Eine Zahl zählt am meisten, etwa der Umsatz dieses Monats oder die Zahl offener Tickets."
+        }
+      },
+      "gallery": {
+        "open": "Widgets durchsuchen",
+        "title": "Widget wählen",
+        "description": "Jedes Widget wird mit Beispieldaten gezeichnet. Wählen Sie eines, um zu sehen, wann es passt und welche Daten es braucht.",
+        "search": "Widgets suchen",
+        "groupsLabel": "Widget-Typen",
+        "empty": "Keine Widgets passen zu Ihrer Suche.",
+        "included": "In Ihrem Tarif enthalten",
+        "others": "Weitere Widgets",
+        "useWhen": "Passend, wenn",
+        "needs": "Benötigte Spalten",
+        "exampleData": "Beispieldaten",
+        "moreRows": "Und {count} weitere Zeilen.",
+        "use": "Dieses Widget verwenden",
+        "cancel": "Abbrechen",
+        "groups": {
+          "all": "Alle",
+          "kpi": "Kennzahlen",
+          "trend": "Im Zeitverlauf",
+          "compare": "Vergleiche",
+          "parts": "Teile eines Ganzen",
+          "distribution": "Verteilung von Werten",
+          "flow": "Flüsse und Stufen",
+          "table": "Tabellen",
+          "content": "Text und Zeit",
+          "other": "Sonstige"
+        },
+        "suggested": "Vorschlag für diese Abfrage"
+      }
+    }
+  },
+  "dashboards": {
+    "list": {
+      "success": "Dashboards geladen.",
+      "errors": {
+        "forbidden": "Sie haben keinen Zugriff auf die Dashboards dieser Organisation.",
+        "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+        "unexpected": "Dashboards konnten gerade nicht geladen werden."
+      }
+    },
+    "get": {
+      "success": "Dashboard geladen.",
+      "errors": {
+        "dashboardIdInvalid": "Die Dashboard-Kennung ist ungültig.",
+        "forbidden": "Sie haben keinen Zugriff auf dieses Dashboard.",
+        "notFound": "Das angeforderte Dashboard wurde nicht gefunden.",
+        "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+        "unexpected": "Das angeforderte Dashboard konnte nicht geladen werden."
+      }
+    },
+    "create": {
+      "success": "Dashboard erstellt.",
+      "errors": {
+        "bodyInvalid": "Der Inhalt der Dashboard-Anfrage ist ungültig.",
+        "dashboardNameInvalid": "Geben Sie einen gültigen Dashboard-Namen ein.",
+        "dashboardNameRequired": "Geben Sie einen Dashboard-Namen ein.",
+        "forbidden": "Sie dürfen in dieser Organisation keine Dashboards erstellen.",
+        "duplicateDashboardName": "Ein Dashboard mit diesem Namen existiert bereits.",
+        "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+        "unexpected": "Das Dashboard konnte nicht erstellt werden."
+      }
+    },
+    "save": {
+      "success": "Dashboard gespeichert.",
+      "errors": {
+        "bodyInvalid": "Der Inhalt der Dashboard-Aktualisierung ist ungültig.",
+        "dashboardIdInvalid": "Die Dashboard-Kennung ist ungültig.",
+        "dashboardNameInvalid": "Geben Sie einen gültigen Dashboard-Namen ein.",
+        "dashboardNameRequired": "Geben Sie einen Dashboard-Namen ein.",
+        "embedEnabledInvalid": "Die Einbettungseinstellung ist ungültig.",
+        "widgetsInvalid": "Die Widget-Daten sind ungültig.",
+        "widgetInvalid": "Ein oder mehrere Widgets sind ungültig.",
+        "forbidden": "Sie haben keinen Zugriff auf dieses Dashboard.",
+        "notFound": "Das angeforderte Dashboard wurde nicht gefunden.",
+        "duplicateDashboardName": "Ein Dashboard mit diesem Namen existiert bereits.",
+        "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+        "unexpected": "Das Dashboard konnte nicht gespeichert werden.",
+        "embedOriginsInvalid": "Prüfen Sie die erlaubten Websites: Verwenden Sie Adressen wie https://example.com, eine pro Zeile."
+      }
+    },
+    "delete": {
+      "success": "Dashboard gelöscht.",
+      "errors": {
+        "bodyInvalid": "Der Inhalt der Löschanfrage ist ungültig.",
+        "dashboardIdInvalid": "Die Dashboard-Kennung ist ungültig.",
+        "confirmationNameInvalid": "Geben Sie den Namen des Dashboards ein, um das Löschen zu bestätigen.",
+        "confirmationNameRequired": "Geben Sie den Namen des Dashboards ein, um das Löschen zu bestätigen.",
+        "confirmationMismatch": "Der Bestätigungsname stimmt nicht mit diesem Dashboard überein.",
+        "forbidden": "Sie haben keinen Zugriff auf dieses Dashboard.",
+        "notFound": "Das angeforderte Dashboard wurde nicht gefunden.",
+        "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+        "unexpected": "Das Dashboard konnte nicht gelöscht werden."
+      }
+    },
+    "embed": {
+      "get": {
+        "success": "Eingebettetes Dashboard geladen.",
+        "errors": {
+          "embedIdInvalid": "Die Einbettungs-GUID ist ungültig.",
+          "notFound": "Das eingebettete Dashboard wurde nicht gefunden.",
+          "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+          "unexpected": "Das eingebettete Dashboard konnte nicht geladen werden."
+        }
+      },
+      "run": {
+        "errors": {
+          "embedIdInvalid": "Die Einbettungs-GUID ist ungültig.",
+          "widgetIdInvalid": "Die Widget-Kennung ist ungültig.",
+          "notFound": "Die Abfrage des eingebetteten Widgets wurde nicht gefunden.",
+          "unsupportedDatabaseType": "Dieses Widget verwendet einen nicht unterstützten Datenbanktyp.",
+          "authenticationFailed": "@:{'app.name'} konnte sich nicht beim Datenbankserver anmelden.",
+          "databaseNotFound": "Die konfigurierte Datenbank wurde nicht gefunden.",
+          "connectionFailed": "@:{'app.name'} konnte den Datenbankserver nicht erreichen.",
+          "timeout": "Die Widget-Abfrage hat das Zeitlimit überschritten.",
+          "sslRequired": "Der Datenbankserver verlangt SSL für diese Verbindung.",
+          "queryRejected": "Die Widget-Abfrage wurde abgelehnt, weil sie nicht nur lesend ist.",
+          "queryFailed": "Die Widget-Abfrage ist auf dem Datenbankserver fehlgeschlagen.",
+          "persistenceUnavailable": "Der Dashboard-Speicher ist derzeit nicht verfügbar.",
+          "unexpected": "Die Abfrage des eingebetteten Widgets konnte nicht ausgeführt werden."
+        }
+      },
+      "regenerate": {
+        "errors": {
+          "notFound": "Dieses Dashboard existiert nicht mehr.",
+          "unexpected": "Der neue Link wurde nicht erstellt. Bitte versuchen Sie es erneut."
+        }
+      },
+      "access": {
+        "denied": "Dieser Link ist abgelaufen. Laden Sie die Seite neu, von der Sie kommen."
+      }
+    }
+  },
+  "login": {
+    "title": "Anmelden",
+    "description": "Weiterleitung zu Ihrem OpenID-Connect-Anbieter.",
+    "refreshHint": "Wenn nichts passiert, laden Sie die Seite neu.",
+    "oidcNotConfigured": {
+      "title": "OIDC ist noch nicht konfiguriert.",
+      "description": "Tragen Sie die Endpoints Ihres Anbieters und NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID in .env.development ein und starten Sie die App neu."
+    }
+  },
+  "connections": {
+    "breadcrumb": {
+      "home": "Start",
+      "list": "Verbindungen",
+      "new": "Neue Verbindung",
+      "edit": "Verbindung bearbeiten"
+    },
+    "form": {
+      "testFirst": "Testen Sie die Verbindung, um speichern zu können.",
+      "sections": {
+        "general": {
+          "title": "Details",
+          "description": "Benennen Sie diese Verbindung und wählen Sie den Datenbanktyp."
+        },
+        "server": {
+          "title": "Server",
+          "description": "Wo die Datenbank läuft. Sie muss vom App-Server aus erreichbar sein."
+        },
+        "login": {
+          "title": "Datenbank-Anmeldung",
+          "description": "Nutzen Sie eine eigene Anmeldung mit reinem Lesezugriff. Passwörter werden verschlüsselt, und ein gespeichertes bleibt erhalten, wenn Sie das Feld leer lassen."
+        }
+      },
+      "readOnly": {
+        "title": "So legen Sie eine Anmeldung mit Lesezugriff an",
+        "description": "@:{'app.name'} lehnt Anmeldungen ab, die mehr als lesen dürfen. Führen Sie dies als Administrator aus und ändern Sie das Passwort.",
+        "copy": "SQL kopieren",
+        "copied": "Kopiert"
+      },
+      "cancel": "Abbrechen"
+    },
+    "index": {
+      "headline": "Verbindungen",
+      "title": "Verbindungen",
+      "description": "Datenbankverbindungen mit Lesezugriff, die Ihre Organisation abfragen kann.",
+      "errors": {
+        "loadTitle": "Verbindungen konnten nicht geladen werden"
+      },
+      "actions": {
+        "new": "Neue Verbindung",
+        "addFirst": "Erste Verbindung hinzufügen"
+      },
+      "table": {
+        "title": "Verbindungen",
+        "description": "Gespeicherte Datenbankverbindungen Ihrer Organisation.",
+        "empty": "Keine Verbindungen gefunden.",
+        "columns": {
+          "connectionName": "Name der Verbindung",
+          "databaseType": "Datenbanktyp",
+          "actions": "Aktionen"
+        },
+        "actions": {
+          "edit": "Bearbeiten",
+          "delete": "Löschen"
+        }
+      },
+      "empty": {
+        "title": "Noch keine Verbindungen",
+        "description": "Verbinden Sie eine Datenbank mit einer Anmeldung mit Lesezugriff, um Dashboards zu erstellen."
+      }
+    },
+    "new": {
+      "headline": "Verbindungen",
+      "title": "Neue Datenbankverbindung",
+      "description": "Fügen Sie eine Datenbankverbindung hinzu und prüfen Sie, ob @:{'app.name'} sie sicher erreicht.",
+      "card": {
+        "title": "Verbindungsdetails",
+        "description": "Geben Sie die Zugangsdaten ein, die für den Verbindungstest nötig sind."
+      },
+      "fields": {
+        "connectionName": {
+          "label": "Name der Verbindung",
+          "placeholder": "Wichtigste Reporting-Datenbank",
+          "description": "Ein sprechender Name für diese Verbindung."
+        },
+        "databaseType": {
+          "description": "Die Datenbank-Engine dieser Verbindung. Derzeit wird PostgreSQL unterstützt.",
+          "label": "Datenbanktyp"
+        },
+        "host": {
+          "description": "Hostname oder IP-Adresse der Datenbank, erreichbar vom App-Server.",
+          "label": "Host",
+          "placeholder": "db.internal"
+        },
+        "port": {
+          "description": "Der Port, auf dem Ihre Datenbank lauscht. PostgreSQL nutzt meist 5432.",
+          "label": "Port",
+          "placeholder": "5432"
+        },
+        "databaseName": {
+          "description": "Der genaue Name der Datenbank, die Sie abfragen möchten.",
+          "label": "Datenbankname",
+          "placeholder": "app_db"
+        },
+        "username": {
+          "description": "Ein Datenbankbenutzer, der die benötigten Tabellen lesen darf.",
+          "label": "Benutzername",
+          "placeholder": "app_user"
+        },
+        "password": {
+          "description": "Das Passwort dieses Benutzers. Gespeicherte Zugangsdaten werden verschlüsselt.",
+          "label": "Passwort",
+          "placeholder": "Passwort"
+        },
+        "sslMode": {
+          "description": "Wählen Sie, ob eine verschlüsselte Verbindung genutzt wird, wie es Ihr Datenbankserver verlangt.",
+          "label": "SSL / Verschlüsselung"
+        }
+      },
+      "submit": {
+        "idle": "Verbindung testen",
+        "loading": "Verbindung wird getestet..."
+      },
+      "save": {
+        "idle": "Verbindung speichern",
+        "loading": "Verbindung wird gespeichert..."
+      }
+    },
+    "edit": {
+      "headline": "Verbindungen",
+      "title": "Datenbankverbindung bearbeiten",
+      "description": "Aktualisieren Sie eine gespeicherte Datenbankverbindung Ihrer Organisation.",
+      "success": "Datenbankverbindung geladen.",
+      "loading": "Die gespeicherten Verbindungsdetails werden geladen.",
+      "card": {
+        "title": "Verbindungsdetails",
+        "description": "Ändern Sie die Felder und testen Sie erneut, bevor Sie Verbindungsänderungen speichern."
+      },
+      "fields": {
+        "password": {
+          "placeholder": "Leer lassen, um es zu behalten",
+          "description": "Leer lassen, um das gespeicherte Passwort zu behalten. Es wird beim Testen oder Speichern weiterverwendet."
+        }
+      },
+      "submit": {
+        "idle": "Verbindung testen",
+        "loading": "Verbindung wird getestet..."
+      },
+      "save": {
+        "idle": "Änderungen speichern",
+        "loading": "Änderungen werden gespeichert..."
+      },
+      "errors": {
+        "loadTitle": "Verbindung konnte nicht geladen werden",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "forbidden": "Sie dürfen diese Datenbankverbindung in dieser Organisation nicht sehen.",
+        "notFound": "Die ausgewählte Verbindung wurde nicht gefunden.",
+        "persistenceUnavailable": "Gespeicherte Verbindungen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Laden der gespeicherten Datenbankverbindung."
+      }
+    },
+    "test": {
+      "success": "PostgreSQL-Verbindung erfolgreich.",
+      "result": {
+        "successTitle": "Verbindung erfolgreich",
+        "errorTitle": "Verbindung fehlgeschlagen"
+      },
+      "notifications": {
+        "successTitle": "Verbindung erfolgreich",
+        "errorTitle": "Verbindung fehlgeschlagen"
+      },
+      "errors": {
+        "unauthorized": "Sie müssen angemeldet sein, um eine Datenbankverbindung zu testen.",
+        "rateLimited": "Zu viele Verbindungstests. Bitte warten Sie und versuchen Sie es erneut.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "connectionNameInvalid": "Der Name der Verbindung muss Text sein.",
+        "databaseTypeInvalid": "Dieser Datenbanktyp wird nicht unterstützt.",
+        "hostRequired": "Der Host ist erforderlich.",
+        "portInvalid": "Der Port muss eine positive ganze Zahl sein.",
+        "databaseNameRequired": "Der Datenbankname ist erforderlich.",
+        "usernameRequired": "Der Benutzername ist erforderlich.",
+        "passwordRequired": "Das Passwort ist erforderlich.",
+        "savedConnectionNotFound": "Die gespeicherte Verbindung wurde nicht gefunden.",
+        "sslModeInvalid": "Dieser SSL-Modus wird nicht unterstützt.",
+        "invalidInput": "Die Verbindungsanfrage ist ungültig.",
+        "unsupportedDatabaseType": "Dieser Datenbanktyp wird noch nicht unterstützt.",
+        "authenticationFailed": "Die Zugangsdaten der Datenbank wurden abgelehnt.",
+        "databaseNotFound": "Die angegebene Datenbank wurde nicht gefunden.",
+        "connectionFailed": "@:{'app.name'} konnte den Datenbankserver nicht erreichen.",
+        "timeout": "Die Datenbankverbindung hat das Zeitlimit überschritten.",
+        "sslRequired": "SSL konnte nicht aufgebaut werden. Der Server verlangt vielleicht SSL, oder sein Zertifikat ist nicht vertrauenswürdig oder passt nicht zum Hostnamen.",
+        "privilegedRole": "Diese Anmeldung hat mehr Rechte, als @:{'app.name'} zulässt. Nutzen Sie eine eigene Anmeldung, die nur Daten lesen kann.",
+        "notImplemented": "Dieser Datenbanktest ist noch nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Testen der Datenbankverbindung."
+      }
+    },
+    "save": {
+      "success": "Datenbankverbindung gespeichert.",
+      "notifications": {
+        "successTitle": "Verbindung gespeichert",
+        "errorTitle": "Speichern fehlgeschlagen"
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine Datenbankverbindungen speichern.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "connectionNameInvalid": "Der Name der Verbindung muss Text sein.",
+        "connectionNameRequired": "Der Name der Verbindung ist erforderlich.",
+        "databaseTypeInvalid": "Dieser Datenbanktyp wird nicht unterstützt.",
+        "hostRequired": "Der Host ist erforderlich.",
+        "portInvalid": "Der Port muss eine positive ganze Zahl sein.",
+        "databaseNameRequired": "Der Datenbankname ist erforderlich.",
+        "usernameRequired": "Der Benutzername ist erforderlich.",
+        "passwordRequired": "Das Passwort ist erforderlich.",
+        "sslModeInvalid": "Dieser SSL-Modus wird nicht unterstützt.",
+        "duplicateConnectionName": "In Ihrer Organisation gibt es bereits eine Verbindung mit diesem Namen.",
+        "duplicateConnectionTarget": "In Ihrer Organisation gibt es bereits eine Verbindung zu diesem Host und dieser Datenbank.",
+        "persistenceUnavailable": "Gespeicherte Verbindungen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Speichern der Datenbankverbindung."
+      }
+    },
+    "update": {
+      "success": "Datenbankverbindung aktualisiert.",
+      "notifications": {
+        "successTitle": "Verbindung aktualisiert",
+        "errorTitle": "Aktualisierung fehlgeschlagen"
+      },
+      "errors": {
+        "forbidden": "Sie dürfen Datenbankverbindungen in dieser Organisation nicht ändern.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "connectionNameInvalid": "Der Name der Verbindung muss Text sein.",
+        "connectionNameRequired": "Der Name der Verbindung ist erforderlich.",
+        "databaseTypeInvalid": "Dieser Datenbanktyp wird nicht unterstützt.",
+        "hostRequired": "Der Host ist erforderlich.",
+        "portInvalid": "Der Port muss eine positive ganze Zahl sein.",
+        "databaseNameRequired": "Der Datenbankname ist erforderlich.",
+        "usernameRequired": "Der Benutzername ist erforderlich.",
+        "passwordRequired": "Das Passwort muss Text sein, wenn es angegeben wird.",
+        "sslModeInvalid": "Dieser SSL-Modus wird nicht unterstützt.",
+        "notFound": "Die ausgewählte Verbindung wurde nicht gefunden.",
+        "duplicateConnectionName": "In Ihrer Organisation gibt es bereits eine Verbindung mit diesem Namen.",
+        "duplicateConnectionTarget": "In Ihrer Organisation gibt es bereits eine Verbindung zu diesem Host und dieser Datenbank.",
+        "persistenceUnavailable": "Gespeicherte Verbindungen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Aktualisieren der Datenbankverbindung."
+      }
+    },
+    "list": {
+      "success": "Gespeicherte Datenbankverbindungen geladen.",
+      "errors": {
+        "forbidden": "Sie dürfen die Datenbankverbindungen dieser Organisation nicht sehen.",
+        "persistenceUnavailable": "Gespeicherte Verbindungen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Laden der gespeicherten Datenbankverbindungen."
+      }
+    },
+    "delete": {
+      "success": "Datenbankverbindung gelöscht.",
+      "dialog": {
+        "title": "Verbindung löschen",
+        "description": "Geben Sie \"{connectionName}\" ein, um das Löschen zu bestätigen.",
+        "confirmationLabel": "Name der Verbindung",
+        "confirmationDescription": "Geben Sie den genauen Namen der gespeicherten Verbindung ein, um das Löschen zu bestätigen.",
+        "deleteLinkedQueries": {
+          "label": "Verknüpfte SQL-Abfragen ebenfalls löschen",
+          "description": "Diese Einstellung greift, sobald verknüpfte SQL-Abfragen gespeichert werden."
+        },
+        "cancel": "Abbrechen",
+        "confirm": "Verbindung löschen",
+        "confirmLoading": "Verbindung wird gelöscht..."
+      },
+      "notifications": {
+        "successTitle": "Verbindung gelöscht",
+        "errorTitle": "Löschen fehlgeschlagen"
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine Datenbankverbindungen löschen.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "confirmationNameInvalid": "Der Bestätigungsname muss Text sein.",
+        "confirmationNameRequired": "Der Bestätigungsname ist erforderlich.",
+        "deleteLinkedQueriesInvalid": "Das Löschen verknüpfter SQL-Abfragen muss wahr oder falsch sein.",
+        "confirmationMismatch": "Der Bestätigungsname stimmt nicht mit der ausgewählten Verbindung überein.",
+        "notFound": "Die ausgewählte Verbindung wurde nicht gefunden.",
+        "persistenceUnavailable": "Gespeicherte Verbindungen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Löschen der Datenbankverbindung."
+      }
+    }
+  },
+  "queries": {
+    "breadcrumb": {
+      "home": "Start",
+      "list": "Abfragen",
+      "new": "Neue Abfrage",
+      "edit": "Abfrage bearbeiten"
+    },
+    "index": {
+      "headline": "Abfragen",
+      "title": "Abfragen",
+      "description": "Wiederverwendbares SQL, das die Widgets Ihrer Dashboards speist.",
+      "actions": {
+        "new": "Neue Abfrage",
+        "addFirst": "Erste Abfrage hinzufügen"
+      },
+      "errors": {
+        "loadTitle": "SQL-Abfragen konnten nicht geladen werden"
+      },
+      "table": {
+        "title": "Abfragen",
+        "description": "Gespeicherte SQL-Abfragen Ihrer Organisation.",
+        "empty": "Keine SQL-Abfragen gefunden.",
+        "columns": {
+          "queryName": "Name der Abfrage",
+          "connectionName": "Verbindung",
+          "actions": "Aktionen"
+        },
+        "actions": {
+          "edit": "Bearbeiten",
+          "delete": "Löschen"
+        },
+        "sortBy": "Nach {column} sortieren"
+      },
+      "empty": {
+        "title": "Noch keine Abfragen",
+        "description": "Schreiben oder generieren Sie SQL und speichern Sie es, um es in Dashboard-Widgets zu verwenden."
+      }
+    },
+    "new": {
+      "headline": "Abfragen",
+      "title": "Neue gespeicherte SQL-Abfrage",
+      "description": "Erstellen Sie eine gespeicherte SQL-Abfrage für Ihre Organisation.",
+      "card": {
+        "title": "Abfragedetails",
+        "description": "Wählen Sie eine Verbindung, testen Sie das SQL und speichern Sie die Abfrage sicher."
+      },
+      "loading": "Gespeicherte Datenbankverbindungen werden geladen...",
+      "actions": {
+        "test": "Abfrage testen",
+        "testLoading": "Abfrage wird getestet...",
+        "save": "Abfrage speichern",
+        "saveLoading": "Abfrage wird gespeichert...",
+        "cancel": "Abbrechen"
+      },
+      "errors": {
+        "loadTitle": "Verbindungen konnten nicht geladen werden"
+      },
+      "emptyConnections": {
+        "title": "Erst eine Verbindung anlegen",
+        "description": "Eine gespeicherte SQL-Abfrage muss mit einer gespeicherten Datenbankverbindung verknüpft sein.",
+        "action": "Verbindung hinzufügen"
+      }
+    },
+    "edit": {
+      "headline": "Abfragen",
+      "title": "Gespeicherte SQL-Abfrage bearbeiten",
+      "description": "Aktualisieren Sie eine gespeicherte SQL-Abfrage Ihrer Organisation.",
+      "card": {
+        "title": "Abfragedetails",
+        "description": "Prüfen Sie das verschlüsselte SQL, testen Sie es bei Bedarf erneut und speichern Sie die aktualisierte Abfrage."
+      },
+      "loading": "Gespeicherte SQL-Abfrage wird geladen...",
+      "actions": {
+        "test": "Abfrage testen",
+        "testLoading": "Abfrage wird getestet...",
+        "save": "Änderungen speichern",
+        "saveLoading": "Änderungen werden gespeichert...",
+        "cancel": "Abbrechen"
+      },
+      "success": "Gespeicherte SQL-Abfrage geladen.",
+      "errors": {
+        "loadTitle": "SQL-Abfrage konnte nicht geladen werden",
+        "forbidden": "Sie dürfen in dieser Organisation keine SQL-Abfragen bearbeiten.",
+        "queryIdInvalid": "Die Abfrage-ID ist ungültig.",
+        "notFound": "Die angeforderte gespeicherte SQL-Abfrage wurde nicht gefunden.",
+        "persistenceUnavailable": "Gespeicherte SQL-Abfragen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Laden der gespeicherten SQL-Abfrage."
+      }
+    },
+    "form": {
+      "fields": {
+        "queryName": {
+          "label": "Name der Abfrage",
+          "description": "Geben Sie dieser Abfrage einen klaren Namen für Ihre Organisation.",
+          "placeholder": "z. B. Top-Kunden"
+        },
+        "connectionId": {
+          "label": "Verbindung",
+          "description": "Wählen Sie die gespeicherte Datenbankverbindung, auf der diese Abfrage läuft.",
+          "placeholder": "Verbindung auswählen"
+        },
+        "sql": {
+          "label": "SQL",
+          "description": "Dieses SQL wird verschlüsselt gespeichert und nur entschlüsselt, wenn es ausdrücklich zum Bearbeiten geladen wird.",
+          "placeholder": "select * from table_name"
+        },
+        "aiSql": {
+          "title": "SQL mit KI generieren",
+          "description": "Generieren Sie SQL mit einem KI-Modell aus Ihren Einstellungen.",
+          "unsupported": {
+            "title": "Lokale KI nicht verfügbar",
+            "description": "Nutzen Sie einen Browser mit aktiviertem WebGPU über HTTPS oder localhost. SQL können Sie weiterhin von Hand schreiben."
+          },
+          "ready": {
+            "cached": "Ein zwischengespeichertes Modell ist verfügbar. Laden Sie es, um Fragen zu stellen.",
+            "notCached": "Laden Sie ein lokales Modell herunter, um Fragen zu stellen. Der erste Download kann groß sein und einige Minuten dauern."
+          },
+          "model": {
+            "label": "Lokales Modell",
+            "description": "Kleinere Modelle brauchen weniger Speicher. Die GPU-Speicherschätzungen sind keine Downloadgrößen."
+          },
+          "actions": {
+            "loadCached": "Zwischengespeichertes Modell laden",
+            "download": "Modell herunterladen und laden",
+            "cancel": "Download abbrechen",
+            "generate": "SQL generieren"
+          },
+          "status": {
+            "ready": "Modell bereit · läuft lokal"
+          },
+          "progress": {
+            "label": "Ladefortschritt des Modells"
+          },
+          "question": {
+            "label": "Was möchten Sie wissen?",
+            "description": "Das Schema der ausgewählten Datenbank wird vor jeder Generierung abgerufen.",
+            "placeholder": "Zeig mir die monatlichen Umsätze"
+          },
+          "error": {
+            "title": "Modell konnte nicht geladen werden"
+          }
+        }
+      }
+    },
+    "test": {
+      "success": "SQL-Abfragetest erfolgreich abgeschlossen.",
+      "notifications": {
+        "successTitle": "Abfragetest erfolgreich",
+        "errorTitle": "Abfragetest fehlgeschlagen"
+      },
+      "results": {
+        "title": "Abfrageergebnisse",
+        "description": "Stichprobe von bis zu {rowLimit} Zeilen aus dem aktuellen Abfragetest.",
+        "empty": "Die Abfrage hat keine Zeilen geliefert."
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine SQL-Abfragen testen.",
+        "rateLimited": "Zu viele SQL-Abfragetests. Bitte warten Sie und versuchen Sie es erneut.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "sqlInvalid": "SQL muss Text sein.",
+        "sqlRequired": "SQL ist erforderlich.",
+        "savedConnectionNotFound": "Die ausgewählte gespeicherte Verbindung wurde nicht gefunden.",
+        "unsupportedDatabaseType": "Dieser Datenbanktyp wird noch nicht unterstützt.",
+        "authenticationFailed": "Die Zugangsdaten der Datenbank wurden abgelehnt.",
+        "databaseNotFound": "Die angegebene Datenbank wurde nicht gefunden.",
+        "connectionFailed": "@:{'app.name'} konnte den Datenbankserver nicht erreichen.",
+        "timeout": "Die Datenbankabfrage hat das Zeitlimit überschritten.",
+        "sslRequired": "Der Datenbankserver verlangt SSL oder kompatible TLS-Einstellungen.",
+        "privilegedLogin": "Die Anmeldung dieser Verbindung hat mehr Rechte, als @:{'app.name'} zulässt. Nutzen Sie eine eigene Anmeldung mit reinem Lesezugriff.",
+        "queryRejected": "Es kann nur eine einzelne SELECT-Abfrage mit Lesezugriff getestet werden.",
+        "queryFailed": "Die SQL-Abfrage konnte nicht ausgeführt werden.",
+        "details": "Rückmeldung der Datenbank: {details}",
+        "persistenceUnavailable": "Das Testen gespeicherter SQL-Abfragen ist vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Testen der SQL-Abfrage."
+      }
+    },
+    "run": {
+      "errors": {
+        "unexpected": "Unerwarteter Fehler beim Ausführen der gespeicherten SQL-Abfrage."
+      }
+    },
+    "save": {
+      "success": "SQL-Abfrage gespeichert.",
+      "notifications": {
+        "successTitle": "Abfrage gespeichert",
+        "errorTitle": "Speichern fehlgeschlagen"
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine SQL-Abfragen speichern.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "queryNameInvalid": "Der Name der Abfrage muss Text sein.",
+        "queryNameRequired": "Der Name der Abfrage ist erforderlich.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "sqlInvalid": "SQL muss Text sein.",
+        "sqlRequired": "SQL ist erforderlich.",
+        "sqlTooLong": "Das SQL überschreitet die maximal erlaubte Länge.",
+        "sqlInvalidCharacters": "Das SQL enthält ungültige Zeichen.",
+        "sqlMultipleStatements": "Es kann nur eine einzelne SQL-Anweisung gespeichert werden.",
+        "sqlNotReadOnly": "Es kann nur eine einzelne SELECT-Abfrage mit Lesezugriff gespeichert werden.",
+        "notFound": "Die ausgewählte Verbindung wurde nicht gefunden.",
+        "duplicateQueryName": "Für die ausgewählte Verbindung gibt es bereits eine Abfrage mit diesem Namen.",
+        "persistenceUnavailable": "Gespeicherte SQL-Abfragen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Speichern der SQL-Abfrage."
+      }
+    },
+    "update": {
+      "success": "SQL-Abfrage aktualisiert.",
+      "notifications": {
+        "successTitle": "Abfrage aktualisiert",
+        "errorTitle": "Aktualisierung fehlgeschlagen"
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine SQL-Abfragen ändern.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "queryIdInvalid": "Die Abfrage-ID ist ungültig.",
+        "queryNameInvalid": "Der Name der Abfrage muss Text sein.",
+        "queryNameRequired": "Der Name der Abfrage ist erforderlich.",
+        "connectionIdInvalid": "Die Verbindungs-ID ist ungültig.",
+        "sqlInvalid": "SQL muss Text sein.",
+        "sqlRequired": "SQL ist erforderlich.",
+        "sqlTooLong": "Das SQL überschreitet die maximal erlaubte Länge.",
+        "sqlInvalidCharacters": "Das SQL enthält ungültige Zeichen.",
+        "sqlMultipleStatements": "Es kann nur eine einzelne SQL-Anweisung gespeichert werden.",
+        "sqlNotReadOnly": "Es kann nur eine einzelne SELECT-Abfrage mit Lesezugriff gespeichert werden.",
+        "notFound": "Die gespeicherte SQL-Abfrage oder die ausgewählte Verbindung wurde nicht gefunden.",
+        "duplicateQueryName": "Für die ausgewählte Verbindung gibt es bereits eine Abfrage mit diesem Namen.",
+        "persistenceUnavailable": "Gespeicherte SQL-Abfragen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Aktualisieren der SQL-Abfrage."
+      }
+    },
+    "delete": {
+      "success": "SQL-Abfrage gelöscht.",
+      "notifications": {
+        "successTitle": "Abfrage gelöscht",
+        "errorTitle": "Löschen fehlgeschlagen"
+      },
+      "dialog": {
+        "title": "Gespeicherte SQL-Abfrage löschen",
+        "description": "Geben Sie {queryName} ein, um das Löschen zu bestätigen.",
+        "confirmationLabel": "Name der Abfrage",
+        "confirmationDescription": "Damit werden die Daten der gespeicherten Abfrage und ihr verschlüsseltes SQL dauerhaft aus der normalen Nutzung entfernt.",
+        "cancel": "Abbrechen",
+        "confirm": "Abfrage löschen",
+        "confirmLoading": "Abfrage wird gelöscht..."
+      },
+      "errors": {
+        "forbidden": "Sie dürfen in dieser Organisation keine SQL-Abfragen löschen.",
+        "bodyInvalid": "Der Inhalt der Anfrage ist kein gültiges JSON.",
+        "queryIdInvalid": "Die Abfrage-ID ist ungültig.",
+        "confirmationNameInvalid": "Der Bestätigungsname muss Text sein.",
+        "confirmationNameRequired": "Der Bestätigungsname ist erforderlich.",
+        "confirmationMismatch": "Der Bestätigungsname stimmt nicht mit dem Namen der gespeicherten Abfrage überein.",
+        "notFound": "Die angeforderte gespeicherte SQL-Abfrage wurde nicht gefunden.",
+        "persistenceUnavailable": "Gespeicherte SQL-Abfragen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Löschen der SQL-Abfrage."
+      }
+    },
+    "list": {
+      "success": "Gespeicherte SQL-Abfragen geladen.",
+      "errors": {
+        "forbidden": "Sie dürfen die SQL-Abfragen dieser Organisation nicht sehen.",
+        "persistenceUnavailable": "Gespeicherte SQL-Abfragen sind vorübergehend nicht verfügbar.",
+        "unexpected": "Unerwarteter Fehler beim Laden der gespeicherten SQL-Abfragen."
+      }
+    }
+  },
+  "sql-workspace": {
+    "breadcrumb": {
+      "label": "SQL-Bereich"
+    }
+  },
+  "navigation": {
+    "label": "Hauptnavigation",
+    "dashboard": "Dashboards",
+    "connections": "Verbindungen",
+    "queries": "Abfragen",
+    "workspace": "SQL-Editor",
+    "aiModels": "KI-Modelle",
+    "data": "Daten",
+    "settings": "Einstellungen",
+    "signOut": "Abmelden"
+  },
+  "interface": {
+    "settingsHeadline": "Einstellungen",
+    "debugLinks": "Debug-Links",
+    "closeDebug": "Debug schließen",
+    "debug": "Debug",
+    "aiModels": "KI-Modelle",
+    "connections": "Verbindungen",
+    "sqlQueries": "SQL-Abfragen",
+    "newDashboard": "Neues Dashboard",
+    "settings": "Einstellungen",
+    "errorLoadingData": "Fehler beim Laden der Daten",
+    "manageAIProvidersAndModels": "KI-Anbieter und Modelle verwalten",
+    "signInAgainNewTab": "Erneut anmelden (neuer Tab)",
+    "loadingYourAISettings": "Ihre KI-Einstellungen werden geladen…",
+    "noAIModelsConfiguredAddAnOpenAIOrLMStudio": "Keine KI-Modelle eingerichtet. Fügen Sie in den KI-Einstellungen eine OpenAI- oder LM-Studio-Verbindung oder ein Browser-Modell hinzu.",
+    "refreshModels": "Modelle aktualisieren",
+    "aiModel": "KI-Modell",
+    "chooseAModelForThisQueryYourSavedDefaultStays": "Wählen Sie ein Modell für diese Abfrage. Ihr gespeichertes Standardmodell bleibt unverändert.",
+    "selectAConfiguredModel": "Eingerichtetes Modell auswählen",
+    "default": " · Standard",
+    "aiConnection": "KI-Verbindung: {value1} · {value2}",
+    "providerDataNotice": "Hinweis zu Daten beim Anbieter",
+    "yourQuestionAndSelectedDatabaseSchemaWillBeSentTo": "Ihre Frage und das Schema der ausgewählten Datenbank werden an {value1} unter {value2} gesendet. Zugangsdaten der Datenbank und Abfrageergebnisse sind ausgenommen.",
+    "lmStudioAPIKeyOptionalThisPageSessionOnly": "LM-Studio-API-Schlüssel (optional, nur für diese Sitzung)",
+    "chooseOpenAIOrLMStudioToUseAnotherProvider": "{value1} Wählen Sie OpenAI oder LM Studio, um einen anderen Anbieter zu nutzen.",
+    "providerConfiguredVerifiedWhenGenerating": "Anbieter eingerichtet · wird beim Generieren geprüft",
+    "cancelGeneration": "Generierung abbrechen",
+    "couldNotGenerateSQL": "SQL konnte nicht generiert werden",
+    "newConnection": "Neue Verbindung",
+    "settingsChooseWhereYourSQLAssistantRuns": "Einstellungen · Wählen Sie, wo Ihr SQL-Assistent läuft.",
+    "couldNotCompleteTheRequest": "Die Anfrage konnte nicht abgeschlossen werden",
+    "signInAgain": "Erneut anmelden",
+    "addAIProvider": "KI-Anbieter hinzufügen",
+    "addDownloadBrowserModel": "Browser-Modell hinzufügen / herunterladen",
+    "refreshSettings": "Einstellungen aktualisieren",
+    "addAIProvider2": "KI-Anbieter hinzufügen",
+    "editConnection": "Verbindung bearbeiten",
+    "chooseAProvider": "Anbieter wählen",
+    "provider": "Anbieter",
+    "openAI": "OpenAI",
+    "lmStudio": "LM Studio",
+    "browserModelWebLLM": "Browser-Modell (WebLLM)",
+    "cloudInferenceYourQuestionAndDatabaseSchemaAreSentTo": "Ausführung in der Cloud. Ihre Frage und das Datenbankschema werden an OpenAI gesendet. API-Schlüssel werden auf dem Server verschlüsselt.",
+    "connectDirectlyFromThisBrowserToLMStudioStartThe": "Verbinden Sie diesen Browser direkt mit LM Studio. Starten Sie den Server, aktivieren Sie CORS und erlauben Sie dem Browser den Zugriff auf das lokale Netzwerk. Hier ist kein Modell-Download nötig.",
+    "runSupportedQwenCoderModelsOnYourGPUDownloadsPersist": "Führen Sie unterstützte Qwen-Coder-Modelle auf Ihrer GPU aus. Downloads bleiben erhalten, solange dieser Browser die Website-Daten behält. GPU-Speicher ist nicht die Downloadgröße; Downloadgrößen sind nicht verfügbar.",
+    "connectionName": "Name der Verbindung",
+    "serverURL": "Server-URL",
+    "apiKey": "API-Schlüssel",
+    "apiKeyOptionalThisPageSessionOnly": "API-Schlüssel (optional, nur für diese Sitzung)",
+    "leaveBlankToRetainYourStoredKey": "Leer lassen, um den gespeicherten Schlüssel zu behalten.",
+    "saveAndTestConnection": "Verbindung speichern und testen",
+    "yourBrowserOrGraphicsHardwareDoesNotSupportWebGPUUse": "Ihr Browser oder Ihre Grafikhardware unterstützt WebGPU nicht. Nutzen Sie HTTPS oder localhost mit einem kompatiblen Browser.",
+    "browserModel": "Browser-Modell",
+    "parameterCountsAndEstimatedGPUMemoryAreIncludedInEach": "Parameterzahl und geschätzter GPU-Speicher stehen im Namen jedes Modells.",
+    "addSelectedBrowserModels": "Ausgewählte Browser-Modelle hinzufügen",
+    "closeSetup": "Einrichtung schließen",
+    "availableModels": "Verfügbare Modelle",
+    "discoveryIdentifiesCandidateModelsAccessAndChatCompatibilityAreVerified": "Die Erkennung findet mögliche Modelle; Zugriff und Chat-Tauglichkeit werden beim Generieren geprüft. LM Studio liefert eventuell auch Embedding-Modelle: Wählen Sie nur Text-Chat-Modelle.",
+    "modelsToAdd": "Hinzuzufügende Modelle",
+    "addSelectedModels": "Ausgewählte Modelle hinzufügen",
+    "configuredModels": "Eingerichtete Modelle",
+    "noAIModelsConfiguredAddAProviderOrABrowser": "Keine KI-Modelle eingerichtet. Fügen Sie einen Anbieter oder ein Browser-Modell hinzu, um zu starten.",
+    "default2": "Standard",
+    "browserModels": "Browser-Modelle",
+    "connectionNotCheckedTestBelow": "Verbindung nicht geprüft · unten testen",
+    "setDefault": "Als Standard festlegen",
+    "rename": "Umbenennen",
+    "reload": "Neu laden",
+    "downloadLoad": "Herunterladen / laden",
+    "unload": "Entladen",
+    "deleteDownloadedFiles": "Heruntergeladene Dateien löschen",
+    "remove": "Entfernen",
+    "cancelDownload": "Download abbrechen",
+    "providerConnections": "Anbieterverbindungen",
+    "connectionNotChecked": "Verbindung nicht geprüft",
+    "testRefreshAvailableModels": "Verfügbare Modelle testen / aktualisieren",
+    "removeConnection": "Verbindung entfernen",
+    "renameModel": "Modell umbenennen",
+    "displayName": "Anzeigename",
+    "saveName": "Namen speichern",
+    "confirmRemoval": "Entfernen bestätigen",
+    "removeRemovingAConnectionAlsoRemovesItsConfiguredModelsIf": "{value1} entfernen? Mit einer Verbindung werden auch ihre eingerichteten Modelle entfernt. Wird das Standardmodell entfernt, wird das erste verbleibende Modell zum Standard.",
+    "cancel": "Abbrechen",
+    "sqlWorkspace": "SQL-Editor",
+    "askAQuestionRefineTheSQLAndTestItAgainst": "Stellen Sie eine Frage, verfeinern Sie das SQL und testen Sie es an Ihrer Datenbank.",
+    "dashboard": "Dashboard",
+    "localModelUnavailable": "Lokales Modell nicht verfügbar",
+    "checkConnectionSettings": "Verbindungseinstellungen prüfen",
+    "couldNotLoadConnections": "Verbindungen konnten nicht geladen werden",
+    "connectionsListErrorsUnexpected": "connections.list.errors.unexpected",
+    "retry": "Erneut versuchen",
+    "connectADatabaseFirst": "Zuerst eine Datenbank verbinden",
+    "addAPostgreSQLConnectionToGenerateAndTestQueries": "Fügen Sie eine Datenbankverbindung hinzu, um Abfragen zu generieren und zu testen.",
+    "addConnection": "Verbindung hinzufügen",
+    "chooseDatabaseStep": "1. Datenbank wählen",
+    "databaseConnection": "Datenbankverbindung",
+    "editOrTestThisConnection": "Diese Verbindung bearbeiten oder testen",
+    "schemaUnavailable": "Schema nicht verfügbar",
+    "readSchema": "Schema lesen",
+    "columnsAvailable": "{value1} Spalten verfügbar",
+    "databaseSchema": "Datenbankschema",
+    "noAccessibleTablesFound": "Keine zugänglichen Tabellen gefunden.",
+    "askQuestionStep": "2. In eigenen Worten fragen",
+    "optionalGenerateSQLUsingYourConfiguredAIModel": "Optional. Generieren Sie SQL mit Ihrem eingerichteten KI-Modell.",
+    "settingsAIModels": "Einstellungen → KI-Modelle",
+    "yourQuestionAndSelectedDatabaseSchemaWillBeSentTo2": "Ihre Frage und das Schema der ausgewählten Datenbank werden an {value1} unter {value2} gesendet. Übermittelt werden nur Schema-Metadaten; Zugangsdaten und Abfrageergebnisse sind ausgenommen.",
+    "browserModelUnavailable": "Browser-Modell nicht verfügbar",
+    "useHTTPSOrLocalhostWithAWebGPUCompatibleBrowserOr": "Nutzen Sie HTTPS oder localhost mit einem WebGPU-fähigen Browser, oder wählen Sie in den Einstellungen unter KI-Modelle einen anderen Anbieter.",
+    "loadCachedModel": "Zwischengespeichertes Modell laden",
+    "downloadAndLoadModel": "Modell herunterladen und laden",
+    "modelReadyRunsLocally": "Modell bereit · läuft lokal",
+    "downloadingAndInitializingModel": "Lokales Modell wird heruntergeladen und initialisiert…",
+    "localModelDownloadAndInitializationProgress": "Fortschritt von Download und Initialisierung des lokalen Modells",
+    "theFirstDownloadCanTakeSeveralMinutesInitializationContinuesAfter": "Der erste Download kann einige Minuten dauern. Die Initialisierung läuft nach dem Download der Dateien weiter.",
+    "whatWouldYouLikeToKnow": "Was möchten Sie wissen?",
+    "theSelectedDatabaseSchemaIsFetchedBeforeEveryGeneration": "Das Schema der ausgewählten Datenbank wird vor jeder Generierung abgerufen.",
+    "showMeMonthlySales": "Zeig mir die monatlichen Umsätze",
+    "generateSQL": "SQL generieren",
+    "modelCouldNotBeLoaded": "Modell konnte nicht geladen werden",
+    "editAndTestSqlStep": "3. SQL bearbeiten und testen",
+    "generatedSQLAppearsHereEditItFreelyOrWriteYour": "Generiertes SQL erscheint hier. Bearbeiten Sie es frei oder schreiben Sie Ihre eigene Abfrage.",
+    "sqlQuery": "SQL-Abfrage",
+    "testsRunAsReadOnlyQueriesWithARowLimit": "Tests laufen als Abfragen mit reinem Lesezugriff, mit Zeilen- und Zeitlimit.",
+    "select": "SELECT ...",
+    "testSQL": "SQL testen",
+    "queryName": "Name der Abfrage",
+    "saveThisQueryToMakeItAvailableWhenAddingA": "Speichern Sie diese Abfrage, damit sie beim Hinzufügen eines Dashboard-Widgets verfügbar ist.",
+    "monthlySales": "Monatliche Umsätze",
+    "saveQuery": "Abfrage speichern",
+    "querySavedItIsNowAvailableInTheDashboardWidget": "Abfrage gespeichert. Sie steht jetzt im Widget-Editor des Dashboards zur Verfügung.",
+    "queryResults": "Abfrageergebnisse",
+    "resultsFromYourLatestSQLTestAppearHere": "Ergebnisse Ihres letzten SQL-Tests erscheinen hier.",
+    "runningYourQuery": "Ihre Abfrage wird ausgeführt…",
+    "rowsReturnedPreviewLimitedToRows": "{value1} Zeilen geliefert · Vorschau auf {value2} Zeilen begrenzt",
+    "sqlTestResults": "Ergebnisse des SQL-Tests",
+    "theQuerySucceededButReturnedNoRows": "Die Abfrage war erfolgreich, hat aber keine Zeilen geliefert.",
+    "theTestFailedReviewTheErrorBesideTheSQLEditor": "Der Test ist fehlgeschlagen. Prüfen Sie den Fehler neben dem SQL-Editor und versuchen Sie es erneut.",
+    "writeOrGenerateSQLThenSelectTestSQL": "Schreiben oder generieren Sie SQL und wählen Sie dann SQL testen.",
+    "renderRawQueryRowsInATable": "Zeigt die Zeilen der Abfrage in einer Tabelle.",
+    "visibleColumns": "Sichtbare Spalten",
+    "selectTheQueryColumnsToDisplayLeaveEmptyToShow": "Wählen Sie die anzuzeigenden Spalten der Abfrage. Leer lassen, um alle Spalten zu zeigen.",
+    "lineChart": "Liniendiagramm",
+    "plotANumericSeriesAgainstALabelOrDateAxis": "Zeigt eine Zahlenreihe über einer Beschriftungs- oder Datumsachse.",
+    "xAxisField": "Feld der X-Achse",
+    "yAxisField": "Feld der Y-Achse",
+    "barChart": "Balkendiagramm",
+    "compareANumericSeriesAcrossCategories": "Vergleicht eine Zahlenreihe über Kategorien.",
+    "categoryField": "Kategoriefeld",
+    "valueField": "Wertfeld",
+    "statCard": "Kennzahlkarte",
+    "highlightASingleMetricFromTheFirstResultRow": "Hebt eine Kennzahl aus der ersten Ergebniszeile hervor.",
+    "labelField": "Beschriftungsfeld",
+    "invalidAISettingsResponse": "Ungültige Antwort der KI-Einstellungen.",
+    "yourSessionHasExpiredSignInAgainToLoadYour": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um Ihre KI-Einstellungen zu laden.",
+    "aiSettingsRequireAnAuthenticatedAccountWithAnOrganizationCheck": "KI-Einstellungen erfordern ein angemeldetes Konto mit Organisation. Prüfen Sie Ihr Konto und die Konfiguration der Organisation.",
+    "couldNotLoadAISettingsCheckTheApplicationDatabaseMigrations": "KI-Einstellungen konnten nicht geladen werden. Prüfen Sie Anwendungsdatenbank, Migrationen und Verschlüsselungsschlüssel und versuchen Sie es erneut.",
+    "connectionNotFound": "Verbindung nicht gefunden.",
+    "connectedModelDiscoverySuccessful": "Verbunden · Modellerkennung erfolgreich",
+    "unavailableTestConnectionOrEditSettings": "Nicht verfügbar · Verbindung testen oder Einstellungen bearbeiten",
+    "loadTheSelectedBrowserModelFirst": "Laden Sie zuerst das ausgewählte Browser-Modell.",
+    "connectionRemovedChooseAnotherModel": "Verbindung entfernt. Wählen Sie ein anderes Modell.",
+    "generatedSQLWasCutShortAskASimplerQuestion": "Das generierte SQL wurde abgeschnitten. Stellen Sie eine einfachere Frage.",
+    "configureAndSelectAnAIModelInSettingsAIModels": "Richten Sie unter Einstellungen → KI-Modelle ein KI-Modell ein und wählen Sie es aus.",
+    "readTheDatabaseSchemaAgainToIdentifyItsSQLDialect": "Lesen Sie das Datenbankschema erneut ein, um den SQL-Dialekt zu erkennen.",
+    "generationCancelled": "Generierung abgebrochen.",
+    "anUnexpectedErrorOccurred": "Ein unerwarteter Fehler ist aufgetreten.",
+    "noCompatibleModelsWereFoundInTheModelCatalogue": "Im Modellkatalog wurden keine kompatiblen Modelle gefunden.",
+    "startingLocalModelConnectingToTheModelDownloadHost": "Lokales Modell wird gestartet. Verbindung zum Download-Server wird hergestellt…",
+    "downloadingAndInitializingTheLocalModel": "Lokales Modell wird heruntergeladen und initialisiert…",
+    "modelReadyQuestionsAndSchemaAreProcessedInThisBrowser": "Modell bereit. Fragen und Schema werden in diesem Browser verarbeitet.",
+    "loadAModelFirst": "Laden Sie zuerst ein Modell.",
+    "theGeneratedSQLWasCutShortAskASimplerQuestion": "Das generierte SQL wurde abgeschnitten. Stellen Sie eine einfachere Frage.",
+    "yourSessionHasExpiredSignInAgainInANew": "Ihre Sitzung ist abgelaufen. Melden Sie sich in einem neuen Tab erneut an, kommen Sie dann hierher zurück und versuchen Sie es erneut. Ihre Abfrage wurde nicht geändert.",
+    "noAccessibleTablesWereFoundInThisDatabase": "In dieser Datenbank wurden keine zugänglichen Tabellen gefunden.",
+    "enterAQuestionFirst": "Geben Sie zuerst eine Frage ein.",
+    "theSchemaAndQuestionAreTooLargeForThisBrowser": "Schema und Frage sind zu groß für den eingestellten Kontext dieses Browser-Modells. Wählen Sie LM Studio oder OpenAI, oder nutzen Sie eine Verbindung mit Zugriff auf weniger Tabellen.",
+    "microsoftSQLServerTSQLQuoteIdentifiersWithSquareBrackets": "Microsoft SQL Server (T-SQL). Setzen Sie Bezeichner in eckige Klammern. Nutzen Sie SQL-Server-Funktionen und CAST/TRY_CONVERT; verwenden Sie nicht DATE_TRUNC von PostgreSQL, ::-Umwandlungen oder LIMIT.",
+    "mySQLQuoteIdentifiersWithBackticksUseMySQLDateFunctionsAnd": "MySQL. Setzen Sie Bezeichner in Backticks. Nutzen Sie die Datumsfunktionen und Umwandlungen von MySQL; verwenden Sie nicht DATE_TRUNC von PostgreSQL oder ::-Umwandlungen.",
+    "sqliteQuoteIdentifiersWithDoubleQuotesUseSQLiteDateStrftime": "SQLite. Setzen Sie Bezeichner in doppelte Anführungszeichen. Nutzen Sie die date/strftime-Funktionen von SQLite und unterstützte Typumwandlungen; verwenden Sie nicht DATE_TRUNC von PostgreSQL oder ::-Umwandlungen.",
+    "theDatabaseDialectIsUnsupportedSelectASupportedDatabaseConnection": "Der Datenbankdialekt wird nicht unterstützt. Wählen Sie eine unterstützte Datenbankverbindung und lesen Sie das Schema erneut ein.",
+    "theModelDidNotReturnASELECTQueryRephraseYour": "Das Modell hat keine SELECT-Abfrage geliefert. Formulieren Sie Ihre Frage um oder geben Sie SQL von Hand ein.",
+    "mailInbox": "Posteingang",
+    "devProviderConsole": "Entwickler-Anbieterkonsole",
+    "selectADatabaseConnectionFirst": "Wählen Sie zuerst eine Datenbankverbindung.",
+    "theSelectedConnectionChangedTryAgain": "Die ausgewählte Verbindung hat sich geändert. Versuchen Sie es erneut.",
+    "couldNotReadTheSchema": "Das Schema konnte nicht gelesen werden.",
+    "databaseDialectIsMissingReloadThePageAndReadThe": "Der Datenbankdialekt fehlt. Laden Sie die Seite neu und lesen Sie das Schema erneut ein.",
+    "couldNotReadTheDatabaseSchema": "Das Datenbankschema konnte nicht gelesen werden.",
+    "readTheDatabaseSchemaFirst": "Lesen Sie zuerst das Datenbankschema ein.",
+    "couldNotGenerateSQL2": "SQL konnte nicht generiert werden.",
+    "tooManyAIRequestsWaitAMinuteAndRetry": "Zu viele KI-Anfragen. Warten Sie eine Minute und versuchen Sie es erneut.",
+    "openAIConnectionNotFound": "OpenAI-Verbindung nicht gefunden.",
+    "selectAConfiguredModelAndSupplyAQuestionAndSchema": "Wählen Sie ein eingerichtetes Modell und geben Sie eine Frage und ein Schema an.",
+    "aiProviderRequestFailed": "Die Anfrage an den KI-Anbieter ist fehlgeschlagen.",
+    "aiSettingsUnavailableCheckTheApplicationDatabaseMigrationsAndEncryption": "KI-Einstellungen nicht verfügbar. Prüfen Sie Anwendungsdatenbank, Migrationen und Verschlüsselungsschlüssel.",
+    "invalidSettingsRequest": "Ungültige Einstellungsanfrage.",
+    "couldNotSaveAISettingsCheckMigrationsAndTheServer": "KI-Einstellungen konnten nicht gespeichert werden. Prüfen Sie Migrationen und den Verschlüsselungsschlüssel des Servers.",
+    "invalidConnection": "Ungültige Verbindung.",
+    "pleaseWaitBeforeLoadingTheSchemaAgain": "Bitte warten Sie, bevor Sie das Schema erneut laden.",
+    "theDatabaseServerCouldNotBeReachedCheckThatIt": "Der Datenbankserver war nicht erreichbar. Prüfen Sie, ob er läuft und ob gespeicherter Hostname und Port vom App-Server aus erreichbar sind.",
+    "theDatabaseRejectedTheSavedCredentialsUpdateTheUsernameAnd": "Die Datenbank hat die gespeicherten Zugangsdaten abgelehnt. Aktualisieren Sie Benutzername und Passwort in den Verbindungseinstellungen.",
+    "theSavedDatabaseNameDoesNotExistOnThisServer": "Der gespeicherte Datenbankname existiert auf diesem Server nicht. Prüfen Sie die Verbindungseinstellungen.",
+    "thisConnectionIsNoLongerAvailableSelectAnotherConnection": "Diese Verbindung ist nicht mehr verfügbar. Wählen Sie eine andere.",
+    "savedConnectionCredentialsAreUnavailableCheckTheApplicationDatabaseAnd": "Die Zugangsdaten der gespeicherten Verbindung sind nicht verfügbar. Prüfen Sie die Anwendungsdatenbank und die Konfiguration ihres Verschlüsselungsschlüssels.",
+    "readingTheSchemaTimedOutCheckTheDatabaseConnectionAnd": "Das Lesen des Schemas hat das Zeitlimit überschritten. Prüfen Sie die Datenbankverbindung und versuchen Sie es erneut.",
+    "theDatabaseCouldNotReturnItsSchemaCheckTheDatabase": "Die Datenbank konnte ihr Schema nicht liefern. Prüfen Sie den Zugriff des Datenbankbenutzers auf die Schema-Metadaten.",
+    "couldNotReadTheDatabaseSchemaCheckTheConnectionAnd": "Das Datenbankschema konnte nicht gelesen werden. Prüfen Sie die Verbindung und ihre Berechtigungen.",
+    "enterAValidLMStudioServerURL": "Geben Sie eine gültige LM-Studio-Server-URL ein.",
+    "useAnHTTPOrHTTPSServerURLWithoutCredentialsQuery": "Nutzen Sie eine HTTP- oder HTTPS-Server-URL ohne Zugangsdaten, Abfrageparameter oder Fragmente.",
+    "authenticationFailedCheckYourAPIKey": "Authentifizierung fehlgeschlagen. Prüfen Sie Ihren API-Schlüssel.",
+    "providerRateLimitReachedWaitAndRetry": "Anfragelimit des Anbieters erreicht. Warten Sie und versuchen Sie es erneut.",
+    "providerRequestFailed": "Anfrage an den Anbieter fehlgeschlagen ( {details}",
+    "providerRequestTimedOutCheckTheServerAndRetry": "Zeitüberschreitung bei der Anfrage an den Anbieter. Prüfen Sie den Server und versuchen Sie es erneut.",
+    "cannotConnectToTheAIServerForLMStudioStart": "Keine Verbindung zum KI-Server. Für LM Studio: Starten Sie den lokalen Server, aktivieren Sie CORS für diese App und erlauben Sie in Ihrem Browser den Zugriff auf das lokale Netzwerk. HTTPS-Seiten können HTTP-Server blockieren; nutzen Sie bei Bedarf einen sicheren Endpoint.",
+    "theAIServerReturnedAnInvalidResponseCheckTheEndpoint": "Der KI-Server hat eine ungültige Antwort geliefert. Prüfen Sie Endpoint und Modell und versuchen Sie es erneut.",
+    "enterAValidNameOrModelIdentifier": "Geben Sie einen gültigen Namen oder eine gültige Modellkennung ein.",
+    "chooseASupportedProvider": "Wählen Sie einen unterstützten Anbieter.",
+    "invalidAPIKey": "Ungültiger API-Schlüssel.",
+    "anOpenAIAPIKeyIsRequired": "Ein OpenAI-API-Schlüssel ist erforderlich.",
+    "enterLMStudioKeysInTheBrowserSessionOnly": "Geben Sie LM-Studio-Schlüssel nur in der Browsersitzung ein.",
+    "enterAValidHTTPOrHTTPSLMStudioURLWithout": "Geben Sie eine gültige HTTP- oder HTTPS-URL für LM Studio ohne Zugangsdaten, Abfrageparameter oder Fragmente ein.",
+    "providerTypeCannotBeChanged": "Der Anbietertyp kann nicht geändert werden.",
+    "selectBetween1And100ChatModels": "Wählen Sie zwischen 1 und 100 Chat-Modellen.",
+    "chooseASupportedBrowserModelFromTheCatalogue": "Wählen Sie ein unterstütztes Browser-Modell aus dem Katalog.",
+    "modelNotFound": "Modell nicht gefunden.",
+    "unsupportedSettingsAction": "Nicht unterstützte Einstellungsaktion.",
+    "thisDatabaseHasTooManyColumnsForTheLocalSQL": "Diese Datenbank hat zu viele Spalten für den lokalen SQL-Assistenten. Nutzen Sie eine Verbindung mit Zugriff auf weniger Tabellen.",
+    "requestFailedPleaseRetry": "Anfrage fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "connectionSuccessfulSelectModelsThatSupportTextChat": "Verbindung erfolgreich. Wählen Sie Modelle, die Text-Chat unterstützen.",
+    "connectionSucceededButNoCandidateChatModelsWereReturnedLoad": "Die Verbindung war erfolgreich, aber es wurden keine passenden Chat-Modelle geliefert. Laden Sie ein Chat-Modell auf Ihrem Server und aktualisieren Sie.",
+    "weightsCachedLoadToVerify": "Gewichte zwischengespeichert · zum Prüfen laden",
+    "notDownloadedInThisBrowser": "In diesem Browser nicht heruntergeladen",
+    "couldNotReadTheDatabaseSchema2": "Das Datenbankschema konnte nicht gelesen werden",
+    "tooManyRequestsPleaseWaitAMinuteAndTryAgain": "Zu viele Anfragen. Bitte warten Sie eine Minute und versuchen Sie es erneut.",
+    "couldNotReadTheDatabaseSchemaCheckTheConnectionSettings": "Das Datenbankschema konnte nicht gelesen werden. Prüfen Sie die Verbindungseinstellungen und versuchen Sie es erneut.",
+    "sqlTestFailed": "SQL-Test fehlgeschlagen",
+    "couldNotSaveQuery": "Abfrage konnte nicht gespeichert werden",
+    "ready": "Bereit",
+    "success": "Erfolg",
+    "error": "Fehler",
+    "edit": "Bearbeiten",
+    "browserModelLabel": "{model} · ~{memory} MB GPU{cached}",
+    "cachedModelSuffix": " · zwischengespeichert",
+    "loadingModel": "Modell wird geladen…",
+    "couldNotReleaseTheLocalModelDetails": "Das lokale Modell konnte nicht freigegeben werden: {details}",
+    "couldNotCheckTheBrowserModelCacheYouDetails": "Der Modell-Cache des Browsers konnte nicht geprüft werden. Sie können trotzdem versuchen, ein Modell zu laden. {details}",
+    "couldNotLoadTheModelCatalogueReloadThisDetails": "Der Modellkatalog konnte nicht geladen werden. Laden Sie die Seite neu, um es erneut zu versuchen. Manuelles SQL ist weiterhin möglich. {details}",
+    "couldNotLoadThisModelTryASmallerDetails": "Dieses Modell konnte nicht geladen werden. Versuchen Sie ein kleineres Modell oder eine q4f32-Variante, wenn Ihre GPU kein float16 unterstützt. {details}",
+    "couldNotGenerateSqlDetails": "SQL konnte nicht generiert werden. {details}",
+    "close": "Schließen",
+    "refreshNamedWidget": "{title} aktualisieren",
+    "configureAPPDATABASEENCRYPTIONKEYToStoreAICredentials": "Setzen Sie APP_DATABASE_ENCRYPTION_KEY, um KI-Zugangsdaten zu speichern.",
+    "invalidEncryptedAICredentials": "Ungültige verschlüsselte KI-Zugangsdaten",
+    "appDATABASEURLIsNotConfigured": "APP_DATABASE_URL ist nicht konfiguriert.",
+    "appDATABASEENCRYPTIONKEYIsNotConfigured": "APP_DATABASE_ENCRYPTION_KEY ist nicht konfiguriert.",
+    "savedDatabaseConnectionSecretIsInvalid": "Das Secret der gespeicherten Datenbankverbindung ist ungültig.",
+    "sqlQueryIsRequired": "Die SQL-Abfrage ist erforderlich.",
+    "sqlQueryExceedsTheAllowedLength": "Die SQL-Abfrage überschreitet die erlaubte Länge.",
+    "sqlQueryContainsInvalidCharacters": "Die SQL-Abfrage enthält ungültige Zeichen.",
+    "onlyASingleSQLStatementCanBeUsed": "Es kann nur eine einzelne SQL-Anweisung verwendet werden.",
+    "onlyReadOnlySELECTQueriesAreAllowed": "Nur SELECT-Abfragen mit Lesezugriff sind erlaubt.",
+    "savedSQLQuerySecretIsInvalid": "Das Secret der gespeicherten SQL-Abfrage ist ungültig."
+  }
+}

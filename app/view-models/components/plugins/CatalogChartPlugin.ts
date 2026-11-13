@@ -49,7 +49,7 @@ export default defineComponent({
         colors: applyColorSettings(applyDashboardChartColors(getChartColors(colorMode.value === 'dark'), dashboardStyle.value), props.config),
         compact: width.value < 420 || height.value < 260,
         dense: width.value < 260 || height.value < 160,
-        format: numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, valueColumnOf(chart.inputs, props.config)),
+        format: numberFormatterFor(props.config, String(locale.value) === 'pseudo' ? 'en' : locale.value, valueColumnOf(chart.inputs, props.config)),
         labels: {
           other: t('pages.dashboard.plugins.catalog.other'),
           total: t('pages.dashboard.plugins.catalog.total'),

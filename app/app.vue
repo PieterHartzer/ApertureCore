@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppNavigation from '~/components/ui/AppNavigation.vue'
-import { en } from '@nuxt/ui/locale'
+import { de, en, es, fr, pt, pt_br } from '@nuxt/ui/locale'
 
 const route = useRoute()
 const showNavigation = computed(() => !route.meta.public && !route.path.startsWith('/auth/') && !route.path.startsWith('/embed/'))
@@ -9,10 +9,16 @@ const pseudo = extendLocale(en, {
   code: 'en-XA',
   name: 'Pseudo'
 })
-const locales = {
+// Nuxt UI's own words (date pickers, empty states) in the same language.
+const locales: Record<string, typeof en> = {
   en,
+  'es': es,
+  'fr': fr,
+  'de': de,
+  'pt-BR': pt_br,
+  'pt-PT': pt,
   pseudo
-} as const
+}
 
 const uiLocale = computed(() => {
   return locales[locale.value] ?? en

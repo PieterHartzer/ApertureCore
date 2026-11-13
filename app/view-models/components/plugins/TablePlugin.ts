@@ -37,7 +37,7 @@ export default defineComponent({
         ? availableColumns.filter((columnName) => selectedColumnSet.has(columnName))
         : availableColumns
 
-      const numberLocale = locale.value === 'pseudo' ? 'en' : locale.value
+      const numberLocale = String(locale.value) === 'pseudo' ? 'en' : locale.value
       const formatColumns = Array.isArray(props.config.formatColumns) ? props.config.formatColumns : []
       const isFormatted = (columnName: string) => formatColumns.length === 0 || formatColumns.includes(columnName)
       const formatCell = (columnName: string) => {

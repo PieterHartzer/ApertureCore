@@ -84,7 +84,7 @@ export default defineComponent({
       return chartWidth.value < 320 || chartHeight.value < 200
     })
 
-    const valueFormat = computed(() => numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, typeof props.config.yField === 'string' ? props.config.yField : undefined))
+    const valueFormat = computed(() => numberFormatterFor(props.config, String(locale.value) === 'pseudo' ? 'en' : locale.value, typeof props.config.yField === 'string' ? props.config.yField : undefined))
     const seriesColor = computed(() => colorSetting(props.config, 'color') ?? chartTheme.value.line)
 
     const baseOption = computed<EChartsOption>(() => ({

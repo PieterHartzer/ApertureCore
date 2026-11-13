@@ -79,18 +79,14 @@ export default defineNuxtConfig({
     },
     langDir: 'locales',
     locales: [
-      {
-        code: 'en',
-        name: 'English',
-        language: 'en-US',
-        file: 'en.json'
-      },
-      {
-        code: 'pseudo',
-        name: 'Pseudo',
-        language: 'en-XA',
-        file: 'pseudo.json'
-      }
+      { code: 'en', name: 'English', language: 'en-US', file: 'en.json' },
+      { code: 'es', name: 'Español', language: 'es', file: 'es.json' },
+      { code: 'fr', name: 'Français', language: 'fr', file: 'fr.json' },
+      { code: 'de', name: 'Deutsch', language: 'de', file: 'de.json' },
+      { code: 'pt-BR', name: 'Português (Brasil)', language: 'pt-BR', file: 'pt-BR.json' },
+      { code: 'pt-PT', name: 'Português (Portugal)', language: 'pt-PT', file: 'pt-PT.json' },
+      // Stretched text for spotting untranslated strings; development only.
+      ...(process.env.NODE_ENV === 'production' ? [] : [{ code: 'pseudo', name: 'Pseudo', language: 'en-XA', file: 'pseudo.json' }])
     ]
   },
   oidc: {

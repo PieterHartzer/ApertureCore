@@ -238,7 +238,7 @@
             "label": "[Ållôwëd wëbšîţëš]",
             "description": "[Thë dåšhbôård ôñly šhôwš îñšîdë ţhëšë wëbšîţëš, ôñë për lîñë. Ôpëñîñg ţhë lîñk dîrëçţly wôñ’ţ šhôw îţ. Lëåvë ëmpţy ţô ållôw åñy wëbšîţë.]",
             "placeholder": "https://portal.example.com\n*.example.com",
-            "invalid": "[Chëçk ţhë ållôwëd wëbšîţëš: ûšë åddrëššëš lîkë hţţpš://ëxåmplë.çôm, ôñë për lîñë, åţ môšţ {måx}.]"
+            "invalid": "[Chëçk ţhë ållôwëd wëbšîţëš: ûšë åddrëššëš lîkë hţţpš://ëxåmplë.çôm, ôñë për lîñë, åţ môšţ {max}.]"
           }
         }
       },

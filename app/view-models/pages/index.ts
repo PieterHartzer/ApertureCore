@@ -253,7 +253,7 @@ export default defineComponent({
     const pluginOptions = computed<WidgetPickerItem[]>(() => {
       const options = pluginDefinitions.value
         .map((plugin) => ({ label: getPluginDefinitionName(plugin), value: plugin.id }))
-        .sort((left, right) => left.label.localeCompare(right.label, locale.value === 'pseudo' ? 'en' : locale.value))
+        .sort((left, right) => left.label.localeCompare(right.label, String(locale.value) === 'pseudo' ? 'en' : locale.value))
 
       return builderExtension?.arrangeWidgetOptions(options) ?? options
     })
@@ -813,7 +813,7 @@ export default defineComponent({
       ...TEXT_CASES.map(textCase => ({ label: t(`pages.dashboard.plugins.catalog.columnFormats.textCases.${textCase}`), value: textCase }))
     ])
     const maxDatePatternLength = MAX_DATE_PATTERN_LENGTH
-    const formatLocale = computed(() => locale.value === 'pseudo' ? 'en' : locale.value)
+    const formatLocale = computed(() => String(locale.value) === 'pseudo' ? 'en' : locale.value)
     // Each preset is shown with today's date laid out by it.
     const datePatternOptions = computed(() => {
       const sample = new Date()

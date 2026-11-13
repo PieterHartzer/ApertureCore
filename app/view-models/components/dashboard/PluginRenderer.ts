@@ -48,7 +48,7 @@ export default defineComponent({
     const displayRows = computed(() => applyColumnFormatsToRows(
       applyLabelOverridesToRows(props.rows, props.widget.pluginConfig),
       props.widget.pluginConfig,
-      locale.value === 'pseudo' ? 'en' : locale.value,
+      String(locale.value) === 'pseudo' ? 'en' : locale.value,
       keepAsDates.value
     ))
 

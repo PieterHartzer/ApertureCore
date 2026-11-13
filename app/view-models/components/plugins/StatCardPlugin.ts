@@ -66,7 +66,7 @@ export default defineComponent({
 
     const formattedValue = computed(() => {
       if (numericValue.value !== null) {
-        return numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, valueField.value).full(numericValue.value)
+        return numberFormatterFor(props.config, String(locale.value) === 'pseudo' ? 'en' : locale.value, valueField.value).full(numericValue.value)
       }
 
       if (typeof rawValue.value === 'boolean') {

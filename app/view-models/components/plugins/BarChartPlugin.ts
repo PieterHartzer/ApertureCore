@@ -99,7 +99,7 @@ export default defineComponent({
       return longestLabel * characterWidth > (chartWidth.value - 80) / count - 8
     })
 
-    const valueFormat = computed(() => numberFormatterFor(props.config, locale.value === 'pseudo' ? 'en' : locale.value, typeof props.config.yField === 'string' ? props.config.yField : undefined))
+    const valueFormat = computed(() => numberFormatterFor(props.config, String(locale.value) === 'pseudo' ? 'en' : locale.value, typeof props.config.yField === 'string' ? props.config.yField : undefined))
     const seriesColor = computed(() => colorSetting(props.config, 'color') ?? chartTheme.value.line)
 
     const baseOption = computed<EChartsOption>(() => ({
