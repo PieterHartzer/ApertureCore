@@ -69,6 +69,44 @@ const topGroups = computed(() => groups.value.filter(group => group.placement !=
 const bottomGroups = computed(() => groups.value.filter(group => group.placement === 'bottom'))
 const allItems = computed(() => groups.value.flatMap((group) => group.items))
 const active = (path: string) => isNavigationSectionActive(route.path, path)
+
+// Groups with a heading fold away. Settings starts folded; the choice is kept
+// in this browser, and a group opens by itself when its page is showing.
+const FOLDED_KEY = 'navigation-folded-groups'
+const folded = ref<Record<string, boolean>>({})
+const isFolded = (group: NavigationGroup) => folded.value[group.key] ?? group.key === 'settings'
+const groupHasActive = (group: NavigationGroup) => group.items.some(item => active(item.to))
+const saveFolded = () => {
+  try {
+    localStorage.setItem(FOLDED_KEY, JSON.stringify(folded.value))
+  } catch {
+    // Private windows may refuse storage; folding still works for this visit.
+  }
+}
+const toggleGroup = (group: NavigationGroup) => {
+  folded.value = { ...folded.value, [group.key]: !isFolded(group) }
+  saveFolded()
+}
+const unfoldActive = () => {
+  const group = groups.value.find(entry => entry.label && groupHasActive(entry))
+
+  if (group && isFolded(group)) folded.value = { ...folded.value, [group.key]: false }
+}
+
+onMounted(() => {
+  try {
+    const stored = JSON.parse(localStorage.getItem(FOLDED_KEY) ?? '{}') as unknown
+
+    if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+      folded.value = Object.fromEntries(Object.entries(stored).filter(([, value]) => typeof value === 'boolean')) as Record<string, boolean>
+    }
+  } catch {
+    // Unreadable or blocked storage: use the defaults.
+  }
+
+  unfoldActive()
+})
+watch(() => route.path, unfoldActive)
 const linkClass = (path: string) => active(path)
   ? 'bg-primary/15 text-highlighted shadow-[inset_2px_0_0_var(--ui-primary)]'
   : 'text-muted hover:bg-elevated/60 hover:text-highlighted'
@@ -112,8 +150,18 @@ const linkClass = (path: string) => active(path)
         :key="group.key"
         :data-nav-group="group.key"
       >
-        <p v-if="group.label" class="mb-1 px-2 text-xs text-dimmed">{{ group.label }}</p>
-        <ul :class="group.key === 'main' ? 'space-y-1' : 'space-y-0.5'">
+        <button
+          v-if="group.label"
+          type="button"
+          class="mb-1 flex w-full items-center justify-between rounded-md px-2 py-0.5 text-xs text-dimmed transition-colors hover:text-highlighted"
+          :aria-expanded="!isFolded(group)"
+          :aria-controls="`nav-group-${group.key}`"
+          @click="toggleGroup(group)"
+        >
+          {{ group.label }}
+          <UIcon name="i-lucide-chevron-down" class="size-3.5 transition-transform" :class="isFolded(group) ? '-rotate-90' : ''" aria-hidden="true" />
+        </button>
+        <ul v-show="!group.label || !isFolded(group)" :id="`nav-group-${group.key}`" :class="group.key === 'main' ? 'space-y-1' : 'space-y-0.5'">
           <li v-for="item in group.items" :key="item.to">
             <!-- The main features get larger rows with a tinted icon. -->
             <NuxtLink
@@ -142,8 +190,18 @@ const linkClass = (path: string) => active(path)
           :key="group.key"
           :data-nav-group="group.key"
         >
-          <p v-if="group.label" class="mb-1 px-2 text-xs text-dimmed">{{ group.label }}</p>
-          <ul class="space-y-0.5">
+          <button
+            v-if="group.label"
+            type="button"
+            class="mb-1 flex w-full items-center justify-between rounded-md px-2 py-0.5 text-xs text-dimmed transition-colors hover:text-highlighted"
+            :aria-expanded="!isFolded(group)"
+            :aria-controls="`nav-group-${group.key}`"
+            @click="toggleGroup(group)"
+          >
+            {{ group.label }}
+            <UIcon name="i-lucide-chevron-down" class="size-3.5 transition-transform" :class="isFolded(group) ? '-rotate-90' : ''" aria-hidden="true" />
+          </button>
+          <ul v-show="!group.label || !isFolded(group)" :id="`nav-group-${group.key}`" class="space-y-0.5">
             <li v-for="item in group.items" :key="item.to">
               <NuxtLink :to="item.to" :aria-current="active(item.to) ? 'page' : undefined" class="flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors" :class="linkClass(item.to)">
                 <UIcon :name="item.icon" class="size-4 shrink-0" aria-hidden="true" />
