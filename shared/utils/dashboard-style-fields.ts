@@ -1,5 +1,5 @@
 export type DashboardStyleControl = 'color' | 'number' | 'select' | 'switch'
-export type DashboardStyleGroup = 'page' | 'widgets' | 'titles' | 'values' | 'charts'
+export type DashboardStyleGroup = 'page' | 'widgets' | 'titles' | 'values' | 'charts' | 'chartColors'
 
 export interface DashboardStyleField {
   key: string
@@ -21,12 +21,16 @@ const choice = (key: string, label: string, group: DashboardStyleGroup, options:
   options: options.map(([value, text]) => ({ value, label: text }))
 })
 
+/** Style keys for series 2 to 6. */
+export const CHART_SERIES_KEYS = ['chartColor2', 'chartColor3', 'chartColor4', 'chartColor5', 'chartColor6'] as const
+
 export const DASHBOARD_STYLE_GROUPS: { id: DashboardStyleGroup, label: string }[] = [
   { id: 'page', label: 'Page' },
   { id: 'widgets', label: 'Widgets' },
   { id: 'titles', label: 'Widget titles' },
   { id: 'values', label: 'Numbers and labels' },
-  { id: 'charts', label: 'Charts' }
+  { id: 'charts', label: 'Charts' },
+  { id: 'chartColors', label: 'Chart colours' }
 ]
 
 export const DASHBOARD_STYLE_FIELDS: DashboardStyleField[] = [
@@ -51,7 +55,12 @@ export const DASHBOARD_STYLE_FIELDS: DashboardStyleField[] = [
   color('labelColor', 'Label colour', 'values'),
   color('chartPrimary', 'Main series colour', 'charts'),
   color('chartText', 'Axis text colour', 'charts'),
-  color('chartGrid', 'Grid line colour', 'charts')
+  color('chartGrid', 'Grid line colour', 'charts'),
+  // Series 1 is the main series colour above; these colour the next series in order.
+  ...CHART_SERIES_KEYS.map((key, index) => color(key, `Series ${index + 2}`, 'chartColors')),
+  // Heatmaps and calendars run from low to high; funnels step from high towards low.
+  color('chartHeatLow', 'Lowest values', 'chartColors'),
+  color('chartHeatHigh', 'Highest values', 'chartColors')
 ]
 
 export type DashboardStyle = Record<string, string | number | boolean>

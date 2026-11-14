@@ -399,7 +399,8 @@
           "widgets": "Widgets",
           "titles": "Widget-Titel",
           "values": "Zahlen und Beschriftungen",
-          "charts": "Diagramme"
+          "charts": "Diagramme",
+          "chartColors": "Diagrammfarben"
         },
         "fields": {
           "pageBackground": {
@@ -495,6 +496,27 @@
               "dotted": "Gepunktet",
               "double": "Doppelt"
             }
+          },
+          "chartColor2": {
+            "label": "Reihe 2"
+          },
+          "chartColor3": {
+            "label": "Reihe 3"
+          },
+          "chartColor4": {
+            "label": "Reihe 4"
+          },
+          "chartColor5": {
+            "label": "Reihe 5"
+          },
+          "chartColor6": {
+            "label": "Reihe 6"
+          },
+          "chartHeatLow": {
+            "label": "Niedrigste Werte"
+          },
+          "chartHeatHigh": {
+            "label": "Höchste Werte"
           }
         }
       },
@@ -892,7 +914,8 @@
               "viewer": "Im Stil jedes Betrachters",
               "everyone": "Für alle gleich"
             }
-          }
+          },
+          "hexColor": "{label}, Hex-Code"
         },
         "shared": {
           "loading": "Diagramm wird geladen..."

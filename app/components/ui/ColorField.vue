@@ -17,7 +17,21 @@ export default component
           @input="onSolidInput"
         >
       </span>
-      <span class="min-w-0 flex-1 truncate font-mono text-xs text-muted">{{ modelValue ?? placeholder }}</span>
+      <UInput
+        size="sm"
+        class="min-w-0 flex-1"
+        :ui="{ base: 'font-mono text-xs' }"
+        :model-value="draft"
+        :placeholder="placeholder || '#rrggbb'"
+        :color="draftInvalid ? 'error' : undefined"
+        :highlight="draftInvalid"
+        :aria-label="t('pages.dashboard.plugins.catalog.hexColor', { label })"
+        :aria-invalid="draftInvalid"
+        spellcheck="false"
+        autocomplete="off"
+        @update:model-value="onHexInput"
+        @blur="onHexBlur"
+      />
       <UButton
         v-if="modelValue && clearable"
         color="neutral"

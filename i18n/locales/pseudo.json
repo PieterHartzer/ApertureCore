@@ -377,7 +377,8 @@
           "widgets": "[Wîdgëţš]",
           "titles": "[Wîdgëţ ţîţlëš]",
           "values": "[Nûmbërš åñd låbëlš]",
-          "charts": "[Chårţš]"
+          "charts": "[Chårţš]",
+          "chartColors": "[Chårt côlôurs]"
         },
         "fields": {
           "pageBackground": {
@@ -473,6 +474,27 @@
               "dotted": "[Dôţţëd]",
               "double": "[Dôûblë]"
             }
+          },
+          "chartColor2": {
+            "label": "[Sëriës 2]"
+          },
+          "chartColor3": {
+            "label": "[Sëriës 3]"
+          },
+          "chartColor4": {
+            "label": "[Sëriës 4]"
+          },
+          "chartColor5": {
+            "label": "[Sëriës 5]"
+          },
+          "chartColor6": {
+            "label": "[Sëriës 6]"
+          },
+          "chartHeatLow": {
+            "label": "[Lôwëst våluës]"
+          },
+          "chartHeatHigh": {
+            "label": "[Highëst våluës]"
           }
         }
       },
@@ -870,7 +892,8 @@
               "viewer": "[Îñ ëåçh vîëwër'š šţýlë]",
               "everyone": "[Šåmë fôr ëvërýôñë]"
             }
-          }
+          },
+          "hexColor": "[{label}, hëx côdë]"
         },
         "shared": {
           "loading": "[Ļôåðîñĝ çĥåřţ...]"

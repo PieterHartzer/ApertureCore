@@ -1,8 +1,17 @@
-import { computed, defineComponent, useId, type PropType } from 'vue'
+import { computed, defineComponent, ref, useId, watch, type PropType } from 'vue'
 
 import { isHexColor, joinHexColor, splitHexColor } from '#shared/utils/color'
 
-/** A colour picker with an opacity percentage, saved as #rrggbb or #rrggbbaa. */
+/** Reads typed or pasted HTML colours: #8b5cf6, 8b5cf6, #abc and #8b5cf680. */
+export const parseHexInput = (input: string): string | null => {
+  const text = input.trim().replace(/^#?/, '#').toLowerCase()
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/.exec(text)
+  const full = short ? `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}` : text
+
+  return isHexColor(full) ? full : null
+}
+
+/** A colour picker with a hex box and an opacity percentage, saved as #rrggbb or #rrggbbaa. */
 export default defineComponent({
   props: {
     modelValue: {
@@ -43,6 +52,40 @@ export default defineComponent({
       emit('update:modelValue', joinHexColor(value, props.modelValue ? opacity.value : 100))
     }
 
+    // The hex box: valid colours apply as you type; anything else waits and shows red.
+    const draft = ref(props.modelValue ?? '')
+    const draftInvalid = ref(false)
+
+    watch(() => props.modelValue, (value) => {
+      if (parseHexInput(draft.value) !== value) draft.value = value ?? ''
+      draftInvalid.value = false
+    })
+
+    const onHexInput = (value: string | number) => {
+      const text = String(value ?? '')
+      const parsed = parseHexInput(text)
+
+      draft.value = text
+
+      if (!text.trim()) {
+        draftInvalid.value = false
+        if (props.clearable) emit('update:modelValue', null)
+        return
+      }
+
+      draftInvalid.value = parsed === null
+
+      if (!parsed) return
+
+      // Six digits keep the chosen opacity; eight digits bring their own.
+      emit('update:modelValue', parsed.length === 9 ? parsed : joinHexColor(parsed, props.modelValue ? opacity.value : 100))
+    }
+
+    const onHexBlur = () => {
+      draft.value = props.modelValue ?? ''
+      draftInvalid.value = false
+    }
+
     const sliderLabelId = useId()
 
     const onOpacityInput = (value: number | number[] | undefined) => {
@@ -56,6 +99,10 @@ export default defineComponent({
     }
 
     return {
+      draft,
+      draftInvalid,
+      onHexBlur,
+      onHexInput,
       onOpacityInput,
       onSolidInput,
       opacity,

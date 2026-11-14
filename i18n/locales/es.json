@@ -399,7 +399,8 @@
           "widgets": "Widgets",
           "titles": "Títulos de widgets",
           "values": "Números y etiquetas",
-          "charts": "Gráficos"
+          "charts": "Gráficos",
+          "chartColors": "Colores de los gráficos"
         },
         "fields": {
           "pageBackground": {
@@ -495,6 +496,27 @@
               "dotted": "Punteado",
               "double": "Doble"
             }
+          },
+          "chartColor2": {
+            "label": "Serie 2"
+          },
+          "chartColor3": {
+            "label": "Serie 3"
+          },
+          "chartColor4": {
+            "label": "Serie 4"
+          },
+          "chartColor5": {
+            "label": "Serie 5"
+          },
+          "chartColor6": {
+            "label": "Serie 6"
+          },
+          "chartHeatLow": {
+            "label": "Valores más bajos"
+          },
+          "chartHeatHigh": {
+            "label": "Valores más altos"
           }
         }
       },
@@ -892,7 +914,8 @@
               "viewer": "En el estilo de cada persona",
               "everyone": "Igual para todos"
             }
-          }
+          },
+          "hexColor": "{label}, código hexadecimal"
         },
         "shared": {
           "loading": "Cargando gráfico..."

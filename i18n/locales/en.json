@@ -399,7 +399,8 @@
           "widgets": "Widgets",
           "titles": "Widget titles",
           "values": "Numbers and labels",
-          "charts": "Charts"
+          "charts": "Charts",
+          "chartColors": "Chart colours"
         },
         "fields": {
           "pageBackground": {
@@ -495,6 +496,27 @@
               "dotted": "Dotted",
               "double": "Double"
             }
+          },
+          "chartColor2": {
+            "label": "Series 2"
+          },
+          "chartColor3": {
+            "label": "Series 3"
+          },
+          "chartColor4": {
+            "label": "Series 4"
+          },
+          "chartColor5": {
+            "label": "Series 5"
+          },
+          "chartColor6": {
+            "label": "Series 6"
+          },
+          "chartHeatLow": {
+            "label": "Lowest values"
+          },
+          "chartHeatHigh": {
+            "label": "Highest values"
           }
         }
       },
@@ -892,7 +914,8 @@
               "viewer": "In each viewer's style",
               "everyone": "Same for everyone"
             }
-          }
+          },
+          "hexColor": "{label}, hex code"
         },
         "shared": {
           "loading": "Loading chart..."

@@ -1,6 +1,6 @@
 import { isBorderStyle, outlineDeclarations } from './border'
 import { isHexColor } from './color'
-import { DASHBOARD_STYLE_FIELDS, type DashboardStyle } from './dashboard-style-fields'
+import { CHART_SERIES_KEYS, DASHBOARD_STYLE_FIELDS, type DashboardStyle } from './dashboard-style-fields'
 
 export const DASHBOARD_CANVAS = '[data-dashboard-canvas]'
 
@@ -88,6 +88,12 @@ export const buildDashboardCss = (input: unknown) => {
 
 export interface DashboardChartStyle {
   primary?: string
+  /** Series 2 onwards, in order; a gap keeps that series' default colour. */
+  series?: (string | undefined)[]
+  heatLow?: string
+  heatHigh?: string
+  /** The widget background, so faded colours and slice edges blend into it. */
+  surface?: string
   text?: string
   grid?: string
   fontFamily?: string
@@ -99,6 +105,10 @@ export const getDashboardChartStyle = (input: unknown): DashboardChartStyle => {
 
   return {
     primary: text('chartPrimary'),
+    series: CHART_SERIES_KEYS.map(key => text(key)),
+    heatLow: text('chartHeatLow'),
+    heatHigh: text('chartHeatHigh'),
+    surface: text('cardBackground')?.slice(0, 7),
     text: text('chartText'),
     grid: text('chartGrid'),
     fontFamily: FONT_STACKS[text('fontFamily') ?? '']

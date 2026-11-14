@@ -119,15 +119,55 @@ const defaultChartColors = (dark: boolean): ChartColors => dark
       tooltipBorder: '#e5e5e5'
     }
 
-export const applyDashboardChartColors = (colors: ChartColors, style: { primary?: string, text?: string, grid?: string }): ChartColors => ({
-  ...colors,
-  primary: style.primary ?? colors.primary,
-  categorical: style.primary ? [style.primary, ...colors.categorical.slice(1)] : colors.categorical,
-  // A dashboard's own main colour also fills the area under its lines.
-  areaColor: style.primary ? undefined : colors.areaColor,
-  label: style.text ?? colors.label,
-  grid: style.grid ?? colors.grid
-})
+/** Mixes two #rrggbb colours; 0 gives the first, 1 the second. Any opacity is dropped. */
+export const mixHexColors = (from: string, to: string, amount: number) => {
+  const channel = (hex: string, start: number) => Number.parseInt(hex.slice(start, start + 2), 16)
+
+  return '#' + [1, 3, 5].map((start) => {
+    const value = Math.round(channel(from, start) + (channel(to, start) - channel(from, start)) * amount)
+
+    return value.toString(16).padStart(2, '0')
+  }).join('')
+}
+
+export interface DashboardChartColorStyle {
+  primary?: string
+  series?: (string | undefined)[]
+  heatLow?: string
+  heatHigh?: string
+  surface?: string
+  text?: string
+  grid?: string
+}
+
+/**
+ * Lays a dashboard's own colours over the default palette. Series colours replace
+ * the defaults slot by slot. Heatmaps use the lowest and highest colours; with
+ * only a main colour, they fade from the background to it. Funnel stages step
+ * from the strongest colour towards the lowest one.
+ */
+export const applyDashboardChartColors = (colors: ChartColors, style: DashboardChartColorStyle): ChartColors => {
+  const surface = style.surface ?? colors.surface
+  const categorical = colors.categorical.map((color, index) => (index === 0 ? style.primary : style.series?.[index - 1]) ?? color)
+  const strong = style.heatHigh ?? style.primary
+  const weak = style.heatLow ?? (strong ? mixHexColors(strong, surface, 0.88) : undefined)
+  const steps = colors.ordinal.length
+
+  return {
+    ...colors,
+    primary: style.primary ?? colors.primary,
+    categorical,
+    surface,
+    sequential: strong && weak ? [weak, strong] : colors.sequential,
+    ordinal: strong && weak
+      ? Array.from({ length: steps }, (_, index) => mixHexColors(strong, weak, (index / Math.max(steps - 1, 1)) * 0.8))
+      : colors.ordinal,
+    // A dashboard's own main colour also fills the area under its lines.
+    areaColor: style.primary ? undefined : colors.areaColor,
+    label: style.text ?? colors.label,
+    grid: style.grid ?? colors.grid
+  }
+}
 
 export const readableTextOn = (hex: string) => {
   const channel = (start: number) => {
