@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLocaleSelect from '~/components/ui/AppLocaleSelect.vue'
+import AppThemeMenu from '~/components/ui/AppThemeMenu.vue'
 import { useAppPermissions } from '~/composables/useAppPermissions'
 import { appExtensions, type NavigationGroup } from '~/extensions'
 
@@ -121,7 +122,7 @@ const linkClass = (path: string) => active(path)
         <template v-if="!brandLogo?.includesName">{{ brandName }}</template>
       </NuxtLink>
       <div class="ml-auto flex items-center gap-1">
-        <UColorModeButton size="sm" />
+        <AppThemeMenu />
         <UButton color="neutral" variant="ghost" size="sm" square icon="i-lucide-log-out" :aria-label="t('navigation.signOut')" @click="logout()" />
       </div>
     </div>
@@ -216,7 +217,7 @@ const linkClass = (path: string) => active(path)
     <div class="space-y-1 border-t border-default p-2">
       <div class="flex items-center gap-1">
         <AppLocaleSelect compact class="min-w-0 flex-1" />
-        <UColorModeButton size="sm" />
+        <AppThemeMenu />
       </div>
       <div class="flex items-center gap-2 border-t border-default px-1 pt-2">
         <span class="grid size-7 shrink-0 place-items-center rounded-full bg-primary/15 text-[11px] font-semibold text-highlighted" aria-hidden="true">{{ userDetails.initials }}</span>

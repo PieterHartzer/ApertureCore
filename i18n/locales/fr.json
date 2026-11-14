@@ -1679,7 +1679,13 @@
     "aiModels": "Modèles d’IA",
     "data": "Données",
     "settings": "Paramètres",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "theme": {
+      "label": "Thème",
+      "system": "Comme l’appareil",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
   },
   "interface": {
     "settingsHeadline": "Paramètres",

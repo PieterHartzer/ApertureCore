@@ -29,7 +29,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // An absolute path, so this still works when another app extends this one.
   css: [fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url))],
-  colorMode: { preference: 'dark', fallback: 'dark' },
+  // Follow the device, like the website and the sign-in pages (Zitadel), so the theme never flips between them.
+  colorMode: { preference: 'system', fallback: 'light' },
   devServer: {
     host: process.env.NUXT_HOST || undefined,
     port: nuxtPort

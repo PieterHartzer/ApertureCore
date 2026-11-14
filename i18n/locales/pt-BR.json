@@ -1679,7 +1679,13 @@
     "aiModels": "Modelos de IA",
     "data": "Dados",
     "settings": "Configurações",
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "theme": {
+      "label": "Tema",
+      "system": "Igual ao dispositivo",
+      "light": "Claro",
+      "dark": "Escuro"
+    }
   },
   "interface": {
     "settingsHeadline": "Configurações",

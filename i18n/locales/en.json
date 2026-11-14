@@ -1679,7 +1679,13 @@
     "aiModels": "AI models",
     "data": "Data",
     "settings": "Settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "theme": {
+      "label": "Theme",
+      "system": "Same as device",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "interface": {
     "settingsHeadline": "Settings",

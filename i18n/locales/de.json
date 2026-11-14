@@ -1679,7 +1679,13 @@
     "aiModels": "KI-Modelle",
     "data": "Daten",
     "settings": "Einstellungen",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "theme": {
+      "label": "Design",
+      "system": "Wie das Gerät",
+      "light": "Hell",
+      "dark": "Dunkel"
+    }
   },
   "interface": {
     "settingsHeadline": "Einstellungen",
