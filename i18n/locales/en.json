@@ -215,6 +215,14 @@
             "embedEnabled": {
               "label": "Enable embedding",
               "description": "Allow this dashboard to be rendered publicly through its embed GUID."
+            },
+            "printLayout": {
+              "label": "Print layout",
+              "description": "Which way the dashboard prints on A4 paper.",
+              "options": {
+                "landscape": "Landscape",
+                "portrait": "Portrait"
+              }
             }
           },
           "actions": {

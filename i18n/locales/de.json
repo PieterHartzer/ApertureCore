@@ -215,6 +215,14 @@
             "embedEnabled": {
               "label": "Einbetten aktivieren",
               "description": "Erlaubt, dieses Dashboard über seine Einbettungs-GUID öffentlich anzuzeigen."
+            },
+            "printLayout": {
+              "label": "Drucklayout",
+              "description": "In welchem Format das Dashboard auf A4-Papier gedruckt wird.",
+              "options": {
+                "landscape": "Querformat",
+                "portrait": "Hochformat"
+              }
             }
           },
           "actions": {

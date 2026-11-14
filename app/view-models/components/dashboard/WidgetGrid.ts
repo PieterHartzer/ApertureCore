@@ -63,7 +63,13 @@ export default defineComponent({
       return {
         '--pending-column': x === undefined ? `span ${w}` : `${x + 1} / span ${w}`,
         '--pending-row': y === undefined ? `span ${h}` : `${y + 1} / span ${h}`,
-        '--pending-height': `span ${h}`
+        '--pending-height': `span ${h}`,
+        // The saved place on the 12-column grid, for printing. Set here rather than
+        // at print time, so the browser's own print (Ctrl/Cmd+P) keeps the layout too.
+        ...(x === undefined ? {} : { '--print-x': String(x + 1) }),
+        ...(y === undefined ? {} : { '--print-y': String(y + 1) }),
+        '--print-w': String(w),
+        '--print-h': String(h)
       }
     }
 

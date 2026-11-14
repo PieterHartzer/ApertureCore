@@ -175,6 +175,18 @@ export default component
             </UFormField>
 
             <UFormField
+              name="printLayout"
+              :label="t('pages.dashboard.selector.settings.fields.printLayout.label')"
+              :description="t('pages.dashboard.selector.settings.fields.printLayout.description')"
+            >
+              <URadioGroup
+                v-model="dashboardSettingsInput.printLayout"
+                orientation="horizontal"
+                :items="printLayoutOptions.map(option => ({ value: option, label: t(`pages.dashboard.selector.settings.fields.printLayout.options.${option}`) }))"
+              />
+            </UFormField>
+
+            <UFormField
               name="isDefault"
               :label="t('pages.dashboard.selector.settings.fields.isDefault.label')"
               :description="t('pages.dashboard.selector.settings.fields.isDefault.description')"
@@ -915,6 +927,7 @@ export default component
           <div
             v-if="hasSelectedDashboard"
             class="flex flex-wrap items-center gap-2"
+            data-print-hide
           >
             <UButton
               v-if="isDashboardEditing"

@@ -8,7 +8,7 @@ export const useChartTheme = () => {
   const dashboardStyle = useDashboardChartStyle()
 
   return computed(() => {
-    const colors = getChartColors(colorMode.value === 'dark')
+    const colors = getChartColors(dashboardStyle.value.dark ?? colorMode.value === 'dark')
 
     return {
       line: dashboardStyle.value.primary ?? colors.primary,

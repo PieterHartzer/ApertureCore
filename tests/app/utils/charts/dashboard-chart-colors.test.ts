@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { applyDashboardChartColors, getChartColors, mixHexColors } from '../../../../app/utils/charts/chart-colors'
-import { getDashboardChartStyle } from '../../../../shared/utils/dashboard-style'
+import { buildDashboardCss, getDashboardChartStyle } from '../../../../shared/utils/dashboard-style'
 
 vi.stubGlobal('useI18n', () => ({ t: (key: string) => key }))
 
@@ -72,3 +72,25 @@ describe('parseHexInput', () => {
     expect(parseHexInput('rgb(1, 2, 3)')).toBeNull()
   })
 })
+
+describe('dashboard text and chart ink', () => {
+  it('draws charts for the dashboard background, not the app theme', () => {
+    expect(getDashboardChartStyle({ cardBackground: '#fffbef' }).dark).toBe(false)
+    expect(getDashboardChartStyle({ cardBackground: '#1e293b' }).dark).toBe(true)
+    expect(getDashboardChartStyle({}).dark).toBeUndefined()
+  })
+
+  it('uses the number or text colour for chart totals and needles', () => {
+    expect(getDashboardChartStyle({ textColor: '#3b3a3f' }).ink).toBe('#3b3a3f')
+    expect(getDashboardChartStyle({ textColor: '#3b3a3f', valueColor: '#d4657a' }).ink).toBe('#d4657a')
+    expect(applyDashboardChartColors(base, { ink: '#3b3a3f' }).ink).toBe('#3b3a3f')
+  })
+
+  it('sets the text shades inside the dashboard', () => {
+    expect(buildDashboardCss({ textColor: '#3b3a3f' })).toContain('--ui-text-highlighted: #3b3a3f;')
+    // A light background with no text colour gets dark text, even in the dark theme.
+    expect(buildDashboardCss({ cardBackground: '#fffbef' })).toContain('--ui-text-highlighted: #1e293b;')
+    expect(buildDashboardCss({})).not.toContain('--ui-text')
+  })
+})
+

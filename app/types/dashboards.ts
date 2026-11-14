@@ -1,5 +1,6 @@
 import type { DashboardStyle } from '../../shared/utils/dashboard-style-fields'
 import type { DashboardAppearance } from '../../shared/utils/dashboard-appearance'
+import type { DashboardPrintLayout } from '../../shared/utils/dashboard-print-layout'
 import type { DashboardWidget } from './dashboard-widgets'
 import type { SavedSqlQueryResultRow } from './saved-sql-queries'
 
@@ -13,6 +14,7 @@ export interface DashboardSummary {
   /** Opens first for everyone in the organisation. */
   isDefault: boolean
   appearance: DashboardAppearance
+  printLayout: DashboardPrintLayout
   style: DashboardStyle
   widgetCount: number
   createdAt: string
@@ -58,6 +60,7 @@ export interface DashboardSaveInput {
   isDefault?: boolean
   embedAllowedOrigins?: string[]
   appearance?: DashboardAppearance
+  printLayout?: DashboardPrintLayout
   style?: DashboardStyle
   widgets: DashboardSaveWidgetInput[]
 }
@@ -212,7 +215,7 @@ export const createEmptyDashboardCreateInput = (): DashboardCreateInput => ({
 })
 
 export const toDashboardSaveInput = (
-  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'>,
+  dashboard: Pick<DashboardDetails, 'dashboardName' | 'embedEnabled' | 'appearance' | 'style' | 'widgets'> & { printLayout?: DashboardPrintLayout },
   changes: { isDefault?: boolean, embedAllowedOrigins?: string[] } = {}
 ): DashboardSaveInput => ({
   dashboardName: dashboard.dashboardName,
@@ -220,6 +223,7 @@ export const toDashboardSaveInput = (
   ...(changes.isDefault === undefined ? {} : { isDefault: changes.isDefault }),
   ...(changes.embedAllowedOrigins === undefined ? {} : { embedAllowedOrigins: changes.embedAllowedOrigins }),
   appearance: dashboard.appearance,
+  ...(dashboard.printLayout ? { printLayout: dashboard.printLayout } : {}),
   style: dashboard.style,
   widgets: dashboard.widgets.map((widget) => ({
     id: widget.id,

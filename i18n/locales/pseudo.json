@@ -193,6 +193,14 @@
             "embedEnabled": {
               "label": "[Ĕñåƀļë ëḿƀëððîñĝ]",
               "description": "[Åļļôŵ ţĥîš ðåšĥƀôåřð ţô ƀë řëñðëřëð þûƀļîçļý ţĥřôûĝĥ îţš ëḿƀëð ĜÛÎÐ.]"
+            },
+            "printLayout": {
+              "label": "[Print låyôut]",
+              "description": "[Which wåy thë dåshbôård prints ôn A4 påpër.]",
+              "options": {
+                "landscape": "[Låndscåpë]",
+                "portrait": "[Pôrtråit]"
+              }
             }
           },
           "actions": {

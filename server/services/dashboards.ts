@@ -5,6 +5,7 @@ import { readStoredEmbedOrigins } from '../../shared/utils/embed-origins'
 import {
   normalizeDashboardAppearance
 } from '../../shared/utils/dashboard-appearance'
+import { normalizeDashboardPrintLayout } from '../../shared/utils/dashboard-print-layout'
 import type { Transaction } from 'kysely'
 
 import type {
@@ -43,6 +44,7 @@ interface DashboardRow {
   embed_allowed_origins?: unknown
   is_default?: boolean
   appearance: string
+  print_layout?: string
   style: unknown
   created_at: Date
   updated_at: Date
@@ -192,6 +194,7 @@ const mapDashboardSummary = (
   embedAllowedOrigins: readStoredEmbedOrigins(row.embed_allowed_origins),
   isDefault: row.is_default === true,
   appearance: normalizeDashboardAppearance(row.appearance),
+  printLayout: normalizeDashboardPrintLayout(row.print_layout),
   style: normalizeDashboardStyle(row.style).style,
   widgetCount,
   createdAt: new Date(row.created_at).toISOString(),
@@ -259,6 +262,7 @@ const loadDashboardRow = async (
       'embed_allowed_origins',
       'is_default',
       'appearance',
+      'print_layout',
       'style',
       'created_at',
       'updated_at'
@@ -357,6 +361,7 @@ export const listDashboards = async (
         'embed_allowed_origins',
         'is_default',
         'appearance',
+        'print_layout',
         'style',
         'created_at',
         'updated_at'
@@ -622,6 +627,7 @@ export const saveDashboard = async (
           ...(input.isDefault === undefined ? {} : { is_default: input.isDefault }),
           ...(input.embedAllowedOrigins ? { embed_allowed_origins: JSON.stringify(input.embedAllowedOrigins) } : {}),
           ...(input.appearance ? { appearance: input.appearance } : {}),
+          ...(input.printLayout ? { print_layout: input.printLayout } : {}),
           ...(input.style ? { style: input.style } : {}),
           updated_by_user_id: authContext.userId
         })

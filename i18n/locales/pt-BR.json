@@ -215,6 +215,14 @@
             "embedEnabled": {
               "label": "Ativar incorporação",
               "description": "Permite exibir este painel publicamente pelo GUID de incorporação."
+            },
+            "printLayout": {
+              "label": "Layout de impressão",
+              "description": "Como o painel é impresso em papel A4.",
+              "options": {
+                "landscape": "Paisagem",
+                "portrait": "Retrato"
+              }
             }
           },
           "actions": {

@@ -1,6 +1,7 @@
 import type { GuardRejection } from '../utils/extensions'
 import type { DashboardStyle } from '../../shared/utils/dashboard-style-fields'
 import type { DashboardAppearance } from '../../shared/utils/dashboard-appearance'
+import type { DashboardPrintLayout } from '../../shared/utils/dashboard-print-layout'
 import type { AuthenticatedOrganizationContext } from './database-connections'
 
 export type { AuthenticatedOrganizationContext }
@@ -56,6 +57,7 @@ export interface DashboardSummary {
   /** Opens first for everyone in the organisation. */
   isDefault: boolean
   appearance: DashboardAppearance
+  printLayout: DashboardPrintLayout
   style: DashboardStyle
   widgetCount: number
   createdAt: string
@@ -99,6 +101,7 @@ export interface SaveDashboardInput extends CreateDashboardInput {
   isDefault?: boolean
   embedAllowedOrigins?: string[]
   appearance?: DashboardAppearance
+  printLayout?: DashboardPrintLayout
   style?: DashboardStyle
   widgets: DashboardWidgetInput[]
 }

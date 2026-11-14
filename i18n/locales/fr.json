@@ -215,6 +215,14 @@
             "embedEnabled": {
               "label": "Activer l’intégration",
               "description": "Permet d’afficher publiquement ce tableau de bord via son GUID d’intégration."
+            },
+            "printLayout": {
+              "label": "Mise en page à l’impression",
+              "description": "Sens d’impression du tableau de bord sur papier A4.",
+              "options": {
+                "landscape": "Paysage",
+                "portrait": "Portrait"
+              }
             }
           },
           "actions": {

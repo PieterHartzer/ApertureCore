@@ -2,6 +2,7 @@ import AppEmptyState from '~/components/ui/AppEmptyState.vue'
 import ColorField from '~/components/ui/ColorField.vue'
 import { settingInput } from '~/components/plugins/index'
 import { DASHBOARD_APPEARANCES, DEFAULT_DASHBOARD_APPEARANCE, type DashboardAppearance } from '#shared/utils/dashboard-appearance'
+import { DASHBOARD_PRINT_LAYOUTS, DEFAULT_DASHBOARD_PRINT_LAYOUT, type DashboardPrintLayout } from '#shared/utils/dashboard-print-layout'
 import { MAX_EMBED_ORIGINS, normalizeEmbedOrigins } from '#shared/utils/embed-origins'
 import { CARD, COLUMN_FORMATS, CURRENCIES, MAX_THRESHOLD_STEPS, getCardStyle, isCardShadowHidden, isCardTitleHidden, parseAdvancedOptions, parseLabelOverrides, parseThresholdSteps, type LabelOverride, THRESHOLD_STEP_COLORS, type ThresholdStep } from '~/utils/charts/chart-settings'
 import { COLUMN_FORMAT_KINDS, DATE_PATTERN_PRESETS, DATE_STYLES, MAX_DATE_PATTERN_LENGTH, TEXT_CASES, defaultDatePattern, isDateKind, isNumberKind, parseColumnFormats, previewColumnFormat, type ColumnFormat, type ColumnFormatKind } from '~/utils/charts/column-formats'
@@ -147,10 +148,12 @@ export default defineComponent({
       isDefault: false,
       // One website per line; empty means the embed may appear anywhere.
       embedAllowedOrigins: '',
-      appearance: DEFAULT_DASHBOARD_APPEARANCE as DashboardAppearance
+      appearance: DEFAULT_DASHBOARD_APPEARANCE as DashboardAppearance,
+      printLayout: DEFAULT_DASHBOARD_PRINT_LAYOUT as DashboardPrintLayout
     })
 
     const appearanceOptions = DASHBOARD_APPEARANCES
+    const printLayoutOptions = DASHBOARD_PRINT_LAYOUTS
 
     // useHead must run before the first await in this setup.
     // The dialog previews its selection before the dashboard is saved.
@@ -169,9 +172,16 @@ export default defineComponent({
 
     provideDashboardChartStyle(computed(() => getDashboardChartStyle(activeStyle.value)))
 
+    // Which way the dashboard prints. The paper size goes in its own rule, and the
+    // attribute lets the print stylesheet lay the dashboard out at that paper's width.
+    const activePrintLayout = computed(() => selectedDashboard.value?.printLayout ?? DEFAULT_DASHBOARD_PRINT_LAYOUT)
+
     useHead({
-      htmlAttrs: { 'data-appearance': activeAppearance },
-      style: computed(() => [{ key: 'dashboard-style', textContent: dashboardCss.value }])
+      htmlAttrs: { 'data-appearance': activeAppearance, 'data-print-layout': activePrintLayout },
+      style: computed(() => [
+        { key: 'dashboard-style', textContent: dashboardCss.value },
+        { key: 'dashboard-page', textContent: `@page { size: A4 ${activePrintLayout.value}; }` }
+      ])
     })
 
     const dashboardSettingsErrorMessage = ref('')
@@ -1067,6 +1077,7 @@ export default defineComponent({
       embedAllowedOrigins: dashboard.embedAllowedOrigins,
       isDefault: dashboard.isDefault,
       appearance: dashboard.appearance,
+      printLayout: dashboard.printLayout,
       style: dashboard.style,
       widgetCount: dashboard.widgets.length,
       createdAt: dashboard.createdAt,
@@ -1545,7 +1556,8 @@ export default defineComponent({
         embedEnabled: selectedDashboard.value.embedEnabled,
         isDefault: selectedDashboard.value.isDefault,
         embedAllowedOrigins: selectedDashboard.value.embedAllowedOrigins.join('\n'),
-        appearance: selectedDashboard.value.appearance
+        appearance: selectedDashboard.value.appearance,
+        printLayout: selectedDashboard.value.printLayout ?? DEFAULT_DASHBOARD_PRINT_LAYOUT
       }
       dashboardSettingsErrorMessage.value = ''
       isConfirmingNewEmbedLink.value = false
@@ -1646,7 +1658,8 @@ export default defineComponent({
           ...selectedDashboard.value,
           dashboardName,
           embedEnabled: dashboardSettingsInput.value.embedEnabled,
-          appearance: dashboardSettingsInput.value.appearance
+          appearance: dashboardSettingsInput.value.appearance,
+          printLayout: dashboardSettingsInput.value.printLayout
         }
 
         const defaultChanged = dashboardSettingsInput.value.isDefault !== selectedDashboard.value.isDefault
@@ -1879,6 +1892,7 @@ export default defineComponent({
       setNumberSetting,
       setSettingValue,
       appearanceOptions,
+      printLayoutOptions,
       builderDescription,
       builderTitle,
       createDashboardErrorMessage,

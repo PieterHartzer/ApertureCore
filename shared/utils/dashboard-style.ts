@@ -1,5 +1,5 @@
 import { isBorderStyle, outlineDeclarations } from './border'
-import { isHexColor } from './color'
+import { isDarkColor, isHexColor } from './color'
 import { CHART_SERIES_KEYS, DASHBOARD_STYLE_FIELDS, type DashboardStyle } from './dashboard-style-fields'
 
 export const DASHBOARD_CANVAS = '[data-dashboard-canvas]'
@@ -54,6 +54,35 @@ const cssRule = (selector: string, declarations: (string | null)[]) => {
 }
 const declaration = (property: string, value: unknown, unit = '') => value === undefined ? null : `${property}: ${value}${unit} !important;`
 
+/**
+ * Whether the dashboard's own widget (or page) background is dark. Charts and
+ * text follow it, so a light dashboard stays readable when the app is in dark
+ * mode, and the other way round. Undefined when the dashboard sets neither.
+ */
+export const dashboardSurfaceIsDark = (style: DashboardStyle): boolean | undefined => {
+  const surface = [style.cardBackground, style.pageBackground].find(isHexColor)
+
+  return surface === undefined ? undefined : isDarkColor(surface)
+}
+
+// Text shades inside the dashboard, from its text colour (or one that suits its background).
+const textVariables = (style: DashboardStyle) => {
+  const dark = dashboardSurfaceIsDark(style)
+  const text = isHexColor(style.textColor) ? style.textColor.slice(0, 7) : dark === undefined ? undefined : dark ? '#f1f5f9' : '#1e293b'
+
+  if (!text) return []
+
+  const shade = (percent: number) => `color-mix(in srgb, ${text} ${percent}%, transparent)`
+
+  return [
+    `--ui-text-highlighted: ${text};`,
+    `--ui-text: ${shade(90)};`,
+    `--ui-text-toned: ${shade(80)};`,
+    `--ui-text-muted: ${shade(68)};`,
+    `--ui-text-dimmed: ${shade(50)};`
+  ]
+}
+
 /** Builds the page's stylesheet from validated properties. */
 export const buildDashboardCss = (input: unknown) => {
   const { style } = normalizeDashboardStyle(input)
@@ -70,7 +99,7 @@ export const buildDashboardCss = (input: unknown) => {
   const font = typeof style.fontFamily === 'string' ? FONT_STACKS[style.fontFamily] : undefined
 
   return [
-    cssRule(DASHBOARD_CANVAS, ['isolation: isolate;', 'overflow: clip;', 'overflow-clip-margin: 64px;', declaration('color', style.textColor), declaration('font-family', font)]),
+    cssRule(DASHBOARD_CANVAS, ['isolation: isolate;', 'overflow: clip;', 'overflow-clip-margin: 64px;', declaration('color', style.textColor), declaration('font-family', font), ...textVariables(style)]),
     cssRule('body::before', [style.pageBackground === undefined ? null : `background: ${style.pageBackground} !important;`]),
     cssRule(`${DASHBOARD_CANVAS} .grid-stack`, style.widgetGap === undefined ? [] : ['top', 'right', 'bottom', 'left'].map(side => `--gs-item-margin-${side}: ${Number(style.widgetGap) / 2}px !important;`)),
     cssRule(card, [declaration('background-color', style.cardBackground), declaration('box-shadow', boxShadow), declaration('outline', outline?.outline), declaration('outline-offset', outline?.outlineOffset), declaration('border-radius', style.borderRadius, 'px')]),
@@ -94,6 +123,10 @@ export interface DashboardChartStyle {
   heatHigh?: string
   /** The widget background, so faded colours and slice edges blend into it. */
   surface?: string
+  /** Text drawn inside charts: totals, gauge values and needles. */
+  ink?: string
+  /** Draw charts for a dark background; undefined follows the app's theme. */
+  dark?: boolean
   text?: string
   grid?: string
   fontFamily?: string
@@ -109,6 +142,8 @@ export const getDashboardChartStyle = (input: unknown): DashboardChartStyle => {
     heatLow: text('chartHeatLow'),
     heatHigh: text('chartHeatHigh'),
     surface: text('cardBackground')?.slice(0, 7),
+    ink: (text('valueColor') ?? text('textColor'))?.slice(0, 7),
+    dark: dashboardSurfaceIsDark(style),
     text: text('chartText'),
     grid: text('chartGrid'),
     fontFamily: FONT_STACKS[text('fontFamily') ?? '']

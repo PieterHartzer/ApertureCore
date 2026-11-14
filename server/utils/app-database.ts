@@ -62,6 +62,7 @@ export interface AppDatabase {
     embed_allowed_origins: Generated<unknown>
     is_default: Generated<boolean>
     appearance: Generated<string>
+    print_layout: Generated<string>
     style: Generated<unknown>
     created_by_user_id: string
     updated_by_user_id: string

@@ -136,6 +136,7 @@ export interface DashboardChartColorStyle {
   heatLow?: string
   heatHigh?: string
   surface?: string
+  ink?: string
   text?: string
   grid?: string
 }
@@ -158,6 +159,7 @@ export const applyDashboardChartColors = (colors: ChartColors, style: DashboardC
     primary: style.primary ?? colors.primary,
     categorical,
     surface,
+    ink: style.ink ?? colors.ink,
     sequential: strong && weak ? [weak, strong] : colors.sequential,
     ordinal: strong && weak
       ? Array.from({ length: steps }, (_, index) => mixHexColors(strong, weak, (index / Math.max(steps - 1, 1)) * 0.8))

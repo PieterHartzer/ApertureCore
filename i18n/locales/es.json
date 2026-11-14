@@ -215,6 +215,14 @@
             "embedEnabled": {
               "label": "Activar la inserción",
               "description": "Permite mostrar este panel públicamente mediante su GUID de inserción."
+            },
+            "printLayout": {
+              "label": "Diseño de impresión",
+              "description": "Cómo se imprime el panel en papel A4.",
+              "options": {
+                "landscape": "Horizontal",
+                "portrait": "Vertical"
+              }
             }
           },
           "actions": {

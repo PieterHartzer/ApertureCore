@@ -1,5 +1,6 @@
 import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
 import { isDashboardAppearance } from '../../shared/utils/dashboard-appearance'
+import { isDashboardPrintLayout } from '../../shared/utils/dashboard-print-layout'
 import { normalizeEmbedOrigins } from '../../shared/utils/embed-origins'
 import type {
   CreateDashboardInput,
@@ -479,6 +480,13 @@ export const validateSaveDashboardInput = (
     )
   }
 
+  if (value.printLayout !== undefined && !isDashboardPrintLayout(value.printLayout)) {
+    return createSaveDashboardValidationError(
+      'body_invalid',
+      'body'
+    )
+  }
+
   const style = value.style === undefined ? null : normalizeDashboardStyle(value.style)
 
   if (style?.invalid) {
@@ -523,6 +531,7 @@ export const validateSaveDashboardInput = (
     ...(value.isDefault === undefined ? {} : { isDefault: value.isDefault }),
     ...(embedAllowedOrigins === undefined ? {} : { embedAllowedOrigins }),
     ...(value.appearance === undefined ? {} : { appearance: value.appearance }),
+    ...(value.printLayout === undefined ? {} : { printLayout: value.printLayout }),
     ...(style ? { style: style.style } : {}),
     widgets
   }
