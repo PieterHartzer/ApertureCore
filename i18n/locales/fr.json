@@ -1027,6 +1027,12 @@
           "other": "Autres"
         },
         "suggested": "Suggéré pour cette requête"
+      },
+      "duplicate": {
+        "action": "Dupliquer",
+        "name": "{name} (copie)",
+        "success": "« {name} » est prêt. Renommez-le dans les paramètres du tableau de bord.",
+        "successTitle": "Tableau de bord copié"
       }
     }
   },
@@ -1128,6 +1134,12 @@
       },
       "access": {
         "denied": "Ce lien a expiré. Rechargez la page d’où vous venez."
+      }
+    },
+    "duplicate": {
+      "errors": {
+        "notFound": "Ce tableau de bord n’existe plus.",
+        "unexpected": "Le tableau de bord n’a pas pu être copié. Veuillez réessayer."
       }
     }
   },

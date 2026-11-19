@@ -43,7 +43,7 @@ export default component
             :items="[
               [
                 { label: t('pages.dashboard.selector.actions.new'), icon: 'i-lucide-plus', onSelect: openCreateDashboardDialog },
-                ...(hasSelectedDashboard ? [{ label: t('pages.dashboard.selector.actions.settings'), icon: 'i-lucide-settings-2', onSelect: openDashboardSettings }, { label: t('pages.dashboard.style.open'), icon: 'i-lucide-paintbrush', onSelect: openStyleEditor }] : [])
+                ...(hasSelectedDashboard ? [{ label: t('pages.dashboard.selector.actions.settings'), icon: 'i-lucide-settings-2', onSelect: openDashboardSettings }, { label: t('pages.dashboard.style.open'), icon: 'i-lucide-paintbrush', onSelect: openStyleEditor }, { label: t('pages.dashboard.duplicate.action'), icon: 'i-lucide-copy', disabled: isDuplicatingDashboard, onSelect: onDuplicateDashboard }] : [])
               ],
               ...(hasSelectedDashboard ? [[{ label: t('pages.dashboard.selector.settings.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', disabled: isSavingDashboardSettings || isDeletingDashboard, onSelect: openDeleteDashboardDialog }]] : [])
             ]"

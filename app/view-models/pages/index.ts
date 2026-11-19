@@ -108,6 +108,7 @@ export default defineComponent({
     const { listQueries } = useSavedSqlQueries(requestFetch)
     const {
       createDashboard: createDashboardRequest,
+      duplicateDashboard: duplicateDashboardRequest,
       deleteDashboard: deleteDashboardRequest,
       getDashboard,
       listDashboards,
@@ -1546,6 +1547,43 @@ export default defineComponent({
       }
     }
 
+    // Copies the open dashboard and opens the copy, ready to rename in its settings.
+    const isDuplicatingDashboard = ref(false)
+    const onDuplicateDashboard = async () => {
+      const source = selectedDashboard.value
+
+      if (!source || isDuplicatingDashboard.value) {
+        return
+      }
+
+      isDuplicatingDashboard.value = true
+
+      try {
+        const response = await duplicateDashboardRequest(
+          source.id,
+          t('pages.dashboard.duplicate.name', { name: source.dashboardName })
+        )
+
+        if (response.ok && response.dashboard) {
+          upsertDashboardSummary(response.dashboard)
+          selectedDashboard.value = response.dashboard
+          selectedDashboardId.value = response.dashboard.id
+          dashboardStatus.value = 'success'
+          isDashboardEditing.value = false
+          resetDraft()
+          success(
+            t('pages.dashboard.duplicate.success', { name: response.dashboard.dashboardName }),
+            t('pages.dashboard.duplicate.successTitle')
+          )
+          return
+        }
+
+        error(translateMessage(t, response.messageKey, 'dashboards.duplicate.errors.unexpected'))
+      } finally {
+        isDuplicatingDashboard.value = false
+      }
+    }
+
     const openDashboardSettings = () => {
       if (!selectedDashboard.value) {
         return
@@ -1941,6 +1979,8 @@ export default defineComponent({
       onCopyEmbedUrl,
       onCreateDashboard,
       onCreateDashboardOpenChange,
+      onDuplicateDashboard,
+      isDuplicatingDashboard,
       onDashboardSelectionChange,
       onDashboardSettingsOpenChange,
       onDeleteDashboard,

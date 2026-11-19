@@ -1027,6 +1027,12 @@
           "other": "Otros"
         },
         "suggested": "Sugerido para esta consulta"
+      },
+      "duplicate": {
+        "action": "Duplicar",
+        "name": "{name} (copia)",
+        "success": "«{name}» está listo. Cámbiale el nombre en la configuración del panel.",
+        "successTitle": "Panel copiado"
       }
     }
   },
@@ -1128,6 +1134,12 @@
       },
       "access": {
         "denied": "Este enlace ha caducado. Recarga la página de la que vienes."
+      }
+    },
+    "duplicate": {
+      "errors": {
+        "notFound": "Este panel ya no existe.",
+        "unexpected": "No se pudo copiar el panel. Inténtalo de nuevo."
       }
     }
   },

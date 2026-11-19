@@ -188,10 +188,27 @@ export const useDashboards = (
     }
   }
 
+  /** Copies a dashboard; the server picks a free name based on the one given. */
+  const duplicateDashboard = async (dashboardId: string, dashboardName: string): Promise<DashboardCreateResponse> => {
+    try {
+      return await requestFetch<DashboardCreateResponse>(`/api/dashboards/${dashboardId}/duplicate`, {
+        method: 'POST',
+        body: { dashboardName }
+      })
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'data' in error && isResponseWithCode(error.data)) {
+        return error.data as DashboardCreateResponse
+      }
+
+      return { ok: false, code: 'unexpected_error', message: 'dashboards.duplicate.errors.unexpected', messageKey: 'dashboards.duplicate.errors.unexpected' } as DashboardCreateResponse
+    }
+  }
+
   return {
     listDashboards,
     getDashboard,
     createDashboard,
+    duplicateDashboard,
     saveDashboard,
     deleteDashboard,
     regenerateEmbedLink

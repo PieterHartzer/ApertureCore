@@ -1027,6 +1027,12 @@
           "other": "[Ôţhër]"
         },
         "suggested": "[Šûggëšţëd för ţhîš qûëry]"
+      },
+      "duplicate": {
+        "action": "[Dûplîçåţë]",
+        "name": "[{name} (çôpý)]",
+        "success": "[“{name}” îš ŕëådý. Rëñåmë îţ îñ Dåšhbôåŕd šëţţîñgš.]",
+        "successTitle": "[Dåšhbôåŕd çôpîëd]"
       }
     }
   },
@@ -1128,6 +1134,12 @@
       },
       "access": {
         "denied": "[Thîš lîñk håš ëxpîrëd. Rëlôåd ţhë pågë yôû çåmë frôm.]"
+      }
+    },
+    "duplicate": {
+      "errors": {
+        "notFound": "[Thîš dåšhbôåŕd ñô lôñgëŕ ëxîšţš.]",
+        "unexpected": "[Thë dåšhbôåŕd çôûldñ’ţ bë çôpîëd. Plëåšë ţŕý ågåîñ.]"
       }
     }
   },

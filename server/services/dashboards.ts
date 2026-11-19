@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { sql } from 'kysely'
 
 import { normalizeDashboardStyle } from '../../shared/utils/dashboard-style'
@@ -865,4 +867,67 @@ export const getEmbeddedDashboard = async (
       message: 'unexpected_error'
     }
   }
+}
+
+/** The first free name: "Sales (copy)", then "Sales (copy) 2", and so on. */
+const findFreeDashboardName = async (
+  db: AppDatabaseClient,
+  organizationId: string,
+  baseName: string
+) => {
+  const taken = new Set((await db
+    .selectFrom('app_dashboards')
+    .select(['dashboard_name'])
+    .where('organization_id', '=', organizationId)
+    .where('deleted_at', 'is', null)
+    .where('dashboard_name', 'like', `${baseName.replace(/[\\%_]/g, (character) => `\\${character}`)}%`)
+    .execute() as Array<{ dashboard_name: string }>).map((row) => row.dashboard_name))
+
+  for (let number = 1; ; number += 1) {
+    const name = number === 1 ? baseName : `${baseName} ${number}`
+
+    if (!taken.has(name)) return name
+  }
+}
+
+/**
+ * Copies a dashboard: its widgets, layout, look and print setting, under a new name.
+ * It goes through the same create and save steps as any dashboard, so plan limits still
+ * apply. The copy is never embedded and never the default; its widgets use the same
+ * saved queries. If the widgets can't be saved, the half-made copy is removed again.
+ */
+export const duplicateDashboard = async (
+  authContext: AuthenticatedOrganizationContext,
+  input: { dashboardId: string, dashboardName: string }
+): Promise<CreateDashboardResult | SaveDashboardResult> => {
+  const db = getAppDatabase()
+  const organizationId = mapOrganizationIdToStorage(authContext.organizationId)
+  const source = await loadDashboardDetails(db, organizationId, input.dashboardId)
+
+  if (!source) {
+    return { ok: false, code: 'not_found', message: 'not_found' }
+  }
+
+  const dashboardName = await findFreeDashboardName(db, organizationId, input.dashboardName)
+  const created = await createDashboard(authContext, { dashboardName })
+
+  if (isGuardRejection(created) || !created.ok) {
+    return created
+  }
+
+  const saved = await saveDashboard(authContext, {
+    dashboardId: created.dashboard.id,
+    dashboardName,
+    embedEnabled: false,
+    appearance: source.appearance,
+    printLayout: source.printLayout,
+    style: source.style,
+    widgets: source.widgets.map(({ dashboardId: _dashboardId, ...widget }) => ({ ...widget, id: randomUUID() }))
+  })
+
+  if (isGuardRejection(saved) || !saved.ok) {
+    await deleteDashboard(authContext, { dashboardId: created.dashboard.id, confirmationName: dashboardName })
+  }
+
+  return saved
 }

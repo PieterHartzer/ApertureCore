@@ -1027,6 +1027,12 @@
           "other": "Outros"
         },
         "suggested": "Sugerido para esta consulta"
+      },
+      "duplicate": {
+        "action": "Duplicar",
+        "name": "{name} (cópia)",
+        "success": "“{name}” está pronto. Mude-lhe o nome nas definições do painel.",
+        "successTitle": "Painel copiado"
       }
     }
   },
@@ -1128,6 +1134,12 @@
       },
       "access": {
         "denied": "Este link expirou. Recarregue a página de onde veio."
+      }
+    },
+    "duplicate": {
+      "errors": {
+        "notFound": "Este painel já não existe.",
+        "unexpected": "Não foi possível copiar o painel. Tente novamente."
       }
     }
   },

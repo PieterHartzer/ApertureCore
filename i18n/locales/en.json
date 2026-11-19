@@ -1027,6 +1027,12 @@
           "other": "Other"
         },
         "suggested": "Suggested for this query"
+      },
+      "duplicate": {
+        "action": "Duplicate",
+        "name": "{name} (copy)",
+        "success": "“{name}” is ready. Rename it in Dashboard settings.",
+        "successTitle": "Dashboard copied"
       }
     }
   },
@@ -1128,6 +1134,12 @@
       },
       "access": {
         "denied": "This link has expired. Reload the page you came from."
+      }
+    },
+    "duplicate": {
+      "errors": {
+        "notFound": "This dashboard no longer exists.",
+        "unexpected": "The dashboard couldn’t be copied. Please try again."
       }
     }
   },
