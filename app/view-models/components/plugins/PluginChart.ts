@@ -4,6 +4,10 @@ import VChart from 'vue-echarts'
 
 import '~/utils/charts/register-echarts'
 
+// ECharts 6 throws while laying out a Sankey (and other roaming charts) at zero width or
+// height, which happens for a moment while the grid reflows. One pixel is never seen.
+const MIN_CHART_SIZE = { minWidth: '1px', minHeight: '1px' }
+
 export default defineComponent({
   components: {
     VChart
@@ -27,6 +31,7 @@ export default defineComponent({
     const { t } = useI18n()
 
     return {
+      MIN_CHART_SIZE,
       t
     }
   }

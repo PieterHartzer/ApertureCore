@@ -12,6 +12,7 @@ export default component
       :update-options="replace ? { notMerge: true } : undefined"
       class="h-full min-h-0 w-full"
       :class="heightClass"
+      :style="MIN_CHART_SIZE"
     />
 
     <template #fallback>

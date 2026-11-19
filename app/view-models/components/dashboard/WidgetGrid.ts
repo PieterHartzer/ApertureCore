@@ -19,6 +19,19 @@ const GRIDSTACK_COLUMN_COUNT = 12
 const GRIDSTACK_CELL_HEIGHT_PX = 72
 const GRIDSTACK_MARGIN_PX = 6
 
+// Narrow grids: one column on phones; on tablets and small windows six columns, with the
+// widgets packed in reading order. Scaling the saved 12-column places instead left gaps
+// and a staircase of half-empty rows.
+const GRIDSTACK_BREAKPOINTS = [
+  { w: 640, c: 1, layout: 'list' as const },
+  { w: 900, c: 6, layout: 'compact' as const },
+  { c: GRIDSTACK_COLUMN_COUNT }
+]
+
+const layoutForColumn = (column: number) => {
+  return GRIDSTACK_BREAKPOINTS.find((breakpoint) => breakpoint.c === column)?.layout ?? 'moveScale'
+}
+
 export default defineComponent({
   props: {
     editable: {
@@ -165,8 +178,19 @@ export default defineComponent({
 
       isApplyingGridState = true
 
+      // Saved places are on the 12-column grid. On a narrow screen GridStack has already
+      // dropped to fewer columns, so new widgets go in at full width first and the grid
+      // then narrows again the usual way. Otherwise their 12-column places get squeezed.
+      const narrowColumn = grid.getColumn()
+      const hasNewWidgets = props.widgets.some((widget) => !getWidgetElement(widget.id)?.gridstackNode)
+      const widenFirst = narrowColumn !== GRIDSTACK_COLUMN_COUNT && hasNewWidgets
+
       try {
         const widgetIds = new Set(props.widgets.map((widget) => widget.id))
+
+        if (widenFirst) {
+          grid.column(GRIDSTACK_COLUMN_COUNT, 'none')
+        }
 
         grid.batchUpdate()
 
@@ -212,6 +236,11 @@ export default defineComponent({
         }
 
         grid.batchUpdate(false)
+
+        if (widenFirst) {
+          grid.column(narrowColumn, layoutForColumn(narrowColumn))
+          syncGridFloat()
+        }
 
         isApplyingGridState = false
         emitLayoutUpdates(pendingLayoutUpdates)
@@ -283,11 +312,7 @@ export default defineComponent({
         handle: '[data-dashboard-widget-drag-handle]',
         alwaysShowResizeHandle: 'mobile',
         columnOpts: {
-          breakpoints: [
-            { w: 640, c: 1, layout: 'list' },
-            { w: 900, c: 6, layout: 'moveScale' },
-            { c: GRIDSTACK_COLUMN_COUNT }
-          ],
+          breakpoints: GRIDSTACK_BREAKPOINTS,
           layout: 'moveScale'
         }
       }, gridRoot.value)
