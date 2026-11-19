@@ -165,6 +165,9 @@ const promptLanguage = computed(() => {
   try { return new Intl.DisplayNames(['en'], { type: 'language' }).of(tag) ?? undefined } catch { return undefined }
 })
 const usesBrowserModel = computed(() => selected.value?.providerType === 'webllm')
+// Until someone connects their own AI (Claude, ChatGPT and others), the browser model is the only
+// choice, so the way to add one sits right next to it.
+const hasOwnAIProvider = computed(() => ai.settings.value.models.some(model => model.providerType !== 'webllm'))
 const canGenerate = computed(() => !busy.value && !loading.value && !!question.value.trim() && !!connectionId.value && schemaLoaded.value && !!selected.value && (!usesBrowserModel.value || supported.value))
 const lmSessionKey = ref('')
 watch(lmSessionKey, value => { if (selected.value?.providerConnectionId) ai.sessionKeys.set(selected.value.providerConnectionId, value) })
@@ -368,7 +371,8 @@ const save = async (asNew = false) => {
               </UFormField>
             </div>
             <p v-if="modelListFailed" role="status" class="text-xs text-warning">{{ $t('workspace.ask.modelListFailed') }}</p>
-            <NuxtLink to="/settings/ai-models" class="-mt-1 self-start text-xs text-muted hover:text-highlighted">{{ $t('workspace.ask.manage') }}</NuxtLink>
+            <UButton v-if="!hasOwnAIProvider" to="/settings/ai-models" color="neutral" variant="outline" size="sm" icon="i-lucide-plug" class="-mt-1 self-start" :label="$t('workspace.ask.connectOwn')" />
+            <NuxtLink v-else to="/settings/ai-models" class="-mt-1 self-start text-xs text-muted hover:text-highlighted">{{ $t('workspace.ask.manage') }}</NuxtLink>
             <p v-if="usesBrowserModel && !supported" class="text-xs text-warning">{{ $t('interface.useHTTPSOrLocalhostWithAWebGPUCompatibleBrowserOr') }}</p>
             <p v-else-if="selected && !usesBrowserModel" class="text-xs text-muted">{{ $t('interface.yourQuestionAndSelectedDatabaseSchemaWillBeSentTo2', { value1: ai.connectionFor(selected)?.name, value2: ai.connectionFor(selected)?.baseUrl }) }}</p>
             <UFormField v-if="selected?.providerType === 'lmstudio'" :label="$t('workspace.ask.serverKey')" name="serverKey">

@@ -73,7 +73,8 @@
       "noModels": "[Nô môdëlš yëţ]",
       "serverKey": "[Sërvër ÅPÎ këy (ôpţîôñål)]",
       "downloadAndGenerate": "[Dôwñlôåd môdël åñd gëñëråţë]",
-      "downloadNote": "[Fîršţ dôwñlôåd cåñ ţåkë å fëw mîñûţëš.]"
+      "downloadNote": "[Fîršţ dôwñlôåd cåñ ţåkë å fëw mîñûţëš.]",
+      "connectOwn": "[Ûšë Clåûdë, ChåţGPT ôŕ åñôţhëŕ ÅÎ]"
     },
     "collapsePanel": "[Côllåpšë {panel}]",
     "expandPanel": "[Ëxpåñd {panel}]",

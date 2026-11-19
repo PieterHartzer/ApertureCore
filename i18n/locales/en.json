@@ -73,7 +73,8 @@
       "noModels": "No models yet",
       "serverKey": "Server API key (optional)",
       "downloadAndGenerate": "Download model and generate",
-      "downloadNote": "First download can take a few minutes."
+      "downloadNote": "First download can take a few minutes.",
+      "connectOwn": "Use Claude, ChatGPT or another AI"
     },
     "collapsePanel": "Collapse {panel}",
     "expandPanel": "Expand {panel}",

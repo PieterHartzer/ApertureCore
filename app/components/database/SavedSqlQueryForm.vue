@@ -89,6 +89,14 @@ export default component
                 @click="loadModel"
               />
               <UButton
+                v-if="!hasOwnAIProvider"
+                to="/settings/ai-models"
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-plug"
+                :label="$t('workspace.ask.connectOwn')"
+              />
+              <UButton
                 v-if="loading"
                 :label="t('queries.form.fields.aiSql.actions.cancel')"
                 color="neutral"

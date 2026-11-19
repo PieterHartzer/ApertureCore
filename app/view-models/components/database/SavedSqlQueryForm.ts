@@ -78,6 +78,8 @@ export default defineComponent({
       models: ai.settings.value.models.filter(model => model.providerType === providerType)
     })).filter(group => group.models.length))
     const selectedConnection = computed(() => selected.value ? ai.connectionFor(selected.value) : undefined)
+    // Until someone connects their own AI (Claude, ChatGPT and others), show the way to add one next to the browser model.
+    const hasOwnAIProvider = computed(() => ai.settings.value.models.some(model => model.providerType !== 'webllm'))
     const sessionApiKey = ref('')
 
     const DEFAULT_QUERY_TEST_RESULT_SAMPLE_ROW_LIMIT = 25
@@ -353,6 +355,7 @@ export default defineComponent({
     }
 
     return {
+      hasOwnAIProvider,
       canGenerate,
       canSubmit,
       canTest,

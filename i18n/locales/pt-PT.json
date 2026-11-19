@@ -73,7 +73,8 @@
       "noModels": "Nenhum modelo ainda",
       "serverKey": "Chave de API do servidor (opcional)",
       "downloadAndGenerate": "Transferir o modelo e gerar",
-      "downloadNote": "O primeiro transferência pode levar alguns minutos."
+      "downloadNote": "O primeiro transferência pode levar alguns minutos.",
+      "connectOwn": "Usar Claude, ChatGPT ou outra IA"
     },
     "collapsePanel": "Recolher {panel}",
     "expandPanel": "Expandir {panel}",
